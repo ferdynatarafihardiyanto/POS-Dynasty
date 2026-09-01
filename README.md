@@ -1,58 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ☕ Cafe Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Cafe Management System adalah sistem backend komprehensif berbasis **Laravel 11** yang dirancang untuk mendigitalisasi alur pemesanan makanan dan minuman. Sistem ini mendukung dua *role* utama: **Admin** (Kasir/Manajemen) dan **Customer** (Pelanggan), lengkap dengan pemrosesan pesanan menggunakan mekanisme Point of Sales (POS) serta integrasi QR Code Meja.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🌟 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📱 Mode Customer (Pemesanan Mandiri via QR)
+- **Scan QR Meja:** Customer hanya dapat mengakses menu dengan melakukan *scan* QR unik yang terkait langsung dengan meja spesifik. Meja nonaktif tidak dapat digunakan.
+- **Menu Digital & Pencarian:** Menampilkan daftar kategori dan produk yang sedang *aktif*. Dilengkapi fitur filter kategori dan pencarian produk secara *real-time*.
+- **Keranjang & Checkout:** Memungkinkan customer menambah produk ke keranjang, merubah jumlah, dan melakukan checkout mandiri.
+- **Validasi Ketersediaan:** Saat proses pemesanan, sistem secara otomatis menolak (422) apabila stok tidak mencukupi atau meja/produk dalam keadaan nonaktif.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 💻 Mode Admin (POS & Manajemen)
+- **Point of Sales (POS):** Kasir melihat pesanan masuk secara langsung dan dapat menyelesaikannya menggunakan metode **Cash** atau **QRIS**.
+- **Manajemen Menu & Stok:** CRUD (Create, Read, Update) untuk Kategori dan Produk. (Penghapusan menggunakan konsep *Soft Disable* / Menonaktifkan status, bukan `DELETE`).
+- **Stock Management & Opname:** Mencatat seluruh arus barang (Stok Masuk / Keluar) secara detail dengan riwayat log. Menyediakan fitur **Stock Opname** untuk menyesuaikan jumlah fisik secara otomatis.
+- **Manajemen Meja & QR:** Menambah, memodifikasi, dan men-generate ulang Token QR Code untuk setiap meja secara independen.
+- **History & Laporan:** Seluruh transaksi yang berhasil diselesaikan dicatat untuk pembukuan (Total transaksi, Pendapatan per metode, Produk Terjual).
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🏗️ Arsitektur Backend
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Sistem ini didesain menggunakan pola arsitektur **MVC (Model-View-Controller)** murni dengan proteksi logika bisnis *(Business Logic)* yang ketat:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 1. Authentication & Authorization
+- Menggunakan **Laravel Sanctum** untuk sistem berbasis Token API.
+- Customer tidak memiliki/membutuhkan akun login. Otentikasi customer mengandalkan kepemilikan **QR Token** (`qr_token`) yang mewakili meja mereka.
+- Seluruh rute administratif (`/api/admin/*`) dilindungi oleh *Middleware* eksklusif. Customer akan menerima *401/403 Unauthorized* jika mencoba mengaksesnya.
 
-## Agentic Development
+### 2. Konsep *Single Source of Truth* & Snapshot Harga
+- Ketika pesanan dibuat, harga tidak mengandalkan *input* dari *request payload* (anti manipulasi harga / *Price Manipulation*). Backend secara otomatis mengambil harga dari basis data saat itu.
+- Saat melakukan pembayaran (POS), harga total direkam dalam bentuk **Snapshot** pada tabel `pembayaran`. Ini menjamin bahwa riwayat transaksi dan laporan keuangan masa lalu **TIDAK AKAN** berubah meskipun Admin mengubah harga referensi Master Produk pada keesokan harinya.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 3. ACID Compliance & Database Transactions
+- Untuk mencegah data setengah jadi, alur Checkout dan Pembayaran dibungkus rapat dengan blok **`DB::beginTransaction()`** dan **`DB::rollBack()`**.
+- Apabila terjadi *error* secara sistem, jaringan, maupun kondisi logis yang gagal (misal: *Race Condition* di mana dua customer di meja yang sama memperebutkan stok terakhir), stok tidak akan bocor atau menjadi negatif.
 
+### 4. *Double Payment Prevention*
+- Setiap penyelesaian transaksi di level Kasir dikunci dengan pengecekan ganda (*Double Checking*). Jika status pesanan sudah lunas (Paid), sistem secara mutlak akan menolak pembayaran ulang dan tidak akan pernah mengurangi stok dua kali.
+
+### 5. *Soft Disable* (Data Integrity)
+- Sistem melarang keras aksi `DELETE` fisik (HTTP 405) pada Entitas Kategori dan Produk. Hal ini diimplementasikan untuk menjaga integritas dan relasi *Foreign Key* pada `detail_pesanan` dan `riwayat_stok` yang sudah terjadi sebelumnya. Sebagai gantinya, status dibuat menjadi `aktif = false`.
+
+---
+
+## 🗄️ Relasi Database
+
+Sistem dirancang dengan skema relasional yang dinamis:
+- **`cafe_tables`** ➔ Memiliki relasi (1:N) dengan `pesanan`
+- **`kategori`** ➔ Memiliki relasi (1:N) dengan `produk`
+- **`produk`** ➔ Memiliki relasi (1:N) dengan `detail_pesanan`, `riwayat_stok`, `detail_stock_opname`
+- **`pesanan`** ➔ Entitas utama yang menghubungkan Meja dengan (1:N) `detail_pesanan` dan memicu (1:1) `pembayaran`.
+
+---
+
+## 🚀 Panduan Instalasi (Development)
+
+Pastikan Anda memiliki **PHP 8.2+**, **Composer**, dan **MySQL** (Misal: Laragon, XAMPP, dsb).
+
+1. **Clone & Install Dependency**
+   ```bash
+   git clone <repo_url>
+   cd Dynasty
+   composer install
+   ```
+
+2. **Setup Konfigurasi Environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   *Atur koneksi `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` sesuai MySQL Anda di dalam file `.env`.*
+
+3. **Migrate & Seed (Dummy Data)**
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+   *Ini akan menciptakan akun admin default (`admin@cafe.test` / `password123`) serta dummy meja, kategori, dan produk.*
+
+4. **Jalankan Development Server**
+   ```bash
+   php artisan serve
+   ```
+   *API siap digunakan di URL: `http://127.0.0.1:8000`*
+
+---
+
+## 🧪 Testing
+
+Sistem dilengkapi dengan sekumpulan skenario End-To-End (E2E) dan Feature Testing terintegrasi (>140 Assertions) guna memastikan keamanan dan konsistensi dari tahap Registrasi QR Meja hingga Pemotongan Stok.
+
+Jalankan seluruh tes dengan perintah:
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php artisan test
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Jika Anda ingin melakukan pengujian API secara manual, gunakan **Postman** dengan meng-import file `Cafe_Management_Postman_Collection.json` yang telah disediakan di root direktori project ini.
