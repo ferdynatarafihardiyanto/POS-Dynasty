@@ -29,4 +29,9 @@ class Produk extends Model
     {
         return $this->hasMany(RiwayatStok::class, 'produk_id', 'id');
     }
+
+    public function resep()
+    {
+        return $this->hasOne(Resep::class, 'produk_id', 'id');
+    }
 }

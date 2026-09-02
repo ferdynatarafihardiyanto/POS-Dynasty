@@ -61,110 +61,38 @@ class POSController extends Controller
         ]);
     }
 
-    public function prosesPembayaran(Request $request)
+    public function prosesPembayaran(Request $request, \App\Services\PembayaranService $pembayaranService)
     {
         $request->validate([
             'pesanan_id' => 'required|integer',
-            'metode_pembayaran' => 'required|string|in:cash,qris',
+            'metode_pembayaran' => 'required|string|in:cash,qris,transfer',
             'jumlah_bayar' => 'required|integer|min:0'
         ]);
 
-        DB::beginTransaction();
-
         try {
-            $pesanan = Pesanan::lockForUpdate()->find($request->pesanan_id);
-
-            if (!$pesanan) {
-                DB::rollBack();
-                return response()->json(['message' => 'Pesanan tidak ditemukan'], 404);
-            }
-
-            if ($pesanan->status === 'dibayar') {
-                DB::rollBack();
-                return response()->json(['message' => 'Pesanan sudah dibayar'], 422);
-            }
-
-            if ($pesanan->status !== 'menunggu_pembayaran') {
-                DB::rollBack();
-                return response()->json(['message' => 'Pesanan tidak dapat dibayar'], 422);
-            }
-
-            // Validasi Stok
-            foreach ($pesanan->detailPesanan as $detail) {
-                $produk = \App\Models\Produk::lockForUpdate()->find($detail->produk_id);
-                if ($produk->stok < $detail->jumlah) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Stok produk tidak mencukupi'], 422);
-                }
-            }
-
-            $kembalian = 0;
-
-            if ($request->metode_pembayaran === 'cash') {
-                if ($request->jumlah_bayar < $pesanan->total_harga) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Jumlah pembayaran tidak mencukupi'], 422);
-                }
-                $kembalian = $request->jumlah_bayar - $pesanan->total_harga;
-            } else if ($request->metode_pembayaran === 'qris') {
-                if ($request->jumlah_bayar !== $pesanan->total_harga) {
-                    DB::rollBack();
-                    return response()->json(['message' => 'Jumlah pembayaran QRIS harus sesuai dengan total pesanan'], 422);
-                }
-                $kembalian = 0;
-            }
-
-            $nomorTransaksi = 'TRX-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-
-            $pembayaran = Pembayaran::create([
-                'pesanan_id' => $pesanan->id,
-                'nomor_transaksi' => $nomorTransaksi,
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'jumlah_bayar' => $request->jumlah_bayar,
-                'kembalian' => $kembalian,
-                'status' => 'berhasil',
-                'dibayar_pada' => now()
-            ]);
-
-            $pesanan->status = 'dibayar';
-            $pesanan->save();
-
-            // Kurangi Stok & Buat Riwayat
-            foreach ($pesanan->detailPesanan as $detail) {
-                $produk = \App\Models\Produk::find($detail->produk_id);
-                $stokSebelum = $produk->stok;
-                $produk->stok -= $detail->jumlah;
-                $produk->save();
-
-                \App\Models\RiwayatStok::create([
-                    'produk_id' => $produk->id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $detail->jumlah,
-                    'stok_sebelum' => $stokSebelum,
-                    'stok_sesudah' => $produk->stok,
-                    'referensi' => $pesanan->nomor_pesanan,
-                    'keterangan' => 'Pesanan dibayar'
-                ]);
-            }
-
-            DB::commit();
+            $pembayaran = $pembayaranService->prosesPembayaran(
+                $request->pesanan_id,
+                $request->metode_pembayaran,
+                $request->jumlah_bayar
+            );
 
             return response()->json([
-                'message' => $request->metode_pembayaran === 'qris' ? 'Pembayaran QRIS berhasil dikonfirmasi' : 'Pembayaran berhasil',
+                'message' => 'Pembayaran berhasil',
                 'data' => [
                     'nomor_transaksi' => $pembayaran->nomor_transaksi,
-                    'nomor_pesanan' => $pesanan->nomor_pesanan,
+                    'nomor_pesanan' => $pembayaran->pesanan->nomor_pesanan,
                     'metode_pembayaran' => $pembayaran->metode_pembayaran,
-                    'total_harga' => $pesanan->total_harga,
+                    'total_harga' => $pembayaran->pesanan->total_harga,
                     'jumlah_bayar' => $pembayaran->jumlah_bayar,
                     'kembalian' => $pembayaran->kembalian,
                     'status' => $pembayaran->status
                 ]
             ]);
-
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Gagal memproses pembayaran'], 500);
+            if ($e->getMessage() === 'Pesanan tidak ditemukan.') {
+                return response()->json(['message' => $e->getMessage()], 404);
+            }
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 }

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class PesananController extends Controller
 {
-    public function buatPesanan(Request $request)
+    public function buatPesanan(Request $request, \App\Services\PesananService $pesananService)
     {
         $request->validate([
             'qr_token' => 'required|string',
@@ -36,66 +36,8 @@ class PesananController extends Controller
             return response()->json(['message' => 'Meja sedang tidak tersedia'], 422);
         }
 
-        $produkIds = collect($request->produk)->pluck('produk_id')->toArray();
-        
-        // Reject duplicates
-        if (count($produkIds) !== count(array_unique($produkIds))) {
-            return response()->json(['message' => 'Terdapat produk duplikat dalam pesanan'], 422);
-        }
-
-        $produkDb = Produk::whereIn('id', $produkIds)->get()->keyBy('id');
-
-        $totalHarga = 0;
-        $details = [];
-
-        foreach ($request->produk as $item) {
-            $pId = $item['produk_id'];
-            if (!isset($produkDb[$pId])) {
-                return response()->json(['message' => "Produk dengan ID {$pId} tidak ditemukan"], 422);
-            }
-            
-            $produk = $produkDb[$pId];
-            if (!$produk->aktif) {
-                return response()->json(['message' => "Produk {$produk->nama} sedang tidak tersedia"], 422);
-            }
-
-            if ($produk->stok < $item['jumlah']) {
-                return response()->json(['message' => "Stok produk {$produk->nama} tidak mencukupi"], 422);
-            }
-
-            $subtotal = $produk->harga * $item['jumlah'];
-            $totalHarga += $subtotal;
-
-            $details[] = [
-                'produk_id' => $produk->id,
-                'nama_produk' => $produk->nama,
-                'harga' => $produk->harga,
-                'jumlah' => $item['jumlah'],
-                'subtotal' => $subtotal
-            ];
-        }
-
-        DB::beginTransaction();
-
         try {
-            $nomorPesanan = 'ORD-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            // In reality, this should be generated properly, but rand is fine for now or auto-increment based.
-            // Let's ensure unique by adding time or retrying, but random is okay for this simple scenario.
-
-            $pesanan = Pesanan::create([
-                'nomor_pesanan' => $nomorPesanan,
-                'meja_id' => $meja->id,
-                'status' => 'menunggu_pembayaran',
-                'total_harga' => $totalHarga,
-                'catatan' => $request->catatan
-            ]);
-
-            foreach ($details as &$detail) {
-                $detail['pesanan_id'] = $pesanan->id;
-                DetailPesanan::create($detail);
-            }
-
-            DB::commit();
+            $pesanan = $pesananService->buatPesanan($meja->id, $request->produk, $request->catatan);
 
             return response()->json([
                 'message' => 'Pesanan berhasil dibuat',
@@ -104,20 +46,18 @@ class PesananController extends Controller
                     'meja' => $meja->table_number,
                     'status' => $pesanan->status,
                     'total_harga' => $pesanan->total_harga,
-                    'detail' => collect($details)->map(function ($d) {
+                    'detail' => $pesanan->detailPesanan->map(function ($d) {
                         return [
-                            'nama_produk' => $d['nama_produk'],
-                            'harga' => $d['harga'],
-                            'jumlah' => $d['jumlah'],
-                            'subtotal' => $d['subtotal']
+                            'nama_produk' => $d->nama_produk,
+                            'harga' => $d->harga,
+                            'jumlah' => $d->jumlah,
+                            'subtotal' => $d->subtotal
                         ];
                     })
                 ]
             ], 201);
-
         } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Gagal membuat pesanan'], 500);
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 

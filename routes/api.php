@@ -69,6 +69,9 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
     Route::get('/admin/laporan', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanPenjualan']);
     Route::get('/admin/laporan/produk', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanProduk']);
     Route::get('/admin/laporan/pembayaran', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanPembayaran']);
+    Route::get('/admin/laporan/harian', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanHarian']);
+    Route::get('/admin/laporan/bulanan', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanBulanan']);
+    Route::get('/admin/laporan/tren', [\App\Http\Controllers\Admin\LaporanController::class, 'laporanTren']);
 });
 
 // Public Menu

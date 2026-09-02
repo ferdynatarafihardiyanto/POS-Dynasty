@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class DetailPesanan extends Model
 {
     protected $table = 'detail_pesanan';
-    protected $fillable = ['pesanan_id', 'produk_id', 'nama_produk', 'harga', 'jumlah', 'subtotal'];
+    protected $fillable = ['pesanan_id', 'produk_id', 'nama_produk', 'harga', 'jumlah', 'subtotal', 'hpp'];
+
+    protected $casts = [
+        'hpp' => 'decimal:2',
+    ];
 
     public function pesanan()
     {

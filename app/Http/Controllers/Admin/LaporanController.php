@@ -108,4 +108,61 @@ class LaporanController extends Controller
             ]
         ]);
     }
+
+    public function laporanHarian(Request $request, \App\Services\LaporanService $laporanService)
+    {
+        $request->validate([
+            'tanggal' => 'nullable|date_format:Y-m-d'
+        ]);
+
+        $tanggal = $request->tanggal ?? date('Y-m-d');
+
+        try {
+            $data = $laporanService->getLaporanHarian($tanggal);
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengambil laporan harian'], 500);
+        }
+    }
+
+    public function laporanBulanan(Request $request, \App\Services\LaporanService $laporanService)
+    {
+        $request->validate([
+            'bulan' => 'nullable|date_format:Y-m'
+        ]);
+
+        $bulan = $request->bulan ?? date('Y-m');
+
+        try {
+            $data = $laporanService->getLaporanBulanan($bulan);
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengambil laporan bulanan'], 500);
+        }
+    }
+
+    public function laporanTren(Request $request, \App\Services\LaporanService $laporanService)
+    {
+        $request->validate([
+            'bulan' => 'nullable|date_format:Y-m'
+        ]);
+
+        $bulan = $request->bulan ?? date('Y-m');
+
+        try {
+            $data = $laporanService->getTrenPenjualan($bulan);
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengambil tren penjualan'], 500);
+        }
+    }
 }

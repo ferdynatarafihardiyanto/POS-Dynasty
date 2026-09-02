@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\StockOpname;
 use App\Models\StockOpnameDetail;
 use App\Models\Produk;
+use App\Models\BahanBaku;
 use App\Models\RiwayatStok;
 use Illuminate\Support\Facades\DB;
 
@@ -26,8 +27,9 @@ class StockOpnameController extends Controller
         $request->validate([
             'keterangan' => 'nullable|string',
             'detail' => 'required|array|min:1',
-            'detail.*.produk_id' => 'required|exists:produk,id',
-            'detail.*.stok_fisik' => 'required|integer|min:0'
+            'detail.*.produk_id' => 'required_without:detail.*.bahan_baku_id|exists:produk,id',
+            'detail.*.bahan_baku_id' => 'required_without:detail.*.produk_id|exists:bahan_baku,id',
+            'detail.*.stok_fisik' => 'required|numeric|min:0'
         ]);
 
         DB::beginTransaction();
@@ -41,18 +43,35 @@ class StockOpnameController extends Controller
             ]);
 
             foreach ($request->detail as $det) {
-                $produk = Produk::find($det['produk_id']);
-                $stokSistem = $produk->stok;
-                $stokFisik = $det['stok_fisik'];
-                $selisih = $stokFisik - $stokSistem;
-
-                StockOpnameDetail::create([
-                    'stock_opname_id' => $opname->id,
-                    'produk_id' => $produk->id,
-                    'stok_sistem' => $stokSistem,
-                    'stok_fisik' => $stokFisik,
-                    'selisih' => $selisih
-                ]);
+                if (isset($det['bahan_baku_id'])) {
+                    $bahanBaku = BahanBaku::find($det['bahan_baku_id']);
+                    $stokSistem = $bahanBaku->stok;
+                    $stokFisik = $det['stok_fisik'];
+                    $selisih = $stokFisik - $stokSistem;
+                    
+                    StockOpnameDetail::create([
+                        'stock_opname_id' => $opname->id,
+                        'bahan_baku_id' => $bahanBaku->id,
+                        'produk_id' => null,
+                        'stok_sistem' => $stokSistem,
+                        'stok_fisik' => $stokFisik,
+                        'selisih' => $selisih
+                    ]);
+                } else {
+                    $produk = Produk::find($det['produk_id']);
+                    $stokSistem = $produk->stok;
+                    $stokFisik = $det['stok_fisik'];
+                    $selisih = $stokFisik - $stokSistem;
+    
+                    StockOpnameDetail::create([
+                        'stock_opname_id' => $opname->id,
+                        'produk_id' => $produk->id,
+                        'bahan_baku_id' => null,
+                        'stok_sistem' => $stokSistem,
+                        'stok_fisik' => $stokFisik,
+                        'selisih' => $selisih
+                    ]);
+                }
             }
 
             DB::commit();
@@ -69,7 +88,7 @@ class StockOpnameController extends Controller
 
     public function detailStockOpname($id)
     {
-        $opname = StockOpname::with('detail.produk')->find($id);
+        $opname = StockOpname::with(['detail.produk', 'detail.bahanBaku'])->find($id);
         if (!$opname) {
             return response()->json(['message' => 'Stock opname tidak ditemukan'], 404);
         }
@@ -83,9 +102,14 @@ class StockOpnameController extends Controller
                 'status' => $opname->status,
                 'keterangan' => $opname->keterangan,
                 'detail' => $opname->detail->map(function($d) {
+                    $item = $d->bahan_baku_id ? ($d->bahanBaku->nama ?? null) : ($d->produk->nama ?? null);
+                    $tipe = $d->bahan_baku_id ? 'bahan_baku' : 'produk';
+
                     return [
-                        'produk_id' => $d->produk_id,
-                        'nama_produk' => $d->produk->nama ?? null,
+                        'id' => $d->id,
+                        'tipe_item' => $tipe,
+                        'item_id' => $d->bahan_baku_id ?? $d->produk_id,
+                        'nama_item' => $item,
                         'stok_sistem' => $d->stok_sistem,
                         'stok_fisik' => $d->stok_fisik,
                         'selisih' => $d->selisih
@@ -100,8 +124,9 @@ class StockOpnameController extends Controller
         $request->validate([
             'keterangan' => 'nullable|string',
             'detail' => 'required|array|min:1',
-            'detail.*.produk_id' => 'required|exists:produk,id',
-            'detail.*.stok_fisik' => 'required|integer|min:0'
+            'detail.*.produk_id' => 'required_without:detail.*.bahan_baku_id|exists:produk,id',
+            'detail.*.bahan_baku_id' => 'required_without:detail.*.produk_id|exists:bahan_baku,id',
+            'detail.*.stok_fisik' => 'required|numeric|min:0'
         ]);
 
         $opname = StockOpname::find($id);
@@ -123,18 +148,35 @@ class StockOpnameController extends Controller
 
             // Buat detail baru dengan stok sistem saat ini
             foreach ($request->detail as $det) {
-                $produk = Produk::find($det['produk_id']);
-                $stokSistem = $produk->stok;
-                $stokFisik = $det['stok_fisik'];
-                $selisih = $stokFisik - $stokSistem;
+                if (isset($det['bahan_baku_id'])) {
+                    $bahanBaku = BahanBaku::find($det['bahan_baku_id']);
+                    $stokSistem = $bahanBaku->stok;
+                    $stokFisik = $det['stok_fisik'];
+                    $selisih = $stokFisik - $stokSistem;
 
-                StockOpnameDetail::create([
-                    'stock_opname_id' => $opname->id,
-                    'produk_id' => $produk->id,
-                    'stok_sistem' => $stokSistem,
-                    'stok_fisik' => $stokFisik,
-                    'selisih' => $selisih
-                ]);
+                    StockOpnameDetail::create([
+                        'stock_opname_id' => $opname->id,
+                        'bahan_baku_id' => $bahanBaku->id,
+                        'produk_id' => null,
+                        'stok_sistem' => $stokSistem,
+                        'stok_fisik' => $stokFisik,
+                        'selisih' => $selisih
+                    ]);
+                } else {
+                    $produk = Produk::find($det['produk_id']);
+                    $stokSistem = $produk->stok;
+                    $stokFisik = $det['stok_fisik'];
+                    $selisih = $stokFisik - $stokSistem;
+
+                    StockOpnameDetail::create([
+                        'stock_opname_id' => $opname->id,
+                        'produk_id' => $produk->id,
+                        'bahan_baku_id' => null,
+                        'stok_sistem' => $stokSistem,
+                        'stok_fisik' => $stokFisik,
+                        'selisih' => $selisih
+                    ]);
+                }
             }
 
             DB::commit();
@@ -172,26 +214,49 @@ class StockOpnameController extends Controller
             $details = StockOpnameDetail::where('stock_opname_id', $opname->id)->get();
 
             foreach ($details as $detail) {
-                $produk = Produk::lockForUpdate()->find($detail->produk_id);
-                $stokSebelum = $produk->stok;
-                $produk->stok = $detail->stok_fisik; // Set to stok fisik
-                $produk->save();
+                if ($detail->bahan_baku_id) {
+                    $bahanBaku = BahanBaku::lockForUpdate()->find($detail->bahan_baku_id);
+                    $stokSebelum = $bahanBaku->stok;
+                    $bahanBaku->stok = $detail->stok_fisik; 
+                    $bahanBaku->save();
 
-                // Hitung ulang selisih jika stok sistem berubah
-                $selisih = $detail->stok_fisik - $stokSebelum;
-                $detail->stok_sistem = $stokSebelum;
-                $detail->selisih = $selisih;
-                $detail->save();
+                    $selisih = $detail->stok_fisik - $stokSebelum;
+                    $detail->stok_sistem = $stokSebelum;
+                    $detail->selisih = $selisih;
+                    $detail->save();
 
-                RiwayatStok::create([
-                    'produk_id' => $produk->id,
-                    'jenis' => 'penyesuaian',
-                    'jumlah' => $selisih,
-                    'stok_sebelum' => $stokSebelum,
-                    'stok_sesudah' => $produk->stok,
-                    'referensi' => $opname->nomor_opname,
-                    'keterangan' => $opname->keterangan
-                ]);
+                    RiwayatStok::create([
+                        'bahan_baku_id' => $bahanBaku->id,
+                        'produk_id' => null,
+                        'jenis' => 'penyesuaian',
+                        'jumlah' => $selisih,
+                        'stok_sebelum' => $stokSebelum,
+                        'stok_sesudah' => $bahanBaku->stok,
+                        'referensi' => $opname->nomor_opname,
+                        'keterangan' => $opname->keterangan
+                    ]);
+                } else {
+                    $produk = Produk::lockForUpdate()->find($detail->produk_id);
+                    $stokSebelum = $produk->stok;
+                    $produk->stok = $detail->stok_fisik; 
+                    $produk->save();
+    
+                    $selisih = $detail->stok_fisik - $stokSebelum;
+                    $detail->stok_sistem = $stokSebelum;
+                    $detail->selisih = $selisih;
+                    $detail->save();
+    
+                    RiwayatStok::create([
+                        'produk_id' => $produk->id,
+                        'bahan_baku_id' => null,
+                        'jenis' => 'penyesuaian',
+                        'jumlah' => $selisih,
+                        'stok_sebelum' => $stokSebelum,
+                        'stok_sesudah' => $produk->stok,
+                        'referensi' => $opname->nomor_opname,
+                        'keterangan' => $opname->keterangan
+                    ]);
+                }
             }
 
             $opname->status = 'selesai';
