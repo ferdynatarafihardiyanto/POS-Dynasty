@@ -26,9 +26,8 @@
             body { margin: 0; padding: 0; width: 58mm; }
             .no-print { display: none; }
         }
-    </style>
 </head>
-<body onload="window.print(); setTimeout(() => window.close(), 500);">
+<body>
     <div class="text-center mb-2">
         <div class="fw-bold" style="font-size: 16px;">KEDAI DYNASTY</div>
         <div>Jl. Contoh No. 123</div>
@@ -37,10 +36,21 @@
     
     <div class="divider"></div>
     
+    @php
+        $rawCatatan = $pesanan->catatan ?? '';
+        $custName = 'Pelanggan Umum';
+        if (preg_match('/^(.*?)\s*\(Via/i', $rawCatatan, $cm)) {
+            $custName = trim($cm[1]) ?: 'Pelanggan Umum';
+        } elseif (!empty($rawCatatan)) {
+            $custName = $rawCatatan;
+        }
+    @endphp
     <div class="mb-1">
         <div>No: {{ $pesanan->nomor_pesanan }}</div>
         <div>Waktu: {{ \Carbon\Carbon::parse($pesanan->created_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i') }}</div>
         <div>Kasir: {{ Auth::user()->name }}</div>
+        <div>Pelanggan: {{ $custName }}</div>
+        <div>Meja: {{ $pesanan->meja ? ($pesanan->meja->name ?? 'Meja ' . $pesanan->meja->table_number) : '-' }}</div>
     </div>
     
     <div class="divider"></div>
@@ -106,5 +116,17 @@
         <div>Terima Kasih</div>
         <div>Silakan datang kembali</div>
     </div>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        // Cetak otomatis jika tidak diset autoprint=0
+        if (urlParams.get('autoprint') !== '0') {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    window.print();
+                }, 300);
+            });
+        }
+    </script>
 </body>
 </html>

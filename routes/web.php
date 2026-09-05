@@ -29,6 +29,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('meja', \App\Http\Controllers\Web\Admin\CafeTableController::class)->except(['show'])->parameters([
             'meja' => 'meja'
         ]);
+        Route::resource('satuan', \App\Http\Controllers\Web\Admin\SatuanController::class)->except(['show']);
         
         Route::get('/profil', function() { return view('admin.profil.index'); })->name('profil.index');
         Route::get('/karyawan', function() { return view('admin.karyawan.index'); })->name('karyawan.index');

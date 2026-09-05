@@ -321,9 +321,14 @@
                             <div class="col-md-6">
                                 <label class="form-label">Satuan <span class="text-danger">*</span></label>
                                 <select class="form-select" name="satuan">
-                                    <option value="Pcs" selected>Pilih satuan</option>
-                                    <option value="Cup">Cup</option>
-                                    <option value="Botol">Botol</option>
+                                    <option value="Pcs" selected>Pcs</option>
+                                    @if(isset($satuans))
+                                        @foreach($satuans as $st)
+                                            @if($st->nama !== 'Pcs')
+                                                <option value="{{ $st->nama }}">{{ $st->nama }}</option>
+                                            @endif
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -463,9 +468,14 @@
                             <div class="col-md-6">
                                 <label class="form-label">Satuan <span class="text-danger">*</span></label>
                                 <select class="form-select" name="satuan">
-                                    <option value="Pcs" selected>Pilih satuan</option>
-                                    <option value="Cup">Cup</option>
-                                    <option value="Botol">Botol</option>
+                                    <option value="Pcs" selected>Pcs</option>
+                                    @if(isset($satuans))
+                                        @foreach($satuans as $st)
+                                            @if($st->nama !== 'Pcs')
+                                                <option value="{{ $st->nama }}">{{ $st->nama }}</option>
+                                            @endif
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>

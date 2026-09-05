@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class RiwayatStok extends Model
 {
     protected $table = 'riwayat_stok';
-    protected $fillable = ['produk_id', 'bahan_baku_id', 'jenis', 'jumlah', 'stok_sebelum', 'stok_sesudah', 'referensi', 'keterangan'];
+    protected $fillable = ['produk_id', 'bahan_baku_id', 'user_id', 'jenis', 'jumlah', 'stok_sebelum', 'stok_sesudah', 'referensi', 'keterangan'];
 
     public function produk()
     {

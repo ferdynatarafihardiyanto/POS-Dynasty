@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             CafeTableSeeder::class,
+            SatuanSeeder::class,
             KategoriSeeder::class,
             ProdukSeeder::class
         ]);

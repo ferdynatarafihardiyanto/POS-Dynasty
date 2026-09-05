@@ -205,11 +205,12 @@
                         <i class="bi bi-gear"></i> <span>Pengaturan</span>
                         <i class="bi bi-chevron-down ms-auto" style="font-size: 0.8rem;"></i>
                     </a>
-                    <div class="collapse {{ request()->routeIs('admin.meja.*', 'admin.kategori.*', 'admin.modifier-groups.*', 'admin.profil.*', 'admin.karyawan.*') ? 'show' : '' }}" id="collapsePengaturan">
+                    <div class="collapse {{ request()->routeIs('admin.meja.*', 'admin.kategori.*', 'admin.satuan.*', 'admin.modifier-groups.*', 'admin.profil.*', 'admin.karyawan.*') ? 'show' : '' }}" id="collapsePengaturan">
                         <div class="d-flex flex-column gap-1 py-2 px-3 ps-4 ms-2 mt-1" style="border-left: 1px solid rgba(255,255,255,0.2);">
                             <a href="{{ route('admin.profil.index') }}" class="text-decoration-none {{ request()->routeIs('admin.profil.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Profil Toko</a>
                             <a href="{{ route('admin.meja.index') }}" class="text-decoration-none {{ request()->routeIs('admin.meja.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Meja & QR Code</a>
                             <a href="{{ route('admin.kategori.index') }}" class="text-decoration-none {{ request()->routeIs('admin.kategori.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Kategori Produk</a>
+                            <a href="{{ route('admin.satuan.index') }}" class="text-decoration-none {{ request()->routeIs('admin.satuan.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Satuan Unit</a>
                             <a href="{{ route('admin.modifier-groups.index') }}" class="text-decoration-none {{ request()->routeIs('admin.modifier-groups.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Varian / Topping</a>
                             <a href="{{ route('admin.karyawan.index') }}" class="text-decoration-none {{ request()->routeIs('admin.karyawan.*') ? 'text-white fw-bold' : 'text-white opacity-75' }} small py-1">Karyawan</a>
                         </div>

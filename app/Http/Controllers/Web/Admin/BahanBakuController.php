@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BahanBaku;
+use App\Models\Satuan;
 use Illuminate\Http\Request;
 
 class BahanBakuController extends Controller
@@ -11,7 +12,8 @@ class BahanBakuController extends Controller
     public function index()
     {
         $bahanBakus = BahanBaku::latest()->paginate(10);
-        return view('admin.bahan_baku.index', compact('bahanBakus'));
+        $satuans = Satuan::where('aktif', true)->orderBy('nama')->get();
+        return view('admin.bahan_baku.index', compact('bahanBakus', 'satuans'));
     }
 
     public function store(Request $request)
@@ -26,6 +28,20 @@ class BahanBakuController extends Controller
 
         BahanBaku::create($validated);
         return redirect()->back()->with('success', 'Bahan baku berhasil ditambahkan');
+    }
+
+    public function update(Request $request, BahanBaku $bahanBaku)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'satuan' => 'required|string|max:50',
+            'harga_beli' => 'required|numeric|min:0',
+            'stok' => 'required|numeric|min:0',
+            'stok_minimum' => 'required|numeric|min:0',
+        ]);
+
+        $bahanBaku->update($validated);
+        return redirect()->back()->with('success', 'Bahan baku berhasil diperbarui');
     }
 
     public function destroy(BahanBaku $bahanBaku)

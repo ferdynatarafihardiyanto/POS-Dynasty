@@ -35,16 +35,53 @@
     </div>
 
     <div class="p-4 flex-grow-1 overflow-auto" style="background-color: #fcfcfc;">
-        <div class="d-flex justify-content-between mb-4">
-            <div class="d-flex gap-2">
-                <select class="form-select border shadow-sm">
-                    <option>Semua Tipe</option>
-                    <option>Stok Masuk (Pembelian)</option>
-                    <option>Stok Keluar (Penjualan)</option>
-                    <option>Penyesuaian (Opname)</option>
-                </select>
-                <input type="date" class="form-control border shadow-sm">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+                <div class="fw-bold mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Terjadi kesalahan input:</div>
+                <ul class="mb-0 ps-3">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <form method="GET" action="{{ route('admin.stok.index') }}" class="d-flex flex-wrap gap-2 align-items-center">
+                <select class="form-select border shadow-sm" name="tipe" onchange="this.form.submit()" style="min-width: 180px;">
+                    <option value="">Semua Tipe Mutasi</option>
+                    <option value="masuk" {{ request('tipe') == 'masuk' ? 'selected' : '' }}>Stok Masuk (Pembelian)</option>
+                    <option value="keluar" {{ request('tipe') == 'keluar' ? 'selected' : '' }}>Stok Keluar (Penjualan)</option>
+                    <option value="penyesuaian" {{ request('tipe') == 'penyesuaian' ? 'selected' : '' }}>Penyesuaian (Opname)</option>
+                </select>
+                <input type="date" class="form-control border shadow-sm" name="tanggal" value="{{ request('tanggal') }}" onchange="this.form.submit()" style="width: auto;">
+                <div class="input-group shadow-sm" style="width: 220px;">
+                    <input type="text" class="form-control border-end-0 border" name="search" value="{{ request('search') }}" placeholder="Cari item/ref...">
+                    <button class="btn btn-outline-secondary border-start-0 border bg-white" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                @if(request('tipe') || request('tanggal') || request('search'))
+                    <a href="{{ route('admin.stok.index') }}" class="btn btn-light border text-muted shadow-sm" title="Reset filter">
+                        <i class="bi bi-x-circle"></i> Reset
+                    </a>
+                @endif
+            </form>
             <button class="btn text-white rounded-3 px-4 fw-bold shadow-sm d-flex align-items-center gap-2" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#catatStokModal">
                 <i class="bi bi-box-arrow-in-down"></i> Catat Mutasi Stok
             </button>
@@ -59,7 +96,7 @@
                             <th>No. Referensi</th>
                             <th>Tipe</th>
                             <th>Item</th>
-                            <th>Qty</th>
+                            <th>Qty Mutasi</th>
                             <th>Keterangan</th>
                             <th>User</th>
                         </tr>
@@ -79,22 +116,52 @@
                                 @endif
                             </td>
                             <td class="fw-bold text-dark">
-                                {{ $r->produk ? $r->produk->nama : ($r->bahanBaku ? $r->bahanBaku->nama : '-') }}
+                                @if($r->produk)
+                                    <i class="bi bi-cup-hot text-muted me-1"></i> {{ $r->produk->nama }}
+                                @elseif($r->bahanBaku)
+                                    <i class="bi bi-box-seam text-muted me-1"></i> {{ $r->bahanBaku->nama }}
+                                @else
+                                    -
+                                @endif
                             </td>
-                            <td class="fw-bold {{ $r->jenis == 'keluar' || $r->jumlah < 0 ? 'text-danger' : 'text-success' }}">
-                                {{ $r->jenis == 'keluar' || $r->jumlah < 0 ? '-' : '+' }}{{ abs($r->jumlah) }} 
-                                {{ $r->produk ? 'Pcs' : ($r->bahanBaku ? $r->bahanBaku->satuan : '') }}
+                            <td>
+                                <span class="fw-bold {{ $r->jenis == 'keluar' || $r->jumlah < 0 ? 'text-danger' : 'text-success' }}">
+                                    {{ $r->jenis == 'keluar' || $r->jumlah < 0 ? '-' : '+' }}{{ (float)abs($r->jumlah) }} 
+                                    {{ $r->produk ? ($r->produk->satuan ?? 'Pcs') : ($r->bahanBaku ? $r->bahanBaku->satuan : '') }}
+                                </span>
+                                <div class="text-muted small" style="font-size: 0.72rem;">
+                                    Stok: {{ (float)$r->stok_sebelum }} &rarr; {{ (float)$r->stok_sesudah }}
+                                </div>
                             </td>
                             <td class="text-muted">{{ $r->keterangan ?? '-' }}</td>
-                            <td>{{ $r->user ? $r->user->name : '-' }}</td>
+                            <td>
+                                @if($r->user)
+                                    <span class="badge bg-light text-dark border">{{ $r->user->name }}</span>
+                                @else
+                                    <span class="text-muted small">Sistem / POS</span>
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat mutasi stok</td>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                Belum ada riwayat mutasi stok.
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted small">
+                Menampilkan total {{ $riwayats->total() }} riwayat mutasi
+            </div>
+            <div>
+                {{ $riwayats->links('pagination::bootstrap-5') }}
             </div>
         </div>
     </div>
@@ -111,31 +178,31 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <form action="{{ route('admin.stok.store') }}" method="POST">
+                <form action="{{ route('admin.stok.store') }}" method="POST" id="formCatatStok" onsubmit="syncItemId()">
                     @csrf
                     <div class="modal-body px-4 pt-4 pb-2">
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted">Tipe Item <span class="text-danger">*</span></label>
-                            <select class="form-select" name="tipe_item" id="tipeItemSelect" required onchange="toggleItemSelect()">
+                            <select class="form-select shadow-none" name="tipe_item" id="tipeItemSelect" required onchange="toggleItemSelect()">
+                                <option value="bahan_baku" selected>Bahan Baku</option>
                                 <option value="produk">Produk (Barang Jadi)</option>
-                                <option value="bahan_baku">Bahan Baku</option>
                             </select>
                         </div>
                         
-                        <div class="mb-3" id="produkContainer">
-                            <label class="form-label fw-bold small text-muted">Pilih Produk <span class="text-danger">*</span></label>
-                            <select class="form-select" name="item_id_produk" id="produkSelect">
-                                @foreach($produks as $p)
-                                    <option value="{{ $p->id }}">{{ $p->nama }}</option>
+                        <div class="mb-3" id="bahanBakuContainer">
+                            <label class="form-label fw-bold small text-muted">Pilih Bahan Baku <span class="text-danger">*</span></label>
+                            <select class="form-select shadow-none" id="bahanSelect" onchange="syncItemId()">
+                                @foreach($bahanBakus as $bb)
+                                    <option value="{{ $bb->id }}" data-satuan="{{ $bb->satuan }}">{{ $bb->nama }} (Satuan: {{ $bb->satuan }}) - Stok: {{ (float)$bb->stok }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        
-                        <div class="mb-3 d-none" id="bahanBakuContainer">
-                            <label class="form-label fw-bold small text-muted">Pilih Bahan Baku <span class="text-danger">*</span></label>
-                            <select class="form-select" name="item_id_bahan" id="bahanSelect">
-                                @foreach($bahanBakus as $bb)
-                                    <option value="{{ $bb->id }}">{{ $bb->nama }} ({{ $bb->satuan }})</option>
+
+                        <div class="mb-3 d-none" id="produkContainer">
+                            <label class="form-label fw-bold small text-muted">Pilih Produk <span class="text-danger">*</span></label>
+                            <select class="form-select shadow-none" id="produkSelect" onchange="syncItemId()">
+                                @foreach($produks as $p)
+                                    <option value="{{ $p->id }}" data-satuan="{{ $p->satuan ?? 'Pcs' }}">{{ $p->nama }} - Stok: {{ $p->stok }} {{ $p->satuan ?? 'Pcs' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -146,25 +213,30 @@
                         <div class="row g-3 mb-3">
                             <div class="col-6">
                                 <label class="form-label fw-bold small text-muted">Tipe Mutasi <span class="text-danger">*</span></label>
-                                <select class="form-select" name="tipe" required>
+                                <select class="form-select shadow-none" name="tipe" required>
                                     <option value="masuk">Masuk (+)</option>
                                     <option value="keluar">Keluar (-)</option>
                                     <option value="penyesuaian">Penyesuaian (Opname)</option>
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label fw-bold small text-muted">Qty <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="qty" placeholder="0" required min="1">
+                                <label class="form-label fw-bold small text-muted">
+                                    Qty <span class="badge bg-light text-danger border ms-1" id="labelSatuanDynamic">Gram</span> <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" step="any" min="0.01" class="form-control shadow-none" name="qty" id="inputQty" placeholder="0" required>
+                                    <span class="input-group-text bg-light fw-bold text-muted" id="addonSatuanDynamic">Gram</span>
+                                </div>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-muted">Keterangan / Referensi</label>
-                            <textarea class="form-control" name="keterangan" rows="2" placeholder="Contoh: Pembelian dari Supplier A"></textarea>
+                            <textarea class="form-control shadow-none" name="keterangan" rows="2" placeholder="Contoh: Pembelian dari Supplier / Rusak / Kadaluarsa"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0 pb-4 px-4 gap-2">
                         <button type="button" class="btn bg-white rounded-3 fw-bold py-2 px-4 border text-dark" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn text-white rounded-3 fw-bold py-2 px-4" style="background-color: #8b211e;" onclick="syncItemId()">Simpan</button>
+                        <button type="submit" class="btn text-white rounded-3 fw-bold py-2 px-4" style="background-color: #8b211e;">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -186,25 +258,49 @@
             pContainer.classList.add('d-none');
             bContainer.classList.remove('d-none');
         }
+        syncItemId();
     }
     
     function syncItemId() {
         const type = document.getElementById('tipeItemSelect').value;
         const actualInput = document.getElementById('actualItemId');
+        const labelSatuan = document.getElementById('labelSatuanDynamic');
+        const addonSatuan = document.getElementById('addonSatuanDynamic');
+        let currentUnit = 'Pcs';
+
         if (type === 'produk') {
-            actualInput.value = document.getElementById('produkSelect').value;
+            const pEl = document.getElementById('produkSelect');
+            if (pEl && pEl.selectedIndex >= 0 && pEl.options[pEl.selectedIndex]) {
+                actualInput.value = pEl.value;
+                currentUnit = pEl.options[pEl.selectedIndex].getAttribute('data-satuan') || 'Pcs';
+            } else {
+                actualInput.value = '';
+            }
         } else {
-            actualInput.value = document.getElementById('bahanSelect').value;
+            const bEl = document.getElementById('bahanSelect');
+            if (bEl && bEl.selectedIndex >= 0 && bEl.options[bEl.selectedIndex]) {
+                actualInput.value = bEl.value;
+                currentUnit = bEl.options[bEl.selectedIndex].getAttribute('data-satuan') || 'Gram';
+            } else {
+                actualInput.value = '';
+            }
         }
+
+        if (labelSatuan) labelSatuan.innerText = currentUnit;
+        if (addonSatuan) addonSatuan.innerText = currentUnit;
     }
     
     document.addEventListener('DOMContentLoaded', function() {
         toggleItemSelect();
+        syncItemId();
     });
 
     function updateHeaderTime() {
         const now = new Date();
-        document.getElementById('currentTimeHeader').innerText = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        const headerEl = document.getElementById('currentTimeHeader');
+        if (headerEl) {
+            headerEl.innerText = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        }
     }
     updateHeaderTime();
     setInterval(updateHeaderTime, 1000);

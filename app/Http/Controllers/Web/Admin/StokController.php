@@ -8,11 +8,36 @@ use Illuminate\Http\Request;
 
 class StokController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $riwayats = RiwayatStok::with(['produk', 'bahanBaku', 'user'])->latest()->paginate(15);
-        $produks = \App\Models\Produk::all();
-        $bahanBakus = \App\Models\BahanBaku::all();
+        $query = RiwayatStok::with(['produk', 'bahanBaku', 'user']);
+
+        if ($request->filled('tipe') && $request->tipe !== 'all') {
+            $query->where('jenis', $request->tipe);
+        }
+
+        if ($request->filled('tanggal')) {
+            $query->whereDate('created_at', $request->tanggal);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('referensi', 'like', "%{$search}%")
+                  ->orWhere('keterangan', 'like', "%{$search}%")
+                  ->orWhereHas('produk', function($qp) use ($search) {
+                      $qp->where('nama', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('bahanBaku', function($qb) use ($search) {
+                      $qb->where('nama', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $riwayats = $query->latest()->paginate(15)->withQueryString();
+        $produks = \App\Models\Produk::where('aktif', true)->orderBy('nama')->get();
+        $bahanBakus = \App\Models\BahanBaku::where('aktif', true)->orderBy('nama')->get();
+
         return view('admin.stok.index', compact('riwayats', 'produks', 'bahanBakus'));
     }
 
@@ -22,41 +47,54 @@ class StokController extends Controller
             'tipe_item' => 'required|in:produk,bahan_baku',
             'item_id' => 'required|integer',
             'tipe' => 'required|in:masuk,keluar,penyesuaian',
-            'qty' => 'required|numeric',
-            'keterangan' => 'nullable|string'
+            'qty' => 'required|numeric|gt:0',
+            'keterangan' => 'nullable|string|max:255'
+        ], [
+            'item_id.required' => 'Silakan pilih produk atau bahan baku.',
+            'qty.required' => 'Jumlah Qty wajib diisi.',
+            'qty.gt' => 'Jumlah Qty harus lebih dari 0.',
         ]);
+
+        if ($validated['tipe_item'] == 'produk') {
+            $model = \App\Models\Produk::find($validated['item_id']);
+        } else {
+            $model = \App\Models\BahanBaku::find($validated['item_id']);
+        }
+
+        if (!$model) {
+            return redirect()->back()->with('error', 'Item yang dipilih tidak ditemukan.');
+        }
+
+        $stokSebelum = $model->stok;
+        $qty = abs($validated['qty']);
+
+        if ($validated['tipe'] == 'keluar') {
+            if ($model->stok < $qty) {
+                return redirect()->back()->with('error', "Stok {$model->nama} tidak mencukupi! Stok saat ini: {$model->stok}");
+            }
+            $model->stok -= $qty;
+        } else {
+            $model->stok += $qty;
+        }
+        $model->save();
 
         $riwayat = new RiwayatStok();
         $riwayat->jenis = $validated['tipe'];
-        $riwayat->jumlah = $validated['qty'];
-        $riwayat->keterangan = $validated['keterangan'];
+        $riwayat->jumlah = $qty;
+        $riwayat->stok_sebelum = $stokSebelum;
+        $riwayat->stok_sesudah = $model->stok;
+        $riwayat->keterangan = $validated['keterangan'] ?? '-';
         $riwayat->user_id = auth()->id();
         $riwayat->referensi = 'MANUAL-' . time();
 
         if ($validated['tipe_item'] == 'produk') {
-            $riwayat->produk_id = $validated['item_id'];
-            $model = \App\Models\Produk::find($validated['item_id']);
+            $riwayat->produk_id = $model->id;
         } else {
-            $riwayat->bahan_baku_id = $validated['item_id'];
-            $model = \App\Models\BahanBaku::find($validated['item_id']);
+            $riwayat->bahan_baku_id = $model->id;
         }
 
-        if ($model) {
-            $stokSebelum = $model->stok;
-            
-            // Adjust current stock
-            if ($validated['tipe'] == 'keluar') {
-                $model->stok -= abs($validated['qty']);
-            } else {
-                $model->stok += abs($validated['qty']); // Masuk/Penyesuaian (asumsi positif untuk tambah)
-            }
-            $model->save();
-            
-            $riwayat->stok_sebelum = $stokSebelum;
-            $riwayat->stok_sesudah = $model->stok;
-            $riwayat->save();
-        }
+        $riwayat->save();
 
-        return redirect()->back()->with('success', 'Mutasi stok berhasil dicatat');
+        return redirect()->route('admin.stok.index')->with('success', "Mutasi stok {$model->nama} ({$validated['tipe']}) berhasil dicatat.");
     }
 }

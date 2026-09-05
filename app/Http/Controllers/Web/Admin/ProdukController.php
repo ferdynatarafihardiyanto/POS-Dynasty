@@ -36,7 +36,8 @@ class ProdukController extends Controller
         $produks = $query->latest()->paginate(10)->withQueryString();
         $kategoris = Kategori::where('aktif', true)->get();
         $modifierGroups = \App\Models\ModifierGroup::where('aktif', true)->get();
-        return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups'));
+        $satuans = \App\Models\Satuan::where('aktif', true)->orderBy('nama')->get();
+        return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups', 'satuans'));
     }
 
     public function create()

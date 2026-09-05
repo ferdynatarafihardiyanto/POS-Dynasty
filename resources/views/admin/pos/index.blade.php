@@ -43,7 +43,16 @@
                 <h4 class="mb-0 fw-bold">Kasir</h4>
                 <div class="text-danger fw-bold small">TOKO SUMBER REZEKI</div>
             </div>
-            <div class="d-flex align-items-center gap-4">
+            <div class="d-flex align-items-center gap-3">
+                <!-- Printer Status & Quick Settings Button -->
+                <button type="button" class="btn btn-light rounded-pill px-3 py-1 border d-flex align-items-center gap-2 shadow-sm" @click="openPrinterSettingsModal()" title="Pengaturan Printer Struk">
+                    <i class="bi bi-printer-fill" style="color: #8b211e;"></i>
+                    <div class="text-start d-none d-md-block" style="line-height: 1.1;">
+                        <div class="fw-bold text-dark" style="font-size: 0.75rem;" x-text="printerConfig.printerName || 'Printer Thermal'"></div>
+                        <div class="text-success" style="font-size: 0.65rem;"><i class="bi bi-circle-fill" style="font-size: 6px;"></i> Modul Siap</div>
+                    </div>
+                </button>
+
                 <button class="btn btn-light rounded-circle position-relative p-2 border">
                     <i class="bi bi-bell"></i>
                     <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
@@ -65,14 +74,9 @@
         <!-- Search & Filter -->
         <div class="p-4 pb-2">
             <!-- Search -->
-            <div class="position-relative mb-4">
+            <div class="position-relative mb-3">
                 <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                 <input type="text" id="searchInput" class="form-control form-control-lg rounded-pill ps-5 bg-white border-0 shadow-sm" placeholder="Cari produk (F2)" x-model="searchQuery">
-            </div>
-
-            <!-- Customer Name Input -->
-            <div class="mb-4">
-                <input type="text" class="form-control form-control-lg rounded-pill px-4 shadow-sm border-0" placeholder="Nama Pelanggan (Catatan)" x-model="customerName" style="height: 48px; background-color: #f3f4f6;">
             </div>
 
             <!-- Category Pills -->
@@ -133,6 +137,25 @@
             <span class="badge rounded-pill" style="background-color: #fde8e8; color: #8b211e;" x-text="cart.length + ' Item'" x-show="cart.length > 0"></span>
         </div>
         
+        <!-- Pelanggan & Meja Info Bar -->
+        <div class="p-3 border-bottom bg-white">
+            <div class="row g-2">
+                <div class="col-7">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                        <input type="text" class="form-control bg-light border-start-0 shadow-none" placeholder="Pelanggan (Opsional)" x-model="customerName" style="font-size: 0.8rem;">
+                    </div>
+                </div>
+                <div class="col-5">
+                    <select class="form-select form-select-sm bg-light shadow-none fw-semibold" x-model="selectedTableId" style="font-size: 0.8rem;">
+                        <template x-for="tbl in tables" :key="tbl.id">
+                            <option :value="tbl.id" x-text="tbl.name || ('Meja ' + tbl.table_number)"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <div class="p-3 border-bottom bg-light">
             <div class="fw-bold small text-muted text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Item Dipilih</div>
         </div>
@@ -201,7 +224,7 @@
                 <div class="fw-bold text-danger fs-3 lh-1" style="color: #8b211e !important;" x-text="formatRupiah(grandTotal)"></div>
             </div>
 
-            <button id="btnBayar" class="btn btn-lg w-100 rounded-3 mb-2 fw-bold text-white shadow-sm" style="background-color: #8b211e;" @click="openPaymentModal()" :disabled="cart.length === 0 || !customerName">
+            <button id="btnBayar" class="btn btn-lg w-100 rounded-3 mb-2 fw-bold text-white shadow-sm" style="background-color: #8b211e;" @click="openPaymentModal()" :disabled="cart.length === 0">
                 Bayar (F9)
             </button>
             <button class="btn w-100 rounded-3 bg-white fw-bold" style="border: 1px solid #8b211e; color: #8b211e;" @click="clearCart()" :disabled="cart.length === 0">
@@ -271,9 +294,25 @@
                 <div class="modal-body pt-2">
                     <p class="text-muted small mb-4">Silakan pilih metode pembayaran dan masukkan jumlah yang dibayarkan</p>
                     
-                    <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-4" style="background-color: #fde8e8;">
+                    <div class="d-flex justify-content-between align-items-center p-3 rounded-3 mb-3" style="background-color: #fde8e8;">
                         <span class="fw-bold text-dark">Total yang harus dibayar:</span>
                         <span class="fw-bold fs-4" style="color: #8b211e;" x-text="formatRupiah(grandTotal)"></span>
+                    </div>
+
+                    <!-- Informasi Pelanggan & Meja di Modal Pembayaran -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-7">
+                            <label class="small fw-bold mb-1 text-muted"><i class="bi bi-person me-1"></i> Nama Pelanggan</label>
+                            <input type="text" class="form-control shadow-none" placeholder="Pelanggan Umum (cth: Budi)" x-model="customerName">
+                        </div>
+                        <div class="col-5">
+                            <label class="small fw-bold mb-1 text-muted"><i class="bi bi-geo-alt me-1"></i> Meja</label>
+                            <select class="form-select shadow-none" x-model="selectedTableId">
+                                <template x-for="tbl in tables" :key="tbl.id">
+                                    <option :value="tbl.id" x-text="tbl.name || ('Meja ' + tbl.table_number)"></option>
+                                </template>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -342,9 +381,238 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Preview Struk (Thermal Receipt Preview) -->
+    <div class="modal fade" id="receiptPreviewModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-bottom py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-receipt-cutoff fs-4" style="color: #8b211e;"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0">Preview Struk Pembayaran</h5>
+                            <div class="small text-muted">Transaksi selesai dan tersimpan di sistem</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" @click="closeReceiptModal()" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="row g-4">
+                        <!-- Kiri: Tampilan Kertas Struk Thermal Kasir -->
+                        <div class="col-md-6 d-flex justify-content-center">
+                            <div class="receipt-card bg-white p-4 shadow-sm text-dark w-100" style="max-width: 330px; font-family: 'Courier New', Courier, monospace; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 8px;">
+                                <div class="text-center mb-2">
+                                    <div class="fw-bold" style="font-size: 16px;">KEDAI DYNASTY</div>
+                                    <div style="font-size: 11px;">Jl. Contoh No. 123</div>
+                                    <div style="font-size: 10px;">Telp: 08123456789</div>
+                                </div>
+                                <div style="border-top: 1px dashed #475569; margin: 8px 0;"></div>
+                                
+                                <div style="font-size: 11px; line-height: 1.4;">
+                                    <div class="d-flex justify-content-between">
+                                        <span>No:</span>
+                                        <span class="fw-bold" x-text="completedOrder ? completedOrder.nomor_pesanan : '-'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Waktu:</span>
+                                        <span x-text="completedOrder ? completedOrder.time : '-'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Kasir:</span>
+                                        <span>{{ Auth::user()->name }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Pelanggan:</span>
+                                        <span class="fw-bold" x-text="completedOrder ? completedOrder.customerName : 'Pelanggan Umum'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Meja:</span>
+                                        <span class="fw-bold" x-text="completedOrder ? completedOrder.tableName : '-'"></span>
+                                    </div>
+                                </div>
+                                <div style="border-top: 1px dashed #475569; margin: 8px 0;"></div>
+                                
+                                <!-- Rincian Produk -->
+                                <div class="my-2" style="max-height: 220px; overflow-y: auto;">
+                                    <template x-if="completedOrder">
+                                        <template x-for="item in completedOrder.items" :key="item.cartId">
+                                            <div class="mb-2">
+                                                <div class="fw-bold" x-text="item.product.nama"></div>
+                                                <template x-if="item.selectedOptions && item.selectedOptions.length > 0">
+                                                    <div style="font-size: 10px; color: #64748b; padding-left: 6px;">
+                                                        <template x-for="opt in item.selectedOptions" :key="opt.id">
+                                                            <div x-text="'+ ' + opt.nama"></div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <div class="d-flex justify-content-between" style="font-size: 11px;">
+                                                    <span x-text="item.quantity + ' x ' + formatRupiah(item.unitPrice)"></span>
+                                                    <span class="fw-bold" x-text="formatRupiah(item.quantity * item.unitPrice)"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                                
+                                <div style="border-top: 1px dashed #475569; margin: 8px 0;"></div>
+                                
+                                <!-- Total Pembayaran -->
+                                <div style="font-size: 11px; line-height: 1.5;">
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total Harga:</span>
+                                        <span x-text="completedOrder ? formatRupiah(completedOrder.total) : '0'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Metode:</span>
+                                        <span class="text-uppercase fw-semibold" x-text="completedOrder ? completedOrder.paymentMethod : '-'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Bayar:</span>
+                                        <span x-text="completedOrder ? formatRupiah(completedOrder.cashReceived) : '0'"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Kembali:</span>
+                                        <span class="fw-bold text-success" x-text="completedOrder ? formatRupiah(completedOrder.changeAmount) : '0'"></span>
+                                    </div>
+                                </div>
+                                
+                                <div style="border-top: 1px dashed #475569; margin: 8px 0;"></div>
+                                <div class="text-center mt-2" style="font-size: 11px;">
+                                    <div>Terima Kasih</div>
+                                    <div>Silakan datang kembali</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kanan: Wadah Modul Printer & Pengaturan -->
+                        <div class="col-md-6 d-flex flex-column justify-content-between">
+                            <div>
+                                <!-- Wadah Modul Printer Card -->
+                                <div class="card border-0 shadow-sm rounded-3 p-3 bg-white mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="fw-bold d-flex align-items-center gap-2" style="color: #8b211e;">
+                                            <i class="bi bi-cpu fs-5"></i> Wadah Modul Printer Struk
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Terkoneksi</span>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold mb-1">Nama Printer (Hardware/Driver):</label>
+                                        <input type="text" class="form-control form-control-sm" x-model="printerConfig.printerName" @input="savePrinterConfig()" placeholder="cth: POS-58, EPSON TM-T82">
+                                        <div class="text-muted" style="font-size: 0.7rem; margin-top: 2px;">Tersimpan otomatis di browser kasir</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-bold mb-1">Modul Cetak Printer:</label>
+                                        <select class="form-select form-select-sm" x-model="printerConfig.moduleType" @change="savePrinterConfig()">
+                                            <option value="iframe_direct">🖨️ Direct Browser / Silent (Tetap di Web)</option>
+                                            <option value="esc_pos">⚡ ESC/POS USB Driver (Wadah Raw POS)</option>
+                                            <option value="rawbt">📱 Bluetooth / Android RawBT Module</option>
+                                            <option value="custom_api">🌐 Local API / QZ Tray Print Daemon</option>
+                                        </select>
+                                        <div class="text-muted" style="font-size: 0.7rem; margin-top: 2px;">Pilih metode komunikasi dengan printer kasir</div>
+                                    </div>
+
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6">
+                                            <label class="form-label small fw-bold mb-1">Lebar Kertas:</label>
+                                            <select class="form-select form-select-sm" x-model="printerConfig.paperWidth" @change="savePrinterConfig()">
+                                                <option value="58mm">58 mm (Thermal Standar)</option>
+                                                <option value="80mm">80 mm (Thermal Lebar)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6 d-flex align-items-end">
+                                            <div class="form-check form-switch mb-1">
+                                                <input class="form-check-input" type="checkbox" id="autoPrintSwitch" x-model="printerConfig.autoPrint" @change="savePrinterConfig()">
+                                                <label class="form-check-label small fw-semibold" for="autoPrintSwitch" style="font-size: 0.75rem;">Auto-Cetak</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tombol Aksi Kasir -->
+                            <div class="d-flex flex-column gap-2 pt-3 border-top">
+                                <button type="button" class="btn btn-lg w-100 fw-bold text-white shadow-sm" style="background-color: #8b211e;" @click="printCurrentReceipt()">
+                                    <i class="bi bi-printer me-2"></i> Cetak Struk Sekarang
+                                </button>
+                                <button type="button" class="btn btn-light border w-100 fw-bold py-2" @click="closeReceiptModal()">
+                                    <i class="bi bi-plus-circle me-1"></i> Transaksi Baru (Esc)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pengaturan Printer Struk Terpisah -->
+    <div class="modal fade" id="printerSettingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-bottom py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-gear-fill fs-5" style="color: #8b211e;"></i>
+                        <h5 class="modal-title fw-bold mb-0">Pengaturan Wadah Printer Struk</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Printer (Hardware/Driver):</label>
+                        <input type="text" class="form-control shadow-none" x-model="printerConfig.printerName" @input="savePrinterConfig()" placeholder="cth: POS-58, EPSON TM-T82, Panda POS">
+                        <div class="form-text" style="font-size: 0.75rem;">Nama printer fisik yang terpasang di komputer kasir.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Modul Komunikasi Printer:</label>
+                        <select class="form-select shadow-none" x-model="printerConfig.moduleType" @change="savePrinterConfig()">
+                            <option value="iframe_direct">🖨️ Direct Browser / Silent (Tetap di Web)</option>
+                            <option value="esc_pos">⚡ ESC/POS USB Driver (Wadah Raw POS)</option>
+                            <option value="rawbt">📱 Bluetooth / Android RawBT Module</option>
+                            <option value="custom_api">🌐 Local API / QZ Tray Print Daemon</option>
+                        </select>
+                        <div class="form-text" style="font-size: 0.75rem;">Gunakan 'Direct Browser' untuk mencetak langsung tanpa keluar dari web.</div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Ukuran Kertas:</label>
+                            <select class="form-select shadow-none" x-model="printerConfig.paperWidth" @change="savePrinterConfig()">
+                                <option value="58mm">58 mm (Standar)</option>
+                                <option value="80mm">80 mm (Besar)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Auto-Cetak:</label>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" type="checkbox" id="autoPrintSwitchGlobal" x-model="printerConfig.autoPrint" @change="savePrinterConfig()">
+                                <label class="form-check-label small" for="autoPrintSwitchGlobal">Cetak otomatis</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="small fw-bold mb-1 text-muted">File Modul Printer:</div>
+                        <code class="small text-dark">public/js/receipt-printer.js</code>
+                        <div class="small text-muted mt-1" style="font-size: 0.7rem;">Anda dapat menyesuaikan integrasi nama modul atau protokol printer langsung di file tersebut.</div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-secondary w-100 fw-bold" @click="testPrint()">
+                        <i class="bi bi-printer me-1"></i> Uji Coba Cetak (Test Print)
+                    </button>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn text-white w-100 fw-bold" style="background-color: #8b211e;" data-bs-dismiss="modal">Simpan & Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
+<script src="{{ asset('js/receipt-printer.js') }}"></script>
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('posSystem', () => ({
@@ -355,6 +623,7 @@ document.addEventListener('alpine:init', () => {
         searchQuery: '',
         activeCategoryId: null,
         customerName: '',
+        selectedTableId: (window.posData.tables && window.posData.tables.length > 0) ? window.posData.tables[0].id : 1,
         
         cart: [],
         
@@ -374,6 +643,17 @@ document.addEventListener('alpine:init', () => {
         modalSelections: {}, // Format: { groupId: [optId1, optId2] }
         modifierModalInstance: null,
         paymentModalInstance: null,
+        receiptModalInstance: null,
+        printerModalInstance: null,
+        
+        // Data Struk Transaksi Terakhir & Pengaturan Printer
+        completedOrder: null,
+        printerConfig: {
+            printerName: localStorage.getItem('pos_printer_name') || 'POS-58 Thermal Printer',
+            moduleType: localStorage.getItem('pos_printer_module') || 'iframe_direct',
+            paperWidth: localStorage.getItem('pos_paper_width') || '58mm',
+            autoPrint: localStorage.getItem('pos_auto_print') === 'true'
+        },
         
         showToast: false,
         toastTimeout: null,
@@ -403,6 +683,16 @@ document.addEventListener('alpine:init', () => {
                             }
                         });
                     }
+
+                    const recModalEl = document.getElementById('receiptPreviewModal');
+                    if (recModalEl) {
+                        this.receiptModalInstance = new bootstrap.Modal(recModalEl);
+                    }
+
+                    const prnModalEl = document.getElementById('printerSettingsModal');
+                    if (prnModalEl) {
+                        this.printerModalInstance = new bootstrap.Modal(prnModalEl);
+                    }
                 }
             }, 100);
 
@@ -418,6 +708,12 @@ document.addEventListener('alpine:init', () => {
                     e.preventDefault();
                     if (!document.getElementById('btnBayar').disabled) {
                         this.openPaymentModal();
+                    }
+                }
+                // Esc: Tutup Modal Struk jika sedang terbuka
+                else if (e.key === 'Escape') {
+                    if (this.completedOrder && this.receiptModalInstance) {
+                        this.closeReceiptModal();
                     }
                 }
             });
@@ -450,7 +746,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         get isCheckoutDisabled() {
-            if (this.cart.length === 0 || this.loading || !this.customerName) return true;
+            if (this.cart.length === 0 || this.loading) return true;
             if (this.paymentMethod === 'tunai' && this.changeAmount < 0) return true;
             return false;
         },
@@ -603,7 +899,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         openPaymentModal() {
-            if (this.cart.length === 0 || !this.customerName) return;
+            if (this.cart.length === 0) return;
             // Pre-fill cash if it's currently 0 or less than grandTotal
             if (this.paymentMethod === 'tunai' && this.cashReceived < this.grandTotal) {
                 this.cashReceived = this.grandTotal;
@@ -618,10 +914,12 @@ document.addEventListener('alpine:init', () => {
             this.errorMsg = '';
             this.successMsg = '';
             
-            // Auto pick first table for DB compatibility, or fallback to 1
+            // Auto pick selected table or first table
             const defaultTableId = this.tables.length > 0 ? this.tables[0].id : 1;
+            const targetTableId = this.selectedTableId || defaultTableId;
+            const custName = (this.customerName && this.customerName.trim()) ? this.customerName.trim() : 'Pelanggan Umum';
             
-            let fullCatatan = this.customerName + ' (Via ' + this.paymentMethod.toUpperCase();
+            let fullCatatan = custName + ' (Via ' + this.paymentMethod.toUpperCase();
             if (this.paymentMethod === 'tunai') {
                 fullCatatan += ' - Rp ' + this.cashReceived;
             }
@@ -629,7 +927,7 @@ document.addEventListener('alpine:init', () => {
             
             // Build payload
             const payload = {
-                meja_id: defaultTableId,
+                meja_id: targetTableId,
                 catatan: fullCatatan,
                 payment_method: this.paymentMethod,
                 cash_received: this.cashReceived || this.grandTotal,
@@ -657,17 +955,51 @@ document.addEventListener('alpine:init', () => {
                 if (response.ok && data.success) {
                     this.paymentModalInstance.hide();
 
-                    let msg = data.message + ' (Nomor: ' + data.data.nomor_pesanan + ')';
-                    if (cetakResi) {
-                        msg += ' - Sedang mencetak resi...';
-                        window.open('/admin/transaksi/' + data.data.pesanan_id + '/print', '_blank');
-                    }
+                    // Simpan data untuk preview struk langsung di web
+                    const selectedTableObj = this.tables.find(t => t.id == targetTableId);
+                    const tableName = selectedTableObj ? (selectedTableObj.name || ('Meja ' + selectedTableObj.table_number)) : 'Meja -';
                     
-                    this.successMsg = msg;
+                    const now = new Date();
+                    const formattedDate = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                                          now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+                    const currentCart = JSON.parse(JSON.stringify(this.cart));
+                    const currentTotal = this.grandTotal;
+                    const currentMethod = this.paymentMethod;
+                    const currentReceived = currentMethod === 'tunai' ? (this.cashReceived || this.grandTotal) : this.grandTotal;
+                    const currentChange = currentMethod === 'tunai' ? Math.max(0, (this.cashReceived || this.grandTotal) - this.grandTotal) : 0;
+
+                    this.completedOrder = {
+                        pesanan_id: data.data.pesanan_id,
+                        nomor_pesanan: data.data.nomor_pesanan,
+                        customerName: custName,
+                        tableName: tableName,
+                        cashierName: '{{ Auth::user()->name }}',
+                        items: currentCart,
+                        total: currentTotal,
+                        paymentMethod: currentMethod,
+                        cashReceived: currentReceived,
+                        changeAmount: currentChange,
+                        time: formattedDate
+                    };
+
+                    this.successMsg = data.message + ' (Nomor: ' + data.data.nomor_pesanan + ')';
                     this.cart = []; // Reset cart
                     this.customerName = '';
                     this.discountPercent = 0;
                     this.cashReceived = 0;
+
+                    // Tampilkan Modal Preview Struk TETAP DI WEB SENDIRI (tanpa buka tab baru)
+                    if (this.receiptModalInstance) {
+                        this.receiptModalInstance.show();
+                    }
+
+                    // Jika kasir memilih "Simpan & Cetak resi" atau autoPrint aktif
+                    if (cetakResi || this.printerConfig.autoPrint) {
+                        setTimeout(() => {
+                            this.printCurrentReceipt();
+                        }, 400);
+                    }
                     
                     // Hide success message after 5 seconds
                     setTimeout(() => { this.successMsg = ''; }, 5000);
@@ -680,6 +1012,60 @@ document.addEventListener('alpine:init', () => {
                 this.paymentModalInstance.hide();
             } finally {
                 this.loading = false;
+            }
+        },
+
+        openPrinterSettingsModal() {
+            if (this.printerModalInstance) {
+                this.printerModalInstance.show();
+            }
+        },
+
+        savePrinterConfig() {
+            if (window.ReceiptPrinter) {
+                window.ReceiptPrinter.saveConfig(this.printerConfig);
+            }
+        },
+
+        printCurrentReceipt() {
+            if (!this.completedOrder) return;
+            if (window.ReceiptPrinter) {
+                window.ReceiptPrinter.printReceipt(this.completedOrder, this.printerConfig);
+            }
+        },
+
+        closeReceiptModal() {
+            if (this.receiptModalInstance) {
+                this.receiptModalInstance.hide();
+            }
+            this.completedOrder = null;
+            setTimeout(() => {
+                const searchEl = document.getElementById('searchInput');
+                if (searchEl) searchEl.focus();
+            }, 300);
+        },
+
+        testPrint() {
+            const testOrder = {
+                pesanan_id: 0,
+                nomor_pesanan: 'TEST-PRINTER',
+                customerName: 'Test Pelanggan',
+                tableName: 'Meja Test',
+                cashierName: '{{ Auth::user()->name }}',
+                items: [{
+                    product: { nama: 'Test Print Struk POS' },
+                    quantity: 1,
+                    unitPrice: 20000,
+                    selectedOptions: [{ id: 1, nama: 'Normal Sugar' }]
+                }],
+                total: 20000,
+                paymentMethod: 'tunai',
+                cashReceived: 50000,
+                changeAmount: 30000,
+                time: new Date().toLocaleString('id-ID')
+            };
+            if (window.ReceiptPrinter) {
+                window.ReceiptPrinter.printReceipt(testOrder, this.printerConfig);
             }
         }
     }));
