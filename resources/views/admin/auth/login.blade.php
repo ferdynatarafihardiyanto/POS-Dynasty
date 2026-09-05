@@ -24,7 +24,7 @@
             </div>
         @endif
 
-        <form action="{{ url('/login') }}" method="POST">
+        <form action="{{ route('admin.login') }}" method="POST">
             @csrf
             <div class="mb-3">
                 <label class="form-label fw-semibold">Email Account</label>

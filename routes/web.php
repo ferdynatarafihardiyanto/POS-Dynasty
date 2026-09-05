@@ -2,20 +2,64 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\Admin\DashboardController;
+use App\Http\Controllers\Web\Admin\POSController;
 
 Route::get('/', function () {
-    return redirect('/login');
+    return redirect('/admin/login');
 });
 
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'processLogin']);
-});
-
-Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::prefix('admin')->name('admin.')->group(function () {
     
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    // GUEST ROUTES
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [AuthController::class, 'processLogin']);
+    });
+
+    // AUTH ROUTES
+    Route::middleware(['auth', 'role'])->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Master Data CRUD
+        Route::resource('kategori', \App\Http\Controllers\Web\Admin\KategoriController::class)->except(['show']);
+        Route::resource('produk', \App\Http\Controllers\Web\Admin\ProdukController::class)->except(['show']);
+        Route::resource('meja', \App\Http\Controllers\Web\Admin\CafeTableController::class)->except(['show'])->parameters([
+            'meja' => 'meja'
+        ]);
+        
+        Route::get('/profil', function() { return view('admin.profil.index'); })->name('profil.index');
+        Route::get('/karyawan', function() { return view('admin.karyawan.index'); })->name('karyawan.index');
+        
+        Route::resource('bahan-baku', \App\Http\Controllers\Web\Admin\BahanBakuController::class)->parameters(['bahan-baku' => 'bahanBaku']);
+        Route::get('/resep', [\App\Http\Controllers\Web\Admin\ResepController::class, 'index'])->name('resep.index');
+        Route::post('/resep/detail', [\App\Http\Controllers\Web\Admin\ResepController::class, 'storeDetail'])->name('resep.detail.store');
+        Route::delete('/resep/detail/{id}', [\App\Http\Controllers\Web\Admin\ResepController::class, 'destroyDetail'])->name('resep.detail.destroy');
+        Route::resource('modifier-groups', \App\Http\Controllers\Web\Admin\ModifierGroupController::class)->except(['show'])->parameters([
+            'modifier-groups' => 'modifier_group'
+        ]);
+        Route::resource('modifier-options', \App\Http\Controllers\Web\Admin\ModifierOptionController::class)->only(['store', 'update', 'destroy'])->parameters([
+            'modifier-options' => 'modifier_option'
+        ]);
+        
+        Route::get('/stok', [\App\Http\Controllers\Web\Admin\StokController::class, 'index'])->name('stok.index');
+        Route::post('/stok', [\App\Http\Controllers\Web\Admin\StokController::class, 'store'])->name('stok.store');
+        Route::get('/stock-opname', [\App\Http\Controllers\Web\Admin\StockOpnameController::class, 'index'])->name('stock_opname.index');
+        Route::post('/stock-opname', [\App\Http\Controllers\Web\Admin\StockOpnameController::class, 'store'])->name('stock_opname.store');
+        
+        Route::get('/transaksi', [\App\Http\Controllers\Web\Admin\TransaksiController::class, 'index'])->name('transaksi.index');
+        Route::get('/transaksi/{id}/print', [\App\Http\Controllers\Web\Admin\TransaksiController::class, 'print'])->name('transaksi.print');
+        Route::get('/pengeluaran', [\App\Http\Controllers\Web\Admin\PengeluaranController::class, 'index'])->name('pengeluaran.index');
+        Route::post('/pengeluaran', [\App\Http\Controllers\Web\Admin\PengeluaranController::class, 'store'])->name('pengeluaran.store');
+        Route::get('/laporan', [\App\Http\Controllers\Web\Admin\LaporanController::class, 'index'])->name('laporan.index');
+    });
+
+    // POS ROUTES (Accessible by Admin and Kasir)
+    Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
+        Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+        Route::post('/pos/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
+    });
+
 });

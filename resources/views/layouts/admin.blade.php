@@ -24,34 +24,82 @@
             <hr class="text-white">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li>
-                    <a href="{{ route('admin.dashboard') }}" class="nav-link active">
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="bi bi-speedometer2 me-2"></i> Dashboard
                     </a>
                 </li>
+                
+                <li class="mt-3 mb-1 text-muted text-uppercase small fw-bold px-3">Transaksi</li>
                 <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-cart me-2"></i> POS Kasir
+                    <a href="{{ route('admin.pos.index') }}" class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }}">
+                        <i class="bi bi-shop me-2"></i> POS / Kasir
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-box-seam me-2"></i> Stok & Resep
+                    <a href="{{ route('admin.transaksi.index') }}" class="nav-link {{ request()->routeIs('admin.transaksi.*') ? 'active' : '' }}">
+                        <i class="bi bi-receipt me-2"></i> Riwayat Transaksi
+                    </a>
+                </li>
+                
+                <li class="mt-3 mb-1 text-muted text-uppercase small fw-bold px-3">Master Data</li>
+                <li>
+                    <a href="{{ route('admin.kategori.index') }}" class="nav-link {{ request()->routeIs('admin.kategori.*') ? 'active' : '' }}">
+                        <i class="bi bi-tags me-2"></i> Kategori
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-graph-up me-2"></i> Laporan
+                    <a href="{{ route('admin.produk.index') }}" class="nav-link {{ request()->routeIs('admin.produk.*') ? 'active' : '' }}">
+                        <i class="bi bi-cup-hot me-2"></i> Produk / Menu
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.modifier-groups.index') }}" class="nav-link {{ request()->routeIs('admin.modifier-groups.*') ? 'active' : '' }}">
+                        <i class="bi bi-list-stars me-2"></i> Varian / Topping
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.meja.index') }}" class="nav-link {{ request()->routeIs('admin.meja.*') ? 'active' : '' }}">
+                        <i class="bi bi-grid-3x3-gap me-2"></i> Meja & QR
+                    </a>
+                </li>
+                
+                <li class="mt-3 mb-1 text-muted text-uppercase small fw-bold px-3">Dapur & Inventory</li>
+                <li>
+                    <a href="{{ route('admin.bahan-baku.index') }}" class="nav-link {{ request()->routeIs('admin.bahan-baku.*') ? 'active' : '' }}">
+                        <i class="bi bi-box-seam me-2"></i> Bahan Baku
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.resep.index') }}" class="nav-link {{ request()->routeIs('admin.resep.*') ? 'active' : '' }}">
+                        <i class="bi bi-journal-text me-2"></i> Resep
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.stok.index') }}" class="nav-link {{ request()->routeIs('admin.stok.*') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-left-right me-2"></i> Keluar/Masuk Stok
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.stock_opname.index') }}" class="nav-link {{ request()->routeIs('admin.stock_opname.*') ? 'active' : '' }}">
+                        <i class="bi bi-clipboard-check me-2"></i> Stock Opname
+                    </a>
+                </li>
+
+                <li class="mt-3 mb-1 text-muted text-uppercase small fw-bold px-3">Keuangan</li>
+                <li>
+                    <a href="{{ route('admin.laporan.index') }}" class="nav-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
+                        <i class="bi bi-graph-up-arrow me-2"></i> Laporan
                     </a>
                 </li>
             </ul>
             <hr class="text-white">
             <div class="dropdown">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-danger w-100 fw-bold">
-                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                    </button>
-                </form>
+                        <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm px-3">
+                                <i class="bi bi-box-arrow-right me-1"></i> Logout
+                            </button>
+                        </form>
             </div>
         </div>
 

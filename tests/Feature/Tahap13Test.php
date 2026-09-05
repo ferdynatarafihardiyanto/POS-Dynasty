@@ -75,7 +75,7 @@ class Tahap13Test extends TestCase
         $produk->update(['aktif' => true, 'stok' => 0]); // Pastikan 0
 
         $resep = Resep::firstOrCreate(['produk_id' => $produk->id]);
-        if ($resep->details()->count() == 0) {
+        if ($resep->detail()->count() == 0) {
             ResepDetail::create(['resep_id' => $resep->id, 'bahan_baku_id' => $kopi->id, 'jumlah' => 20]);
             ResepDetail::create(['resep_id' => $resep->id, 'bahan_baku_id' => $susu->id, 'jumlah' => 100]);
         }

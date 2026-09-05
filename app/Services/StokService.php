@@ -21,7 +21,7 @@ class StokService
     {
         // Kumpulkan semua produk_id
         $produkIds = array_column($details, 'produk_id');
-        $produks = Produk::with('resep.details')->whereIn('id', $produkIds)->get()->keyBy('id');
+        $produks = Produk::with('resep.detail')->whereIn('id', $produkIds)->get()->keyBy('id');
 
         // Kumpulkan semua bahan_baku_id yang dibutuhkan
         $kebutuhanBahan = [];
@@ -37,10 +37,10 @@ class StokService
             }
 
             if ($produk->resep) {
-                if ($produk->resep->details->isEmpty()) {
+                if ($produk->resep->detail->isEmpty()) {
                     throw new Exception("Produk {$produk->nama} memiliki resep tetapi tidak ada detail resep (INVALID RECIPE).");
                 }
-                foreach ($produk->resep->details as $resepDetail) {
+                foreach ($produk->resep->detail as $resepDetail) {
                     $bahanId = $resepDetail->bahan_baku_id;
                     if (!isset($kebutuhanBahan[$bahanId])) {
                         $kebutuhanBahan[$bahanId] = 0;
@@ -101,12 +101,12 @@ class StokService
     {
         $kebutuhanBahan = [];
         $kebutuhanProduk = [];
-        $produks = Produk::with('resep.details')->whereIn('id', $pesanan->detailPesanan->pluck('produk_id'))->get()->keyBy('id');
+        $produks = Produk::with('resep.detail')->whereIn('id', $pesanan->detailPesanan->pluck('produk_id'))->get()->keyBy('id');
 
         foreach ($pesanan->detailPesanan as $detail) {
             $produk = $produks[$detail->produk_id];
             if ($produk->resep) {
-                foreach ($produk->resep->details as $resepDetail) {
+                foreach ($produk->resep->detail as $resepDetail) {
                     $bahanId = $resepDetail->bahan_baku_id;
                     if (!isset($kebutuhanBahan[$bahanId])) {
                         $kebutuhanBahan[$bahanId] = 0;

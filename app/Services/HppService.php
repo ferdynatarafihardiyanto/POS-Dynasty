@@ -15,16 +15,16 @@ class HppService
      */
     public function hitungHppProduk(Produk $produk): float
     {
-        // Jika produk tidak memiliki resep, kembalikan 0 sesuai aturan
+        // Jika produk tidak memiliki resep, kembalikan HPP dari database produk
         if (!$produk->resep) {
-            return 0;
+            return (float) $produk->hpp;
         }
 
         $hpp = 0;
 
-        foreach ($produk->resep->details as $detail) {
+        foreach ($produk->resep->detail as $dtl) {
             // jumlah bahan baku × harga beli per unit bahan baku
-            $hpp += $detail->jumlah * $detail->bahanBaku->harga_beli;
+            $hpp += $dtl->jumlah * $dtl->bahanBaku->harga_beli;
         }
 
         return (float) $hpp;

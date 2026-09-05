@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $table = 'produk';
-    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'harga', 'stok', 'aktif'];
+    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'hpp', 'harga', 'stok', 'aktif'];
 
     protected $casts = [
         'aktif' => 'boolean',
@@ -33,5 +33,10 @@ class Produk extends Model
     public function resep()
     {
         return $this->hasOne(Resep::class, 'produk_id', 'id');
+    }
+
+    public function modifierGroups()
+    {
+        return $this->belongsToMany(ModifierGroup::class, 'produk_modifier_group', 'produk_id', 'modifier_group_id');
     }
 }
