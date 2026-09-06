@@ -81,6 +81,7 @@ Route::get('/menu/meja/{qr_token}', [MenuController::class, 'menuBerdasarkanMeja
 Route::get('/menu/{id}', [MenuController::class, 'show']);
 
 // Public Cafe Table
+Route::get('/meja', [CafeTableController::class, 'index']);
 Route::get('/meja/{qr_token}', [CafeTableController::class, 'show']);
 
 // Public Pesanan (Customer)

@@ -6,7 +6,7 @@ use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\POSController;
 
 Route::get('/', function () {
-    return redirect('/admin/login');
+    return view('app');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -62,5 +62,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
         Route::post('/pos/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
     });
-
 });
