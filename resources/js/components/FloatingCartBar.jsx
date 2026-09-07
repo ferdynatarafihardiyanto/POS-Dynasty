@@ -16,7 +16,7 @@ export default function FloatingCartBar() {
     };
 
     return (
-        <div className="fixed bottom-3 inset-x-0 z-40 px-4 max-w-md mx-auto pointer-events-none animate-slide-up">
+        <div className="fixed bottom-3 inset-x-0 z-40 px-4 max-w-7xl mx-auto pointer-events-none animate-slide-up">
             <div
                 onClick={() => setIsCartOpen(true)}
                 className="bg-gradient-to-r from-[#7A1517] via-[#881B1E] to-[#6E1214] text-white p-2.5 pl-3 rounded-2xl shadow-2xl border border-amber-500/30 flex items-center justify-between pointer-events-auto cursor-pointer hover:shadow-amber-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all"

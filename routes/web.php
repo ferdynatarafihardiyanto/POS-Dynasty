@@ -8,6 +8,9 @@ use App\Http\Controllers\Web\Admin\POSController;
 Route::get('/', function () {
     return view('app');
 });
+Route::get('/menu', function () {
+    return view('app');
+});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     

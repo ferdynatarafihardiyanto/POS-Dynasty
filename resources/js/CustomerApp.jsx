@@ -37,8 +37,8 @@ function MainCatalog() {
 
     return (
         <div className="min-h-screen bg-stone-100 flex justify-center selection:bg-amber-500 selection:text-white pb-24">
-            {/* Mobile View Container */}
-            <div className="w-full max-w-md bg-stone-50 min-h-screen shadow-2xl relative flex flex-col border-x border-stone-200/60">
+            {/* Desktop/Tablet/Mobile Responsive Container */}
+            <div className="w-full max-w-7xl mx-auto bg-stone-50 min-h-screen shadow-2xl relative flex flex-col border-x border-stone-200/60">
 
                 {/* Toast Notification */}
                 <Toast />
@@ -102,7 +102,7 @@ function MainCatalog() {
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {filteredItems.map((item) => (
                                     <MenuCard
                                         key={item.id}

@@ -12,7 +12,7 @@ export default function PromoBanner({ onSelectItem }) {
     };
 
     return (
-        <section className="pt-3 pb-2 max-w-md mx-auto">
+        <section className="pt-3 pb-2 max-w-7xl w-full mx-auto">
             {/* Header */}
             <div className="px-4 flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-1.5">

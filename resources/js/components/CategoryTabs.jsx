@@ -3,8 +3,8 @@ import { CATEGORIES } from '../data/mockData';
 
 export default function CategoryTabs({ selectedCategory, onSelectCategory }) {
     return (
-        <div className="pt-2 pb-2 max-w-md mx-auto">
-            <div className="flex gap-2 px-4 overflow-x-auto no-scrollbar snap-x">
+        <div className="pt-2 pb-2 max-w-7xl w-full mx-auto">
+            <div className="flex gap-2.5 overflow-x-auto no-scrollbar px-4 pb-2 snap-x">
                 {CATEGORIES.map((cat) => {
                     const isActive = selectedCategory === cat.id;
                     return (

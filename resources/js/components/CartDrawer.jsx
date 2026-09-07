@@ -42,7 +42,7 @@ export default function CartDrawer() {
 
     return (
         <div className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-xs flex justify-center items-end sm:items-center p-0 animate-fade-in">
-            <div className="w-full max-w-md h-[94vh] sm:h-[88vh] bg-stone-50 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up relative">
+            <div className="w-full max-w-md md:ml-auto md:mr-4 md:my-auto md:h-[96vh] md:rounded-3xl h-[94vh] sm:h-[88vh] bg-stone-50 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up relative">
 
                 {/* Header */}
                 <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-stone-200/80 flex items-center justify-between shadow-xs">

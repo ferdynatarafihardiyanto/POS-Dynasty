@@ -10,7 +10,7 @@ export default function Header() {
 
     return (
         <header className="sticky top-0 z-30 bg-gradient-to-r from-[#7A1517] via-[#881B1E] to-[#6E1214] text-white shadow-lg border-b border-amber-500/20">
-            <div className="max-w-md mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+            <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
                 {/* Left: Table Badge & Restaurant Info */}
                 <button
                     onClick={() => setIsTableModalOpen(true)}
