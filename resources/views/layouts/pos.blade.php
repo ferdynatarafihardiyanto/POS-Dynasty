@@ -112,10 +112,60 @@
             background: #94a3b8;
         }
 
+        /* Responsive Breakpoints & Drawers */
+        .pos-sidebar-backdrop, .pos-cart-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 1040;
+            transition: opacity 0.3s ease;
+        }
+        .pos-sidebar-backdrop.show, .pos-cart-backdrop.show {
+            display: block;
+        }
+
         @media (max-width: 992px) {
-            .pos-sidebar { display: none; }
-            .pos-cart { position: absolute; right: 0; top: 0; bottom: 0; box-shadow: -5px 0 15px rgba(0,0,0,0.05); transform: translateX(100%); transition: transform 0.3s; }
-            .pos-cart.show { transform: translateX(0); }
+            .pos-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 280px;
+                max-width: 85vw;
+                z-index: 1050;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25);
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .pos-sidebar.show {
+                transform: translateX(0);
+            }
+            .pos-cart {
+                position: fixed;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 380px;
+                max-width: 100vw;
+                z-index: 1050;
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .pos-cart.show {
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .pos-cart {
+                width: 100vw;
+            }
         }
 
         /* Print Styles */
@@ -159,8 +209,8 @@
                     <div class="fw-bold fs-5">Pos System</div>
                     <div class="small opacity-75">Sistem kasir</div>
                 </div>
-                <button class="btn btn-sm text-white ms-auto d-lg-none" id="closeSidebarBtn">
-                    <i class="bi bi-chevron-double-left"></i>
+                <button type="button" class="btn btn-sm text-white ms-auto d-lg-none rounded-circle d-flex align-items-center justify-content-center" id="closeSidebarBtn" title="Tutup Menu" style="width: 32px; height: 32px; background: rgba(255,255,255,0.15);">
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             
@@ -234,9 +284,70 @@
         
     </div>
 
+    <!-- Backdrop untuk Sidebar Mobile/Tablet -->
+    <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Optional JS for sidebar toggle on mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.pos-sidebar');
+            const sidebarBackdrop = document.getElementById('posSidebarBackdrop');
+            const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+            function openSidebar() {
+                if (sidebar) sidebar.classList.add('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.add('show');
+            }
+
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove('show');
+                if (sidebarBackdrop) sidebarBackdrop.classList.remove('show');
+            }
+
+            // Otomatis pastikan ada tombol hamburger di header jika belum ada (untuk semua halaman admin di tablet & mobile)
+            function ensureSidebarToggleBtn() {
+                if (document.getElementById('openSidebarBtn') || document.querySelector('.btn-open-sidebar')) return;
+
+                // Cari baris header pertama di dalam .pos-main
+                const mainHeader = document.querySelector('.pos-main > div:first-child');
+                if (mainHeader) {
+                    const firstChild = mainHeader.firstElementChild;
+                    if (firstChild) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.id = 'openSidebarBtn';
+                        btn.className = 'btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center me-2 flex-shrink-0';
+                        btn.style.width = '38px';
+                        btn.style.height = '38px';
+                        btn.title = 'Buka Menu Navigasi';
+                        btn.innerHTML = '<i class="bi bi-list fs-5"></i>';
+
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'd-flex align-items-center gap-2';
+                        firstChild.parentNode.insertBefore(wrapper, firstChild);
+                        wrapper.appendChild(btn);
+                        wrapper.appendChild(firstChild);
+                        return;
+                    }
+                }
+            }
+
+            ensureSidebarToggleBtn();
+
+            // Delegated click handler untuk tombol buka sidebar (bisa dipasang di header halaman manapun)
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('#openSidebarBtn') || e.target.closest('.btn-open-sidebar')) {
+                    openSidebar();
+                }
+            });
+
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', closeSidebar);
+            }
+            if (sidebarBackdrop) {
+                sidebarBackdrop.addEventListener('click', closeSidebar);
+            }
+        });
     </script>
     @stack('scripts')
 </body>

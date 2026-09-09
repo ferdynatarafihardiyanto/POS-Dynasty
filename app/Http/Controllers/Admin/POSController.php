@@ -31,6 +31,71 @@ class POSController extends Controller
         ]);
     }
 
+    public function pesananAktif()
+    {
+        $pesanans = Pesanan::with(['meja', 'detailPesanan'])
+            ->whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'disajikan'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'nomor_pesanan' => $p->nomor_pesanan,
+                    'meja_id' => $p->meja_id,
+                    'meja_nomor' => $p->meja ? ($p->meja->table_number ? str_pad($p->meja->table_number, 2, '0', STR_PAD_LEFT) : $p->meja->id) : '-',
+                    'meja_nama' => $p->meja ? ($p->meja->name ?? ('Meja ' . $p->meja->table_number)) : 'Meja Umum',
+                    'status' => $p->status,
+                    'total_harga' => $p->total_harga,
+                    'catatan' => $p->catatan,
+                    'waktu' => $p->created_at ? $p->created_at->timezone('Asia/Jakarta')->format('H:i') : '-',
+                    'created_at' => $p->created_at,
+                    'items' => $p->detailPesanan->map(function ($d) {
+                        return [
+                            'id' => $d->id,
+                            'produk_id' => $d->produk_id,
+                            'nama_produk' => $d->nama_produk,
+                            'harga' => $d->harga,
+                            'jumlah' => $d->jumlah,
+                            'subtotal' => $d->subtotal,
+                            'catatan' => $d->catatan,
+                            'modifiers' => $d->modifiers_snapshot ? json_decode($d->modifiers_snapshot, true) : []
+                        ];
+                    })
+                ];
+            });
+
+        return response()->json([
+            'message' => 'Daftar pesanan aktif berhasil diambil',
+            'data' => $pesanans,
+            'total_aktif' => $pesanans->count()
+        ]);
+    }
+
+    public function ubahStatusPesanan(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:menunggu_pembayaran,diproses,disajikan,selesai,batal'
+        ]);
+
+        $pesanan = Pesanan::with(['meja', 'detailPesanan'])->find($id);
+
+        if (!$pesanan) {
+            return response()->json(['message' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        $pesanan->status = $request->status;
+        $pesanan->save();
+
+        return response()->json([
+            'message' => 'Status pesanan berhasil diperbarui ke ' . $request->status,
+            'data' => [
+                'id' => $pesanan->id,
+                'nomor_pesanan' => $pesanan->nomor_pesanan,
+                'status' => $pesanan->status
+            ]
+        ]);
+    }
+
     public function detailPesanan($id)
     {
         $pesanan = Pesanan::with(['meja', 'detailPesanan'])->find($id);
@@ -54,7 +119,9 @@ class POSController extends Controller
                         'nama_produk' => $d->nama_produk,
                         'harga' => $d->harga,
                         'jumlah' => $d->jumlah,
-                        'subtotal' => $d->subtotal
+                        'subtotal' => $d->subtotal,
+                        'catatan' => $d->catatan,
+                        'modifiers_snapshot' => $d->modifiers_snapshot
                     ];
                 })
             ]

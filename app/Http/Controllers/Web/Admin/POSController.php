@@ -77,4 +77,122 @@ class POSController extends Controller
             ], 400); // Bad Request for business logic errors
         }
     }
+
+    public function pesananAktif()
+    {
+        $pesanans = \App\Models\Pesanan::with(['meja', 'detailPesanan', 'pembayaran'])
+            ->whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'disajikan'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'nomor_pesanan' => $p->nomor_pesanan,
+                    'meja_id' => $p->meja_id,
+                    'meja_nomor' => $p->meja ? ($p->meja->table_number ? str_pad($p->meja->table_number, 2, '0', STR_PAD_LEFT) : $p->meja->id) : '-',
+                    'meja_nama' => $p->meja ? ($p->meja->name ?? ('Meja ' . $p->meja->table_number)) : 'Meja Umum',
+                    'status' => $p->status,
+                    'status_pembayaran' => $p->status_pembayaran,
+                    'metode_pembayaran' => $p->pembayaran ? $p->pembayaran->metode_pembayaran : null,
+                    'total_harga' => $p->total_harga,
+                    'catatan' => $p->catatan,
+                    'waktu' => $p->created_at ? $p->created_at->timezone('Asia/Jakarta')->format('H:i') : '-',
+                    'created_at' => $p->created_at ? $p->created_at->toISOString() : null,
+                    'items' => $p->detailPesanan->map(function ($d) {
+                        return [
+                            'id' => $d->id,
+                            'produk_id' => $d->produk_id,
+                            'nama_produk' => $d->nama_produk,
+                            'harga' => $d->harga,
+                            'jumlah' => $d->jumlah,
+                            'subtotal' => $d->subtotal,
+                            'catatan' => $d->catatan,
+                            'modifiers' => $d->modifiers_snapshot ? json_decode($d->modifiers_snapshot, true) : []
+                        ];
+                    })
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $pesanans,
+            'total_aktif' => $pesanans->count()
+        ]);
+    }
+
+    public function ubahStatusPesanan(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|string|in:menunggu_pembayaran,diproses,disajikan,selesai,batal'
+        ]);
+
+        $pesanan = \App\Models\Pesanan::with(['meja', 'detailPesanan'])->find($id);
+
+        if (!$pesanan) {
+            return response()->json(['success' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        $pesanan->status = $request->status;
+        $pesanan->save();
+
+        $statusLabels = [
+            'diproses' => 'Sedang Dimasak di Dapur',
+            'disajikan' => 'Sudah Dikirim / Disajikan ke Meja',
+            'selesai' => 'Pesanan Selesai',
+            'batal' => 'Pesanan Dibatalkan'
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Status pesanan ' . $pesanan->nomor_pesanan . ' berhasil diubah menjadi: ' . ($statusLabels[$request->status] ?? $request->status),
+            'data' => [
+                'id' => $pesanan->id,
+                'nomor_pesanan' => $pesanan->nomor_pesanan,
+                'status' => $pesanan->status
+            ]
+        ]);
+    }
+
+    public function bayarPesananMeja(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'required|string|in:tunai,cash,qris,debit,transfer',
+            'cash_received' => 'nullable|numeric'
+        ]);
+
+        try {
+            $pesanan = \App\Models\Pesanan::with(['detailPesanan.produk', 'meja'])->findOrFail($id);
+
+            $methodMap = [
+                'tunai' => 'cash',
+                'qris' => 'qris',
+                'debit' => 'transfer'
+            ];
+            $backendMethod = $methodMap[$request->payment_method] ?? $request->payment_method;
+            $cashReceived = $request->cash_received ?? $pesanan->total_harga;
+
+            $pembayaran = $this->pembayaranService->prosesPembayaran(
+                $pesanan->id,
+                $backendMethod,
+                $cashReceived
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran pesanan ' . $pesanan->nomor_pesanan . ' berhasil.',
+                'data' => [
+                    'pesanan_id' => $pesanan->id,
+                    'nomor_pesanan' => $pesanan->nomor_pesanan,
+                    'transaksi' => $pembayaran->nomor_transaksi,
+                    'kembalian' => $pembayaran->kembalian,
+                    'total_harga' => $pesanan->total_harga
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
 }

@@ -4,7 +4,7 @@
 <h2>Edit Produk</h2>
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body">
-        <form action="{{ route('admin.produk.update', $produk->id) }}" method="POST">
+        <form action="{{ route('admin.produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data">
             @csrf @method('PUT')
             <div class="mb-3">
                 <label>Kategori</label>
@@ -21,6 +21,15 @@
             <div class="mb-3">
                 <label>Deskripsi</label>
                 <textarea name="deskripsi" class="form-control">{{ $produk->deskripsi }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label>Foto Produk (Opsional)</label>
+                @if($produk->gambar)
+                    <div class="mb-2">
+                        <img src="{{ asset('storage/' . $produk->gambar) }}" alt="{{ $produk->nama }}" class="rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                    </div>
+                @endif
+                <input type="file" name="gambar" accept="image/*" class="form-control">
             </div>
             <div class="mb-3">
                 <label>Harga</label>

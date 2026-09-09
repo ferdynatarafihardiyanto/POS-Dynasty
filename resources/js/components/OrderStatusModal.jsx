@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle2, Clock, ChefHat, BellRing, Sparkles, ReceiptText, Plus, Bell } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, ChefHat, BellRing, Sparkles, ReceiptText, Plus, QrCode } from 'lucide-react';
+import CustomerPayModal from './CustomerPayModal';
+import CustomerReceiptModal from './CustomerReceiptModal';
 
 export default function OrderStatusModal() {
     const {
         isOrderStatusOpen,
         setIsOrderStatusOpen,
+        setIsOrderHistoryOpen,
         activeOrder,
         orders,
         setActiveOrder,
-        setIsWaiterModalOpen,
         tableInfo
     } = useCart();
+
+    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+    const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
     if (!isOrderStatusOpen) return null;
 
@@ -25,20 +30,65 @@ export default function OrderStatusModal() {
         }).format(num).replace('IDR', 'Rp');
     };
 
+    const handleOpenPayModal = () => {
+        setIsPayModalOpen(true);
+    };
+
+    const isPaid = (currentOrder?.status_pembayaran === 'dibayar') ||
+                   (currentOrder?.status === 'dibayar') ||
+                   (currentOrder?.status === 'disajikan') ||
+                   (currentOrder?.status === 'selesai');
+
     const statusSteps = [
-        { key: 'menunggu_konfirmasi', label: 'Pesanan Diterima', desc: 'Dapur telah menerima tiket pesananmu', icon: CheckCircle2 },
-        { key: 'diproses', label: 'Sedang Dimasak di Dapur', desc: 'Koki sedang menyiapkan hidangan hangatmu', icon: ChefHat },
-        { key: 'disajikan', label: 'Siap Disajikan ke Meja', desc: 'Pelayan sedang mengantarkan makanan', icon: BellRing },
-        { key: 'selesai', label: 'Selesai / Menikmati Makanan', desc: 'Selamat menikmati hidangan lezatmu!', icon: Sparkles }
+        { 
+            key: 'menunggu_pembayaran', 
+            label: '1. Pembayaran HP (QRIS / TF)', 
+            desc: isPaid 
+                ? 'Pembayaran lunas terverifikasi ✅' 
+                : 'Silakan selesaikan pembayaran via QRIS atau Transfer Bank (TF) di HP', 
+            icon: ReceiptText 
+        },
+        { 
+            key: 'diproses', 
+            label: '2. Sedang Dimasak di Dapur', 
+            desc: isPaid 
+                ? 'Koki sedang menyiapkan hidangan lezatmu' 
+                : 'Dapur akan mulai memasak setelah pembayaran diverifikasi', 
+            icon: ChefHat 
+        },
+        { 
+            key: 'disajikan', 
+            label: '3. Pesanan Sudah Diterima di Meja', 
+            desc: (currentOrder?.status === 'disajikan' || currentOrder?.status === 'selesai')
+                ? 'Pelayan telah mengantarkan pesanan ke mejamu. Makanan sudah diterima! 🍽️'
+                : 'Pelayan sedang menyiapkan pengantaran makanan ke mejamu', 
+            icon: BellRing 
+        },
+        { 
+            key: 'selesai', 
+            label: '4. Selesai / Menikmati Makanan', 
+            desc: currentOrder?.status === 'selesai'
+                ? 'Pesanan telah selesai dinikmati. Terima kasih telah berkunjung ke Kedai Dynasty! ✨'
+                : 'Selamat menikmati hidangan lezat Kedai Dynasty!', 
+            icon: Sparkles 
+        }
     ];
 
     const getCurrentStepIndex = () => {
         if (!currentOrder) return 0;
-        const status = (currentOrder.status || 'menunggu_konfirmasi').toLowerCase();
-        if (status.includes('selesai') || status.includes('paid')) return 3;
-        if (status.includes('disajikan') || status.includes('ready')) return 2;
-        if (status.includes('diproses') || status.includes('proses') || status.includes('cook')) return 1;
-        return 0;
+        const status = (currentOrder.status || 'menunggu_pembayaran').toLowerCase();
+        
+        // Jika belum bayar, selalu di Step 0 (Pembayaran di Kasir)
+        if (!isPaid && (status === 'menunggu_pembayaran' || status === 'menunggu_konfirmasi')) {
+            return 0;
+        }
+
+        // Jika sudah bayar
+        if (status === 'selesai') return 3;
+        if (status === 'disajikan') return 2;
+        if (status === 'diproses' || status === 'dibayar') return 1;
+
+        return 1;
     };
 
     const activeStepIdx = getCurrentStepIndex();
@@ -63,7 +113,17 @@ export default function OrderStatusModal() {
                             Dine-in • Meja {currentOrder?.tableNumber || tableInfo.number}
                         </p>
                     </div>
-                    <div className="w-9"></div>
+                    <button
+                        onClick={() => {
+                            setIsOrderStatusOpen(false);
+                            setIsOrderHistoryOpen(true);
+                        }}
+                        className="px-2 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold flex items-center gap-1 transition"
+                        title="Lihat Semua Riwayat Pesanan Meja"
+                    >
+                        <ReceiptText className="w-3.5 h-3.5" />
+                        <span className="text-[11px]">Riwayat</span>
+                    </button>
                 </div>
 
                 {/* Content */}
@@ -99,62 +159,176 @@ export default function OrderStatusModal() {
                                 </div>
                             </div>
 
-                            {/* Stepper Tracking Progress */}
-                            <div className="bg-white p-4 rounded-2xl border border-stone-200/80 space-y-4">
-                                <h4 className="font-display font-extrabold text-xs text-stone-900 uppercase tracking-wider">
-                                    Pelacakan Langsung
-                                </h4>
+                            {/* Payment Status Card (Khusus HP: QRIS / TF) */}
+                            {!isPaid ? (
+                                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/60 border-2 border-amber-300 shadow-xs space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-spin" />
+                                            <span className="font-display font-extrabold text-xs text-amber-950 uppercase tracking-wide">
+                                                Langkah 1: Bayar via HP (QRIS / TF)
+                                            </span>
+                                        </div>
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-stone-950 shadow-2xs">
+                                            Belum Bayar
+                                        </span>
+                                    </div>
 
-                                <div className="space-y-4 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-stone-200 before:z-0">
-                                    {statusSteps.map((step, idx) => {
-                                        const StepIcon = step.icon;
-                                        const isCompleted = idx <= activeStepIdx;
-                                        const isCurrent = idx === activeStepIdx;
+                                    <p className="text-xs text-amber-900 leading-relaxed">
+                                        Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP menggunakan <strong>QRIS Instan</strong> atau <strong>Transfer Bank (TF)</strong> agar pesanan segera dimasak oleh dapur.
+                                    </p>
 
-                                        return (
-                                            <div key={step.key} className="flex items-start gap-3 relative z-10">
-                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors shrink-0 ${
-                                                    isCompleted
-                                                        ? 'bg-amber-400 text-stone-950 font-black shadow-sm ring-4 ring-amber-100'
-                                                        : 'bg-stone-100 text-stone-400'
-                                                }`}>
-                                                    <StepIcon className="w-3.5 h-3.5" />
-                                                </div>
+                                    {/* Tombol Utama Bayar dari HP */}
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenPayModal}
+                                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-extrabold text-xs shadow-lg shadow-emerald-800/20 active:scale-95 transition flex items-center justify-center gap-2 group cursor-pointer"
+                                    >
+                                        <QrCode className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
+                                        <span>Bayar Sekarang Lewat HP (QRIS / TF)</span>
+                                    </button>
 
-                                                <div className="flex-1">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className={`font-display text-xs ${
-                                                            isCurrent
-                                                                ? 'font-extrabold text-[#881B1E]'
-                                                                : isCompleted
-                                                                    ? 'font-bold text-stone-800'
-                                                                    : 'font-medium text-stone-400'
-                                                        }`}>
-                                                            {step.label}
-                                                        </span>
-                                                        {isCurrent && (
-                                                            <span className="text-[9px] font-extrabold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full animate-pulse">
-                                                                Sedang Berlangsung
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-[10px] text-stone-500 mt-0.5">
-                                                        {step.desc}
-                                                    </p>
+                                    <div className="text-[11px] text-amber-800/80 flex items-center gap-1.5 pt-1 border-t border-amber-200/60">
+                                        <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>Pelacakan langsung proses dapur akan otomatis aktif setelah pembayaran.</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                currentOrder.status === 'selesai' ? (
+                                    <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-400 text-emerald-950 shadow-xs space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl">🎉</span>
+                                                <span className="font-display font-black text-xs text-emerald-950 uppercase tracking-wide">
+                                                    Pesanan Telah Selesai!
+                                                </span>
+                                            </div>
+                                            <span className="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase bg-emerald-600 text-white shadow-2xs">
+                                                Selesai
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-emerald-900 leading-relaxed">
+                                            Terima kasih banyak telah berkunjung ke Kedai Dynasty. Transaksi pesanan Meja {currentOrder.tableNumber} telah selesai dinikmati. Sampai jumpa kembali! ✨
+                                        </p>
+                                    </div>
+                                ) : currentOrder.status === 'disajikan' ? (
+                                    <div className="p-4 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-400 text-teal-950 shadow-xs space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl">🍽️</span>
+                                                <span className="font-display font-black text-xs text-teal-950 uppercase tracking-wide">
+                                                    Pesanan Sudah Diterima di Meja!
+                                                </span>
+                                            </div>
+                                            <span className="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase bg-teal-600 text-white shadow-2xs">
+                                                Sudah Tiba
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-teal-900 leading-relaxed">
+                                            Pelayan telah mengantarkan pesanan ke <strong>Meja {currentOrder.tableNumber}</strong>. Makanan sudah diterima, selamat menikmati hidangan lezatmu!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="p-3.5 rounded-2xl bg-emerald-50/95 border border-emerald-200 text-emerald-900 shadow-2xs space-y-1">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2.5">
+                                                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                                                <div>
+                                                    <span className="text-xs font-bold block">Status: Pembayaran Lunas ✅</span>
+                                                    <span className="text-[10px] text-emerald-700">Pembayaran telah diterima. Koki sedang menyiapkan pesananmu.</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
+                                            <span className="px-2.5 py-1 rounded-xl text-[10px] font-extrabold uppercase bg-emerald-600 text-white shadow-2xs">
+                                                Lunas
+                                            </span>
+                                        </div>
+                                    </div>
+                                )
+                            )}
+
+                            {/* Stepper Tracking Progress - Hanya muncul setelah pembayaran lunas */}
+                            {isPaid && (
+                                <div className="bg-white p-4 rounded-2xl border border-stone-200/80 space-y-4 animate-fade-in">
+                                    <h4 className="font-display font-extrabold text-xs text-stone-900 uppercase tracking-wider">
+                                        Pelacakan Langsung
+                                    </h4>
+
+                                    <div className="space-y-4 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-stone-200 before:z-0">
+                                        {statusSteps.map((step, idx) => {
+                                            const StepIcon = step.icon;
+                                            const isCompleted = idx <= activeStepIdx;
+                                            const isCurrent = idx === activeStepIdx;
+                                            const isAllFinished = currentOrder.status === 'selesai';
+
+                                            return (
+                                                <div key={step.key} className="flex items-start gap-3 relative z-10">
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors shrink-0 ${
+                                                        isCompleted
+                                                            ? (isAllFinished && step.key === 'selesai'
+                                                                ? 'bg-emerald-600 text-white font-black shadow-sm ring-4 ring-emerald-100'
+                                                                : 'bg-amber-400 text-stone-950 font-black shadow-sm ring-4 ring-amber-100')
+                                                            : 'bg-stone-100 text-stone-400'
+                                                    }`}>
+                                                        <StepIcon className="w-3.5 h-3.5" />
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`font-display text-xs ${
+                                                                isCurrent
+                                                                    ? (isAllFinished && step.key === 'selesai'
+                                                                        ? 'font-extrabold text-emerald-800'
+                                                                        : 'font-extrabold text-[#881B1E]')
+                                                                    : isCompleted
+                                                                        ? 'font-bold text-stone-800'
+                                                                        : 'font-medium text-stone-400'
+                                                            }`}>
+                                                                {step.label}
+                                                            </span>
+                                                            {isCurrent && (
+                                                                isAllFinished && step.key === 'selesai' ? (
+                                                                    <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                                                                        Selesai
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-[9px] font-extrabold bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded-full animate-pulse">
+                                                                        Sedang Berlangsung
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[10px] text-stone-500 mt-0.5">
+                                                            {step.desc}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Order Details Struk */}
                             <div className="bg-white p-4 rounded-2xl border border-stone-200/80 space-y-3">
-                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                                    <ReceiptText className="w-4 h-4 text-[#881B1E]" />
-                                    <h4 className="font-display font-extrabold text-xs text-stone-900 uppercase tracking-wider">
-                                        Rincian Menu Dipesan
-                                    </h4>
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                                    <div className="flex items-center gap-2">
+                                        <ReceiptText className="w-4 h-4 text-[#881B1E]" />
+                                        <h4 className="font-display font-extrabold text-xs text-stone-900 uppercase tracking-wider">
+                                            Rincian Menu Dipesan
+                                        </h4>
+                                    </div>
+                                    {isPaid && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsReceiptModalOpen(true)}
+                                            className="text-[11px] font-bold text-[#881B1E] bg-red-50 hover:bg-red-100 border border-red-200/80 px-2.5 py-1 rounded-xl transition flex items-center gap-1 shadow-2xs active:scale-95 cursor-pointer"
+                                            title="Buka Nota Struk Digital"
+                                        >
+                                            <ReceiptText className="w-3.5 h-3.5" />
+                                            <span>Nota Struk</span>
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2.5 divide-y divide-stone-100 text-xs">
@@ -162,15 +336,21 @@ export default function OrderStatusModal() {
                                         <div key={idx} className="pt-2 first:pt-0 flex justify-between gap-2">
                                             <div className="flex-1">
                                                 <div className="font-bold text-stone-800">
-                                                    {item.quantity}x {item.menuItem?.nama || item.nama}
+                                                    {item.quantity}x {item.menuItem?.nama || item.nama_produk || 'Menu'}
                                                 </div>
-                                                <div className="text-[10px] text-stone-500 space-x-1">
-                                                    {item.customizations?.carb && <span>• {item.customizations.carb.name}</span>}
-                                                    {item.customizations?.spice && <span>• {item.customizations.spice.name}</span>}
-                                                    {item.customizations?.toppings?.map(t => (
-                                                        <span key={t.id}>• {t.name}</span>
-                                                    ))}
-                                                </div>
+
+                                                {/* Modifiers / Variants */}
+                                                {item.customizations?.modifiers && item.customizations.modifiers.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                                        {item.customizations.modifiers.map(m => (
+                                                            <span key={m.id} className="text-[10px] bg-red-50 text-red-700 px-1.5 py-0.2 rounded font-medium">
+                                                                + {m.nama}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Item Note */}
                                                 {item.notes && (
                                                     <div className="text-[10px] text-amber-800 italic">
                                                         "{item.notes}"
@@ -199,6 +379,11 @@ export default function OrderStatusModal() {
                                         <span>Total Bayar</span>
                                         <span>{formatRupiah(currentOrder.grandTotal)}</span>
                                     </div>
+                                    {currentOrder.notes && (
+                                        <div className="mt-2 pt-2 border-t border-stone-100 bg-amber-50/70 p-2 rounded-xl text-[11px] text-amber-900">
+                                            <span className="font-bold">📝 Catatan:</span> "{currentOrder.notes}"
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -206,28 +391,87 @@ export default function OrderStatusModal() {
                 </div>
 
                 {/* Bottom Action Floating */}
-                <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md p-4 border-t border-stone-200/80 shadow-2xl flex items-center gap-2.5">
-                    <button
-                        onClick={() => {
-                            setIsOrderStatusOpen(false);
-                            setIsWaiterModalOpen(true);
-                        }}
-                        className="py-3 px-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-display font-bold text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 shrink-0"
-                    >
-                        <Bell className="w-3.5 h-3.5 fill-stone-950" />
-                        <span>Panggil Pelayan</span>
-                    </button>
+                <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md p-4 border-t border-stone-200/80 shadow-2xl flex items-center gap-2">
+                    {currentOrder?.status === 'selesai' ? (
+                        <div className="flex items-center gap-2 w-full">
+                            <button
+                                type="button"
+                                onClick={() => setIsReceiptModalOpen(true)}
+                                className="py-3 px-3.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-display font-bold text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                                title="Lihat Nota Struk"
+                            >
+                                <ReceiptText className="w-4 h-4 text-[#881B1E]" />
+                                <span>Nota Struk</span>
+                            </button>
 
-                    <button
-                        onClick={() => setIsOrderStatusOpen(false)}
-                        className="flex-1 py-3 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>Pesan Menu Tambahan</span>
-                    </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsOrderStatusOpen(false);
+                                    setIsOrderHistoryOpen(true);
+                                }}
+                                className="py-3 px-3 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-display font-bold text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                            >
+                                <span>Riwayat</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsOrderStatusOpen(false)}
+                                className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>Kembali ke Menu</span>
+                            </button>
+                        </div>
+                    ) : isPaid ? (
+                        <div className="flex items-center gap-2 w-full">
+                            <button
+                                type="button"
+                                onClick={() => setIsReceiptModalOpen(true)}
+                                className="py-3 px-3.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-display font-bold text-xs shadow-xs active:scale-95 transition flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                                title="Lihat Nota Struk"
+                            >
+                                <ReceiptText className="w-4 h-4 text-[#881B1E]" />
+                                <span>Nota Struk</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsOrderStatusOpen(false)}
+                                className="flex-1 py-3.5 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Pesan Menu Tambahan</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setIsOrderStatusOpen(false)}
+                            className="w-full py-3.5 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Pesan Menu Tambahan</span>
+                        </button>
+                    )}
                 </div>
 
             </div>
+
+            {/* Customer Online QRIS & Transfer Payment Modal */}
+            <CustomerPayModal
+                isOpen={isPayModalOpen}
+                onClose={() => setIsPayModalOpen(false)}
+                order={currentOrder}
+            />
+
+            {/* Customer Digital Receipt / Nota Struk Modal */}
+            <CustomerReceiptModal
+                isOpen={isReceiptModalOpen}
+                onClose={() => setIsReceiptModalOpen(false)}
+                order={currentOrder}
+            />
         </div>
     );
 }

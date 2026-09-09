@@ -4,7 +4,7 @@
 <h2>Tambah Produk</h2>
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body">
-        <form action="{{ route('admin.produk.store') }}" method="POST">
+        <form action="{{ route('admin.produk.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="mb-3">
                 <label>Kategori</label>
@@ -21,6 +21,10 @@
             <div class="mb-3">
                 <label>Deskripsi</label>
                 <textarea name="deskripsi" class="form-control"></textarea>
+            </div>
+            <div class="mb-3">
+                <label>Foto Produk (Opsional)</label>
+                <input type="file" name="gambar" accept="image/*" class="form-control">
             </div>
             <div class="mb-3">
                 <label>Harga</label>

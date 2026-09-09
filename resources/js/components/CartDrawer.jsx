@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, Trash2, Plus, Minus, UtensilsCrossed, AlertCircle, ShoppingBag, ChevronRight, Sparkles } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 
 export default function CartDrawer() {
     const {
@@ -18,7 +18,6 @@ export default function CartDrawer() {
         submitOrder
     } = useCart();
 
-    const [generalNotes, setGeneralNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!isCartOpen) return null;
@@ -34,7 +33,7 @@ export default function CartDrawer() {
     const handleCheckout = async () => {
         setIsSubmitting(true);
         try {
-            await submitOrder(generalNotes);
+            await submitOrder();
         } finally {
             setIsSubmitting(false);
         }
@@ -142,6 +141,11 @@ export default function CartDrawer() {
                                                             + {t.name}
                                                         </span>
                                                     ))}
+                                                    {item.customizations.modifiers && item.customizations.modifiers.map(m => (
+                                                        <span key={m.id} className="text-[10px] bg-amber-50 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded-md font-semibold">
+                                                            + {m.nama} {parseFloat(m.harga_tambahan) > 0 ? `(${formatRupiah(m.harga_tambahan)})` : ''}
+                                                        </span>
+                                                    ))}
                                                 </div>
 
                                                 {/* Special notes for kitchen */}
@@ -190,20 +194,6 @@ export default function CartDrawer() {
                                 <span>Tambah Menu Lainnya</span>
                             </button>
 
-                            {/* General Order Notes */}
-                            <div className="bg-white p-3.5 rounded-2xl border border-stone-200/80">
-                                <label className="block font-display font-bold text-xs text-stone-800 mb-1">
-                                    📝 Catatan Umum untuk Dapur / Pelayan
-                                </label>
-                                <textarea
-                                    value={generalNotes}
-                                    onChange={(e) => setGeneralNotes(e.target.value)}
-                                    rows="2"
-                                    placeholder="Contoh: Tolong disajikan bersamaan ya mas, terima kasih..."
-                                    className="w-full p-2.5 rounded-xl border border-stone-200 bg-stone-50 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition"
-                                />
-                            </div>
-
                             {/* Ringkasan Pembayaran */}
                             <div className="bg-white p-4 rounded-2xl border border-stone-200/80 space-y-2">
                                 <h3 className="font-display font-bold text-xs text-stone-900 uppercase tracking-wider mb-2">
@@ -234,10 +224,10 @@ export default function CartDrawer() {
                         <button
                             onClick={handleCheckout}
                             disabled={isSubmitting}
-                            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#82181A] via-[#8E1B1E] to-[#6E1214] hover:from-[#751417] hover:to-[#82181A] text-white font-display font-extrabold text-xs tracking-wider shadow-lg shadow-red-950/20 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-between uppercase"
+                            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-800 to-emerald-900 hover:from-emerald-600 hover:to-emerald-700 text-white font-display font-extrabold text-xs tracking-wider shadow-lg shadow-emerald-950/20 active:scale-[0.98] disabled:opacity-50 transition-all flex items-center justify-between uppercase"
                         >
-                            <span>{isSubmitting ? 'Mengirim Pesanan...' : 'Kirim Pesanan ke Dapur 🍳'}</span>
-                            <span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-amber-200 text-xs font-bold">
+                            <span>{isSubmitting ? 'Memproses Pesanan...' : 'Lanjut Bayar (QRIS / TF) 📱'}</span>
+                            <span className="bg-white/20 px-2.5 py-0.5 rounded-lg text-emerald-200 text-xs font-bold">
                                 {formatRupiah(grandTotal)}
                             </span>
                         </button>

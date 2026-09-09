@@ -1,8 +1,10 @@
 import React from 'react';
-import { PROMO_ITEMS } from '../data/mockData';
+import { useCart } from '../context/CartContext';
 import { Sparkles, Plus, Star, ChevronRight } from 'lucide-react';
 
 export default function PromoBanner({ onSelectItem }) {
+    const { promoItems } = useCart();
+
     const formatRupiah = (num) => {
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -11,32 +13,39 @@ export default function PromoBanner({ onSelectItem }) {
         }).format(num).replace('IDR', 'Rp');
     };
 
+    if (!promoItems || promoItems.length === 0) return null;
+
     return (
-        <section className="pt-3 pb-2 max-w-7xl w-full mx-auto">
+        <section className="pt-3 pb-2 w-full">
             {/* Header */}
-            <div className="px-4 flex items-center justify-between mb-2.5">
+            <div className="px-4 sm:px-6 lg:px-8 flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-1.5">
                     <span className="text-amber-500 text-sm">⭐</span>
                     <h2 className="font-display font-extrabold text-xs tracking-wider uppercase text-[#881B1E] flex items-center gap-1">
                         Rekomendasi Koki & Promo
                     </h2>
                 </div>
-                <button
-                    onClick={() => onSelectItem(PROMO_ITEMS[0])}
-                    className="text-[11px] font-semibold text-amber-600 hover:text-amber-700 flex items-center"
-                >
-                    Lihat Semua
-                    <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                {promoItems.length > 0 && (
+                    <button
+                        onClick={() => onSelectItem(promoItems[0])}
+                        className="text-[11px] font-semibold text-amber-600 hover:text-amber-700 flex items-center"
+                    >
+                        Lihat Semua
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                )}
             </div>
 
             {/* Horizontal Scroll Cards */}
-            <div className="flex gap-3 px-4 overflow-x-auto no-scrollbar pb-1 snap-x">
-                {PROMO_ITEMS.map((item) => (
+            <div 
+                className="flex gap-3 px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar pb-1.5 scroll-pl-4 sm:scroll-pl-6 lg:scroll-pl-8"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+                {promoItems.map((item) => (
                     <div
                         key={item.id}
                         onClick={() => onSelectItem(item)}
-                        className="snap-start shrink-0 w-[240px] bg-white rounded-2xl border border-stone-200/80 shadow-sm hover:shadow-md overflow-hidden cursor-pointer transition-all duration-200 group flex flex-col justify-between"
+                        className="shrink-0 w-[240px] bg-white rounded-2xl border border-stone-200/80 shadow-sm hover:shadow-md overflow-hidden cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                     >
                         {/* Image Container */}
                         <div className="relative h-28 w-full overflow-hidden bg-stone-100">
@@ -46,25 +55,13 @@ export default function PromoBanner({ onSelectItem }) {
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 loading="lazy"
                             />
-                            {/* Badges */}
+                            {/* Badges Asli dari POS */}
                             <div className="absolute top-2 left-2 flex flex-col gap-1">
-                                {item.diskon && (
-                                    <span className="bg-red-600 text-white font-black text-[9px] px-2 py-0.5 rounded-full shadow-sm">
-                                        {item.diskon}
+                                {item.kategori_nama && (
+                                    <span className="bg-[#881B1E] text-white font-black text-[9px] px-2 py-0.5 rounded-full shadow-sm">
+                                        {item.kategori_nama}
                                     </span>
                                 )}
-                                {item.badge && (
-                                    <span className="bg-amber-500/90 backdrop-blur-xs text-stone-950 font-extrabold text-[9px] px-2 py-0.5 rounded-full shadow-sm flex items-center gap-0.5">
-                                        <Sparkles className="w-2.5 h-2.5" />
-                                        {item.badge}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Rating */}
-                            <div className="absolute bottom-2 right-2 bg-stone-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg flex items-center gap-1">
-                                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                                <span>{item.rating}</span>
                             </div>
                         </div>
 
@@ -105,6 +102,8 @@ export default function PromoBanner({ onSelectItem }) {
                         </div>
                     </div>
                 ))}
+                {/* Trailing padding spacer to prevent clipping at the end of scroll */}
+                <div className="shrink-0 w-1 sm:w-2" aria-hidden="true" />
             </div>
         </section>
     );

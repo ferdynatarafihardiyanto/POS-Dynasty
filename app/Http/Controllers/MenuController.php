@@ -11,11 +11,15 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Produk::with('kategori')
-            ->where('aktif', true)
-            ->whereHas('kategori', function ($q) {
-                $q->where('aktif', true);
-            });
+        $query = Produk::with(['kategori', 'modifierGroups' => function($q) {
+            $q->where('modifier_groups.aktif', true)->with(['options' => function($q2) {
+                $q2->where('aktif', true);
+            }]);
+        }])
+        ->where('aktif', true)
+        ->whereHas('kategori', function ($q) {
+            $q->where('aktif', true);
+        });
 
         if ($request->has('kategori_id') && $request->kategori_id != '') {
             $query->where('kategori_id', $request->kategori_id);

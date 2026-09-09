@@ -91,6 +91,20 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0" style="background-color: #fee2e2; color: #dc2626; max-width: 450px; margin-left: auto;">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                <div class="fw-bold small">{{ session('error') }}</div>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0" style="background-color: #fee2e2; color: #dc2626; max-width: 450px; margin-left: auto;">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                <div class="fw-bold small">{{ $errors->first() }}</div>
+            </div>
+        @endif
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h5 class="fw-bold mb-1">Manajemen Meja</h5>
@@ -119,7 +133,7 @@
                                     <td class="text-muted">{{ $m->name ?? '-' }}</td>
                                     <td class="text-muted font-monospace small bg-light rounded px-2">{{ $m->qr_token }}</td>
                                     <td class="text-end">
-                                        <button class="btn-action btn-action-print" title="Cetak QR" onclick="printQR('{{ $m->table_number }}', '{{ url('/menu?meja=' . $m->qr_token) }}')"><i class="bi bi-qr-code"></i></button>
+                                        <button class="btn-action btn-action-print" title="Cetak QR" onclick="printQR('{{ $m->table_number }}', '{{ url('/?qr_token=' . $m->qr_token) }}')"><i class="bi bi-qr-code"></i></button>
                                         <button type="button" class="btn-action btn-action-edit" title="Edit" data-bs-toggle="modal" data-bs-target="#editMejaModal{{ $m->id }}"><i class="bi bi-pencil"></i></button>
                                         <form action="{{ route('admin.meja.destroy', $m->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus meja ini?')">
                                             @csrf @method('DELETE')
@@ -161,6 +175,7 @@
                 
                 <form action="{{ route('admin.meja.store') }}" method="POST">
                     @csrf
+                    <input type="hidden" name="status" value="active">
                     <div class="modal-body px-4 pt-4 pb-2">
                         <div class="mb-3">
                             <label class="form-label">Nomor Meja <span class="text-danger">*</span></label>
@@ -196,6 +211,7 @@
                 <form action="{{ route('admin.meja.update', $m->id) }}" method="POST">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="status" value="{{ $m->status ?? 'active' }}">
                     <div class="modal-body px-4 pt-4 pb-2">
                         <div class="mb-3">
                             <label class="form-label">Nomor Meja <span class="text-danger">*</span></label>

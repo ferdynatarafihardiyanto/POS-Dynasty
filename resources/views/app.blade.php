@@ -15,7 +15,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
 
-<body class="bg-stone-100 text-stone-900 font-sans antialiased selection:bg-amber-500 selection:text-white min-h-screen">
+<body class="bg-stone-50 text-stone-900 font-sans antialiased selection:bg-amber-500 selection:text-white min-h-screen">
     <div id="app"></div>
 </body>
 </html>

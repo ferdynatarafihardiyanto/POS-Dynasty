@@ -50,7 +50,9 @@ class PesananController extends Controller
                         'nama_produk' => $d->nama_produk,
                         'harga' => $d->harga,
                         'jumlah' => $d->jumlah,
-                        'subtotal' => $d->subtotal
+                        'subtotal' => $d->subtotal,
+                        'catatan' => $d->catatan,
+                        'modifiers_snapshot' => $d->modifiers_snapshot
                     ];
                 })
             ]

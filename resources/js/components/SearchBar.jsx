@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react';
 
 export default function SearchBar({ searchQuery, setSearchQuery }) {
     return (
-        <div className="px-4 pt-3 pb-1 max-w-7xl w-full mx-auto">
+        <div className="w-full px-4 sm:px-6 lg:px-8 pt-3 pb-1">
             <div className="relative flex items-center">
                 <Search className="w-4 h-4 text-stone-400 absolute left-3.5 pointer-events-none" />
                 <input

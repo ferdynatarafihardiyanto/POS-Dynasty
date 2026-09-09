@@ -24,27 +24,14 @@ export default function MenuCard({ item, onSelect }) {
                     loading="lazy"
                 />
 
-                {/* Badges Overlay */}
+                {/* Badges Overlay (Kategori Asli POS) */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    {item.badge && (
-                        <span className="bg-[#881B1E] text-white font-extrabold text-[9px] px-2 py-0.5 rounded-full shadow-sm">
-                            {item.badge}
-                        </span>
-                    )}
-                    {item.diskon && (
-                        <span className="bg-amber-400 text-stone-950 font-black text-[9px] px-2 py-0.5 rounded-full shadow-sm">
-                            {item.diskon}
+                    {item.kategori_nama && (
+                        <span className="bg-stone-900/80 backdrop-blur-xs text-white font-bold text-[9px] px-2 py-0.5 rounded-full shadow-xs">
+                            {item.kategori_nama}
                         </span>
                     )}
                 </div>
-
-                {/* Rating Badge */}
-                {item.rating && (
-                    <div className="absolute bottom-2 right-2 bg-stone-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-lg flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                        <span>{item.rating}</span>
-                    </div>
-                )}
             </div>
 
             {/* Information Body */}

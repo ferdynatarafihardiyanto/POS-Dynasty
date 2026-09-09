@@ -21,6 +21,7 @@ class UpdateProdukRequest extends FormRequest
             'kategori_id' => 'required|exists:kategori,id',
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'hpp' => 'required|integer|min:0',
             'harga' => 'required|integer|min:0',
             'stok' => 'required|integer|min:0',

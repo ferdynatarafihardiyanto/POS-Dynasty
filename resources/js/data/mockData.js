@@ -324,9 +324,9 @@ export const WAITER_QUICK_ACTIONS = [
 ];
 
 export const AVAILABLE_TABLES = [
-    { number: '01', name: 'Meja 01 (Indoor Depan)', token: '3KiGgju7Zb', capacity: '2 Orang' },
-    { number: '02', name: 'Meja 02 (Indoor Tengah)', token: 'ZX822wMXX5', capacity: '4 Orang' },
-    { number: '03', name: 'Meja 03 (Indoor Sofa)', token: '6q2VRvfV0r', capacity: '6 Orang' },
-    { number: '04', name: 'Meja 04 (Outdoor Garden)', token: 'KT1DTfb8cD', capacity: '4 Orang' },
-    { number: '05', name: 'Meja 05 (Outdoor Balcony)', token: 'namXX41oft', capacity: '2 Orang' },
+    { number: '01', name: 'Meja 01', token: 'tUTSNEGGhT', capacity: '2 Orang' },
+    { number: '02', name: 'Meja 02', token: 'wQMk92PcpG', capacity: '4 Orang' },
+    { number: '03', name: 'Meja 03', token: 'r6Xi4WXchd', capacity: '6 Orang' },
+    { number: '04', name: 'Meja 04', token: '66Lt7D0Lto', capacity: '4 Orang' },
+    { number: '05', name: 'Meja 05', token: 'OyI3qLTW3U', capacity: '2 Orang' },
 ];

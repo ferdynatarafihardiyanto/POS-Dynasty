@@ -22,7 +22,7 @@ class UpdateCafeTableRequest extends FormRequest
         return [
             'table_number' => 'required|string|max:50',
             'name' => 'nullable|string|max:255',
-            'status' => 'required|in:active,inactive'
+            'status' => 'nullable|in:active,inactive'
         ];
     }
 }

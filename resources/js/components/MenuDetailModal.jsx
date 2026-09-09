@@ -1,15 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, Heart, Share2, Star, Clock, Flame, Sparkles, Check, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Star, Clock, Flame, Sparkles, Check, Plus, Minus, AlertCircle } from 'lucide-react';
 
 export default function MenuDetailModal({ item, onClose }) {
     const { addToCart, tableInfo } = useCart();
 
-    const [isFavorite, setIsFavorite] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [notes, setNotes] = useState('');
+    const [validationError, setValidationError] = useState('');
+    const [isNotesFocused, setIsNotesFocused] = useState(false);
 
-    // Customization states with smart defaults
+    // Refs for smooth auto-scrolling when typing notes
+    const scrollContainerRef = useRef(null);
+    const notesSectionRef = useRef(null);
+    const notesInputRef = useRef(null);
+
+    // Dynamic database modifier groups state
+    const [selectedModifiers, setSelectedModifiers] = useState(() => {
+        const init = {};
+        if (item?.modifier_groups && item.modifier_groups.length > 0) {
+            item.modifier_groups.forEach(g => {
+                init[g.id] = [];
+            });
+        }
+        return init;
+    });
+
+    // Customization states with smart defaults (for mock fallback)
     const [selectedCarb, setSelectedCarb] = useState(() => {
         if (!item?.options_carbs?.choices) return null;
         return item.options_carbs.choices.find(c => c.is_default) || item.options_carbs.choices[0];
@@ -21,6 +38,41 @@ export default function MenuDetailModal({ item, onClose }) {
     });
 
     const [selectedToppings, setSelectedToppings] = useState([]);
+
+    const scrollToNotes = () => {
+        if (notesSectionRef.current && scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const elemRect = notesSectionRef.current.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // Calculate relative offset within the container with 10px top margin
+            const targetTop = elemRect.top - containerRect.top + container.scrollTop - 10;
+            
+            container.scrollTo({
+                top: Math.max(0, targetTop),
+                behavior: 'smooth'
+            });
+
+            // Secondary scroll for mobile viewports / iOS
+            try {
+                notesSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (err) {}
+        }
+    };
+
+    const handleNotesFocus = () => {
+        setIsNotesFocused(true);
+        // Multi-stage trigger to ensure smooth scroll during and after keyboard transition
+        setTimeout(scrollToNotes, 50);
+        setTimeout(scrollToNotes, 250);
+        setTimeout(scrollToNotes, 450);
+    };
+
+    const handleNotesBlur = () => {
+        setTimeout(() => {
+            setIsNotesFocused(false);
+        }, 150);
+    };
 
     useEffect(() => {
         // Lock body scroll when modal is open
@@ -40,6 +92,33 @@ export default function MenuDetailModal({ item, onClose }) {
         }).format(num).replace('IDR', 'Rp');
     };
 
+    const toggleModifierOption = (group, opt) => {
+        setValidationError('');
+        setSelectedModifiers(prev => {
+            const isSingle = group.tipe === 'single' || group.max_pilihan === 1;
+            const currentList = prev[group.id] || [];
+            const isSelected = currentList.some(o => o.id === opt.id);
+
+            if (isSingle) {
+                if (isSelected) {
+                    if (group.wajib_diisi) return prev;
+                    return { ...prev, [group.id]: [] };
+                }
+                return { ...prev, [group.id]: [opt] };
+            } else {
+                if (isSelected) {
+                    return { ...prev, [group.id]: currentList.filter(o => o.id !== opt.id) };
+                } else {
+                    if (group.max_pilihan && currentList.length >= group.max_pilihan) {
+                        setValidationError(`Maksimal ${group.max_pilihan} pilihan untuk ${group.nama}`);
+                        return prev;
+                    }
+                    return { ...prev, [group.id]: [...currentList, opt] };
+                }
+            }
+        });
+    };
+
     const toggleTopping = (topping) => {
         setSelectedToppings(prev => {
             const exists = prev.some(t => t.id === topping.id);
@@ -56,30 +135,35 @@ export default function MenuDetailModal({ item, onClose }) {
     const carbPrice = selectedCarb?.price || 0;
     const spicePrice = selectedSpice?.price || 0;
     const toppingsPrice = selectedToppings.reduce((sum, t) => sum + (t.price || 0), 0);
-    const unitPrice = basePrice + carbPrice + spicePrice + toppingsPrice;
+    const flatModifiers = Object.values(selectedModifiers).flat();
+    const modifiersPrice = flatModifiers.reduce((sum, m) => sum + (parseFloat(m.harga_tambahan) || 0), 0);
+    const unitPrice = basePrice + carbPrice + spicePrice + toppingsPrice + modifiersPrice;
     const totalPrice = unitPrice * quantity;
 
     const handleAddToCart = () => {
+        // Validation for modifier groups
+        if (item.modifier_groups && item.modifier_groups.length > 0) {
+            for (const group of item.modifier_groups) {
+                const selected = selectedModifiers[group.id] || [];
+                if (group.wajib_diisi && selected.length === 0) {
+                    setValidationError(`Varian / Topping "${group.nama}" wajib dipilih!`);
+                    return;
+                }
+                if (group.min_pilihan > 0 && selected.length < group.min_pilihan) {
+                    setValidationError(`Pilih minimal ${group.min_pilihan} pilihan untuk "${group.nama}"!`);
+                    return;
+                }
+            }
+        }
+
         const customizations = {
             carb: selectedCarb,
             spice: selectedSpice,
-            toppings: selectedToppings
+            toppings: selectedToppings,
+            modifiers: flatModifiers
         };
         addToCart(item, customizations, quantity, notes);
         onClose();
-    };
-
-    const handleShare = () => {
-        if (navigator.share) {
-            navigator.share({
-                title: `${item.nama} - Kedai Dynasty`,
-                text: item.deskripsi,
-                url: window.location.href
-            }).catch(() => {});
-        } else {
-            navigator.clipboard.writeText(window.location.href);
-            alert('Link menu berhasil disalin!');
-        }
     };
 
     return (
@@ -90,7 +174,8 @@ export default function MenuDetailModal({ item, onClose }) {
                 <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-stone-200/80 flex items-center justify-between shadow-xs">
                     <button
                         onClick={onClose}
-                        className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95"
+                        className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                        title="Kembali"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
@@ -104,24 +189,17 @@ export default function MenuDetailModal({ item, onClose }) {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setIsFavorite(!isFavorite)}
-                            className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition active:scale-95"
-                        >
-                            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-stone-600'}`} />
-                        </button>
-                        <button
-                            onClick={handleShare}
-                            className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95"
-                        >
-                            <Share2 className="w-4 h-4" />
-                        </button>
-                    </div>
+                    {/* Spacer to keep title centered */}
+                    <div className="w-9 h-9" aria-hidden="true" />
                 </div>
 
                 {/* Scrollable Content Body */}
-                <div className="flex-1 overflow-y-auto no-scrollbar pb-32">
+                <div 
+                    ref={scrollContainerRef}
+                    className={`flex-1 overflow-y-auto no-scrollbar relative transition-all duration-300 ${
+                        isNotesFocused ? 'pb-[380px]' : 'pb-32'
+                    }`}
+                >
                     {/* Hero Image */}
                     <div className="relative h-64 w-full bg-stone-200 overflow-hidden">
                         <img
@@ -170,33 +248,115 @@ export default function MenuDetailModal({ item, onClose }) {
                             )}
                         </div>
 
-                        {/* Meta Tags */}
-                        <div className="mt-3.5 flex items-center gap-2 flex-wrap text-xs font-semibold text-stone-600">
-                            {item.rating && (
-                                <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-xl">
-                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                                    <span>{item.rating} ({item.reviews_count || 100} ulasan)</span>
-                                </div>
-                            )}
-                            {item.prep_time && (
-                                <div className="flex items-center gap-1 px-2.5 py-1 bg-stone-100 text-stone-700 rounded-xl">
-                                    <Clock className="w-3.5 h-3.5 text-stone-500" />
-                                    <span>{item.prep_time}</span>
-                                </div>
-                            )}
-                            {item.portion_tag && (
-                                <div className="flex items-center gap-1 px-2.5 py-1 bg-orange-50 text-orange-800 border border-orange-200/80 rounded-xl">
-                                    <Flame className="w-3.5 h-3.5 text-orange-500" />
-                                    <span>{item.portion_tag}</span>
-                                </div>
-                            )}
-                        </div>
+                        {/* Meta Tags Asli dari POS */}
+                        {item.kategori_nama && (
+                            <div className="mt-3 flex items-center gap-2 flex-wrap text-xs font-semibold">
+                                <span className="px-2.5 py-1 bg-stone-100 text-stone-700 rounded-xl border border-stone-200/60 text-[11px] font-bold">
+                                    {item.kategori_nama}
+                                </span>
+                            </div>
+                        )}
 
-                        {/* Description */}
-                        <p className="mt-3.5 text-xs text-stone-600 leading-relaxed">
-                            {item.deskripsi}
-                        </p>
+                        {/* Description Asli dari POS */}
+                        {item.deskripsi && (
+                            <p className="mt-3 text-xs text-stone-600 leading-relaxed">
+                                {item.deskripsi}
+                            </p>
+                        )}
                     </div>
+
+                    {/* Dynamic Database Modifier Groups & Toppings */}
+                    {item.modifier_groups && item.modifier_groups.length > 0 && item.modifier_groups.map((group) => {
+                        const isSingle = group.tipe === 'single' || group.max_pilihan === 1;
+                        const currentSelected = selectedModifiers[group.id] || [];
+                        const options = group.options || [];
+
+                        if (options.length === 0) return null;
+
+                        return (
+                            <div key={group.id} className="mt-2.5 p-4 bg-white border-y border-stone-200/70">
+                                <div className="flex items-center justify-between mb-1">
+                                    <h3 className="font-display font-bold text-sm text-stone-900 flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#881B1E]"></span>
+                                        {group.nama}
+                                    </h3>
+                                    <div className="flex items-center gap-1">
+                                        {group.wajib_diisi ? (
+                                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                                                WAJIB
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                                                OPSIONAL
+                                            </span>
+                                        )}
+                                        {group.max_pilihan > 1 && (
+                                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                                MAKS {group.max_pilihan}
+                                            </span>
+                                        )}
+                                        {isSingle && (
+                                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                                PILIH 1
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <p className="text-[11px] text-stone-400 mb-3">
+                                    {isSingle
+                                        ? 'Pilih salah satu varian'
+                                        : (group.min_pilihan > 0
+                                            ? `Pilih minimal ${group.min_pilihan} hingga ${group.max_pilihan || 'beberapa'} pilihan`
+                                            : `Bisa pilih hingga ${group.max_pilihan || 'beberapa'} pilihan`
+                                          )
+                                    }
+                                </p>
+
+                                <div className="space-y-2.5">
+                                    {options.map((opt) => {
+                                        const isSelected = currentSelected.some(o => o.id === opt.id);
+                                        const optPrice = parseFloat(opt.harga_tambahan) || 0;
+
+                                        return (
+                                            <div
+                                                key={opt.id}
+                                                onClick={() => toggleModifierOption(group, opt)}
+                                                className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
+                                                    isSelected
+                                                        ? 'border-amber-500 bg-amber-50/50 shadow-xs'
+                                                        : 'border-stone-200 hover:border-stone-300 bg-white'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    {isSingle ? (
+                                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                                            isSelected ? 'border-amber-600 bg-amber-500' : 'border-stone-300 bg-white'
+                                                        }`}>
+                                                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                                        </div>
+                                                    ) : (
+                                                        <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${
+                                                            isSelected ? 'border-amber-600 bg-amber-500 text-stone-950' : 'border-stone-300 bg-white'
+                                                        }`}>
+                                                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="text-xs font-bold text-stone-900">
+                                                            {opt.nama}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-xs font-bold ${isSelected ? 'text-[#881B1E]' : 'text-stone-700'}`}>
+                                                    {optPrice > 0 ? `+${formatRupiah(optPrice)}` : '+Rp 0'}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
 
                     {/* Option 1: Pilihan Nasi / Karbohidrat (Radio) */}
                     {item.options_carbs && (
@@ -368,15 +528,35 @@ export default function MenuDetailModal({ item, onClose }) {
                     )}
 
                     {/* Option 4: Catatan Khusus untuk Koki */}
-                    <div className="mt-2.5 p-4 bg-white border-y border-stone-200/70">
+                    <div 
+                        ref={notesSectionRef}
+                        className={`mt-2.5 p-4 bg-white border-y border-stone-200/70 transition-all duration-300 ${
+                            isNotesFocused ? 'ring-2 ring-[#881B1E]/30 bg-red-50/15' : ''
+                        }`}
+                    >
                         <div className="flex items-center justify-between mb-1">
                             <h3 className="font-display font-bold text-sm text-stone-900 flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#881B1E]"></span>
                                 Catatan Khusus untuk Koki
                             </h3>
-                            <span className="text-[10px] font-medium text-stone-400">
-                                Opsional
-                            </span>
+                            {isNotesFocused ? (
+                                <button
+                                    type="button"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={() => {
+                                        if (notesInputRef.current) notesInputRef.current.blur();
+                                        setIsNotesFocused(false);
+                                    }}
+                                    className="text-[11px] font-bold text-[#881B1E] bg-red-50 hover:bg-red-100 border border-red-200/80 px-2.5 py-0.5 rounded-full transition-all flex items-center gap-1 shadow-xs cursor-pointer active:scale-95"
+                                >
+                                    <Check className="w-3 h-3 stroke-[2.5]" />
+                                    Selesai
+                                </button>
+                            ) : (
+                                <span className="text-[10px] font-medium text-stone-400">
+                                    Opsional
+                                </span>
+                            )}
                         </div>
                         <p className="text-[11px] text-stone-400 mb-2">
                             Beri instruksi khusus untuk persiapan hidangan ini
@@ -384,11 +564,15 @@ export default function MenuDetailModal({ item, onClose }) {
 
                         <div className="relative">
                             <textarea
+                                ref={notesInputRef}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value.slice(0, 120))}
+                                onFocus={handleNotesFocus}
+                                onClick={handleNotesFocus}
+                                onBlur={handleNotesBlur}
                                 rows="2"
                                 placeholder="Contoh: Kuah dipisah, jangan pakai daun bawang, sambal banyakin..."
-                                className="w-full p-3 rounded-2xl border border-stone-200 bg-stone-50 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 focus:bg-white transition"
+                                className="w-full p-3 rounded-2xl border border-stone-200 bg-stone-50 text-xs text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#881B1E]/30 focus:border-[#881B1E] focus:bg-white transition"
                             />
                             <div className="text-right text-[10px] text-stone-400 mt-1">
                                 {notes.length}/120 karakter
@@ -398,8 +582,15 @@ export default function MenuDetailModal({ item, onClose }) {
                 </div>
 
                 {/* Sticky Bottom Action Bar */}
-                <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md p-4 border-t border-stone-200/80 shadow-2xl flex items-center gap-3">
-                    {/* Quantity Selector */}
+                <div className="absolute bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur-md p-4 border-t border-stone-200/80 shadow-2xl flex flex-col gap-2.5">
+                    {validationError && (
+                        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs font-bold text-red-700 flex items-center gap-2 animate-fade-in shadow-xs">
+                            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                            <span>{validationError}</span>
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                        {/* Quantity Selector */}
                     <div className="flex items-center border border-stone-200 rounded-2xl bg-stone-50 p-1">
                         <button
                             onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -429,6 +620,7 @@ export default function MenuDetailModal({ item, onClose }) {
                             {formatRupiah(totalPrice)}
                         </span>
                     </button>
+                    </div>
                 </div>
 
             </div>

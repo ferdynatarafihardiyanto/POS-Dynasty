@@ -11,6 +11,9 @@ export default function TableScannerModal() {
 
     const handleSelectTable = (table) => {
         setTableInfo(table);
+        try {
+            localStorage.setItem('dynasty_table', JSON.stringify(table));
+        } catch (e) {}
         setIsTableModalOpen(false);
         showToast(`Berhasil tersambung ke Meja ${table.number} (${table.name})! 📍`, 'success');
     };

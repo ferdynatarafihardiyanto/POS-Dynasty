@@ -9,6 +9,7 @@ use App\Http\Requests\StoreProdukRequest;
 use App\Http\Requests\UpdateProdukRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProdukController extends Controller
 {
@@ -50,7 +51,11 @@ class ProdukController extends Controller
     public function store(StoreProdukRequest $request)
     {
         DB::transaction(function () use ($request) {
-            $produk = Produk::create($request->validated());
+            $data = $request->validated();
+            if ($request->hasFile('gambar')) {
+                $data['gambar'] = $request->file('gambar')->store('produk', 'public');
+            }
+            $produk = Produk::create($data);
             $produk->modifierGroups()->sync($request->modifier_groups ?? []);
         });
         
@@ -70,7 +75,14 @@ class ProdukController extends Controller
     public function update(UpdateProdukRequest $request, Produk $produk)
     {
         DB::transaction(function () use ($request, $produk) {
-            $produk->update($request->validated());
+            $data = $request->validated();
+            if ($request->hasFile('gambar')) {
+                if ($produk->gambar && Storage::disk('public')->exists($produk->gambar)) {
+                    Storage::disk('public')->delete($produk->gambar);
+                }
+                $data['gambar'] = $request->file('gambar')->store('produk', 'public');
+            }
+            $produk->update($data);
             
             // Preserve existing inactive modifier groups to prevent silent data loss
             $inactiveGroups = $produk->modifierGroups->where('aktif', false)->pluck('id')->toArray();
@@ -92,6 +104,9 @@ class ProdukController extends Controller
     {
         if ($produk->detailPesanan()->count() > 0) {
             return redirect()->route('admin.produk.index')->with('error', 'Produk tidak dapat dihapus karena sudah memiliki riwayat pesanan. Pertimbangkan untuk menonaktifkannya saja.');
+        }
+        if ($produk->gambar && Storage::disk('public')->exists($produk->gambar)) {
+            Storage::disk('public')->delete($produk->gambar);
         }
         $produk->delete();
         return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil dihapus.');

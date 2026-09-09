@@ -104,10 +104,16 @@
 @section('content')
 <div class="pos-main">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between p-4 bg-white border-bottom">
-        <div>
-            <h4 class="mb-0 fw-bold text-dark">Daftar Barang</h4>
-            <div class="text-muted small">Kelola data barang & inventori</div>
+    <div class="d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <!-- Hamburger Button untuk Sidebar di Mobile/Tablet -->
+            <button type="button" class="btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center" id="openSidebarBtn" title="Buka Menu" style="width: 38px; height: 38px;">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark fs-5 fs-md-4">Daftar Barang</h4>
+                <div class="text-muted small">Kelola data barang & inventori</div>
+            </div>
         </div>
         <div class="d-flex align-items-center gap-4">
             <button class="btn btn-light rounded-circle position-relative p-2 border">
@@ -208,7 +214,18 @@
                         @forelse($produks as $p)
                         <tr>
                             <td class="text-muted fw-bold">BRG-{{ str_pad($p->id, 3, '0', STR_PAD_LEFT) }}</td>
-                            <td class="fw-bold text-dark">{{ $p->nama }}</td>
+                            <td class="fw-bold text-dark">
+                                <div class="d-flex align-items-center gap-2">
+                                    @if($p->gambar)
+                                        <img src="{{ asset('storage/' . $p->gambar) }}" alt="{{ $p->nama }}" class="rounded-2 border object-fit-cover shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                    @else
+                                        <div class="rounded-2 border bg-light d-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                            <i class="bi bi-cup-hot" style="font-size: 1.1rem; color: #8b211e;"></i>
+                                        </div>
+                                    @endif
+                                    <span>{{ $p->nama }}</span>
+                                </div>
+                            </td>
                             <td class="text-muted">{{ $p->kategori->nama ?? '-' }}</td>
                             <td class="text-muted">Pcs</td> <!-- Mock data per design -->
                             <td class="text-muted">Rp {{ number_format($p->hpp, 0, ',', '.') }}</td>
@@ -293,12 +310,13 @@
                         <div class="mb-3">
                             <label class="form-label mb-2">Gambar produk <span class="text-muted fw-normal">(opsional)</span></label>
                             <div class="d-flex align-items-center gap-3">
-                                <label class="upload-box text-center p-2">
-                                    <input type="file" class="d-none" name="gambar">
-                                    <div>
+                                <label class="upload-box text-center p-2" for="gambar_upload_tambah" style="cursor: pointer; position: relative; width: 84px; height: 84px; border: 1.5px dashed #ccc; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background-color: #fafafa;">
+                                    <input type="file" class="d-none" id="gambar_upload_tambah" name="gambar" accept="image/png, image/jpeg, image/gif" onchange="previewProductImage(this, 'preview_tambah', 'placeholder_tambah')">
+                                    <div id="placeholder_tambah" class="d-flex flex-column align-items-center">
                                         <i class="bi bi-image text-muted fs-4"></i>
                                         <div class="small text-muted mt-1" style="font-size: 0.7rem;">Klik untuk upload</div>
                                     </div>
+                                    <img id="preview_tambah" src="" alt="Preview" class="d-none w-100 h-100 object-fit-cover" style="position: absolute; top: 0; left: 0;">
                                 </label>
                                 <div class="text-muted small" style="font-size: 0.7rem; line-height: 1.5;">
                                     Format: JPG, PNG, atau GIF<br>
@@ -440,17 +458,21 @@
                         <div class="mb-3">
                             <label class="form-label mb-2">Gambar produk <span class="text-muted fw-normal">(opsional)</span></label>
                             <div class="d-flex align-items-center gap-3">
-                                <label class="upload-box text-center p-2">
-                                    <input type="file" class="d-none" name="gambar">
-                                    <div>
+                                <label class="upload-box text-center p-2" for="gambar_upload_edit_{{ $p->id }}" style="cursor: pointer; position: relative; width: 84px; height: 84px; border: 1.5px dashed #ccc; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background-color: #fafafa;">
+                                    <input type="file" class="d-none" id="gambar_upload_edit_{{ $p->id }}" name="gambar" accept="image/png, image/jpeg, image/gif" onchange="previewProductImage(this, 'preview_edit_{{ $p->id }}', 'placeholder_edit_{{ $p->id }}')">
+                                    <div id="placeholder_edit_{{ $p->id }}" class="d-flex flex-column align-items-center {{ $p->gambar ? 'd-none' : '' }}">
                                         <i class="bi bi-image text-muted fs-4"></i>
                                         <div class="small text-muted mt-1" style="font-size: 0.7rem;">Klik untuk upload</div>
                                     </div>
+                                    <img id="preview_edit_{{ $p->id }}" src="{{ $p->gambar ? asset('storage/' . $p->gambar) : '' }}" alt="Preview" class="{{ $p->gambar ? '' : 'd-none' }} w-100 h-100 object-fit-cover" style="position: absolute; top: 0; left: 0;">
                                 </label>
                                 <div class="text-muted small" style="font-size: 0.7rem; line-height: 1.5;">
                                     Format: JPG, PNG, atau GIF<br>
                                     Ukuran maksimal: 2MB<br>
                                     Rasio: 1:1 (persegi)
+                                    @if($p->gambar)
+                                        <div class="text-success fw-bold mt-1"><i class="bi bi-check-circle-fill"></i> Foto produk aktif</div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -556,6 +578,33 @@
     }
     updateHeaderTime();
     setInterval(updateHeaderTime, 1000);
+
+    // Image preview handler for modal upload
+    function previewProductImage(input, previewId, placeholderId) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file gambar maksimal adalah 2MB');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewEl = document.getElementById(previewId);
+                if (previewEl) {
+                    previewEl.src = e.target.result;
+                    previewEl.classList.remove('d-none');
+                }
+                if (placeholderId) {
+                    const placeholderEl = document.getElementById(placeholderId);
+                    if (placeholderEl) {
+                        placeholderEl.classList.add('d-none');
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    }
 </script>
 @endpush
 @endsection

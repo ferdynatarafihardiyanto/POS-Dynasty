@@ -64,5 +64,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'role:admin,kasir'])->group(function () {
         Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
         Route::post('/pos/checkout', [POSController::class, 'checkout'])->name('pos.checkout');
+        Route::get('/pos/pesanan-aktif', [POSController::class, 'pesananAktif'])->name('pos.pesanan_aktif');
+        Route::patch('/pos/pesanan/{id}/status', [POSController::class, 'ubahStatusPesanan'])->name('pos.ubah_status');
+        Route::post('/pos/pesanan/{id}/bayar', [POSController::class, 'bayarPesananMeja'])->name('pos.bayar_pesanan');
     });
 });

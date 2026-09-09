@@ -279,6 +279,11 @@
                                             <div class="fw-bold text-dark" x-text="formatRupiah(item.subtotal)"></div>
                                         </div>
                                         <div class="text-muted small" x-text="formatRupiah(item.harga) + ' x ' + item.jumlah"></div>
+                                        <template x-if="item.catatan">
+                                            <div class="small mt-1 text-danger fst-italic">
+                                                <i class="bi bi-chat-left-text me-1"></i>Catatan: <span x-text="item.catatan"></span>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>

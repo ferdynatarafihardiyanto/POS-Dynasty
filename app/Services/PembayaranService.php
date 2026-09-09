@@ -33,11 +33,11 @@ class PembayaranService
                 throw new Exception("Pesanan tidak ditemukan.");
             }
 
-            if ($pesanan->status === 'dibayar') {
+            if ($pesanan->status === 'dibayar' || $pesanan->status === 'selesai') {
                 throw new Exception("Pesanan sudah dibayar.");
             }
 
-            if ($pesanan->status !== 'menunggu_pembayaran') {
+            if (!in_array($pesanan->status, ['menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'disajikan'])) {
                 throw new Exception("Pesanan tidak dapat dibayar.");
             }
 
@@ -85,7 +85,11 @@ class PembayaranService
                 'dibayar_pada' => now()
             ]);
 
-            $pesanan->status = 'dibayar';
+            if ($pesanan->status === 'disajikan') {
+                $pesanan->status = 'selesai';
+            } else {
+                $pesanan->status = 'diproses';
+            }
             $pesanan->save();
 
             DB::commit();
