@@ -56,76 +56,105 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
             }
 
             const snapToken = res.data.data.snap_token;
+            const redirectUrl = res.data.data.redirect_url;
+            const clientKey = res.data.data.client_key || 'SB-Mid-client-Qx6UwA5DFHHUPt2B';
 
-            // 2. Periksa ketersediaan Snap SDK
-            if (!window.snap) {
-                showToast('Modul pembayaran Midtrans sedang dimuat, coba 1 detik lagi...', 'warning');
-                setIsSubmitting(false);
-                return;
-            }
+            const triggerPay = () => {
+                if (window.snap && typeof window.snap.pay === 'function') {
+                    window.snap.pay(snapToken, {
+                        onSuccess: async function(result) {
+                            console.log('Midtrans Payment Success:', result);
+                            setIsSubmitting(true);
 
-            // 3. Munculkan Pop-up Resmi Midtrans Snap
-            window.snap.pay(snapToken, {
-                onSuccess: async function(result) {
-                    console.log('Midtrans Payment Success:', result);
-                    setIsSubmitting(true);
+                            // Konfirmasi sinkron ke server kita
+                            try {
+                                await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/midtrans-confirm`, {
+                                    payment_type: result?.payment_type || 'qris'
+                                });
+                            } catch (e) {
+                                console.warn('Confirm fallback notice:', e);
+                            }
 
-                    // Konfirmasi sinkron ke server kita
-                    try {
-                        await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/midtrans-confirm`, {
-                            payment_type: result?.payment_type || 'qris'
-                        });
-                    } catch (e) {
-                        console.warn('Confirm fallback notice:', e);
-                    }
+                            const updatedOrder = {
+                                ...order,
+                                customerName: trimmedName,
+                                nama_pelanggan: trimmedName,
+                                metode_pembayaran: result?.payment_type || 'midtrans',
+                                status: 'diproses',
+                                status_pembayaran: 'dibayar'
+                            };
 
-                    const updatedOrder = {
-                        ...order,
-                        customerName: trimmedName,
-                        nama_pelanggan: trimmedName,
-                        metode_pembayaran: result?.payment_type || 'midtrans',
-                        status: 'diproses',
-                        status_pembayaran: 'dibayar'
-                    };
+                            if (typeof setActiveOrder === 'function') {
+                                setActiveOrder(updatedOrder);
+                            }
 
-                    if (typeof setActiveOrder === 'function') {
-                        setActiveOrder(updatedOrder);
-                    }
+                            if (typeof setOrders === 'function') {
+                                setOrders(prev => {
+                                    if (!Array.isArray(prev)) return [updatedOrder];
+                                    return prev.map(o => {
+                                        const oNum = (o?.orderNumber || '').replace(/^#/, '');
+                                        return (oNum === cleanOrderNumber || o?.orderNumber === order?.orderNumber) ? updatedOrder : o;
+                                    });
+                                });
+                            }
 
-                    if (typeof setOrders === 'function') {
-                        setOrders(prev => {
-                            if (!Array.isArray(prev)) return [updatedOrder];
-                            return prev.map(o => {
-                                const oNum = (o?.orderNumber || '').replace(/^#/, '');
-                                return (oNum === cleanOrderNumber || o?.orderNumber === order?.orderNumber) ? updatedOrder : o;
-                            });
-                        });
-                    }
+                            if (typeof showToast === 'function') {
+                                showToast(`🎉 Pembayaran Berhasil! Pesanan a.n. ${trimmedName} segera dimasak.`, 'success');
+                            }
 
-                    if (typeof showToast === 'function') {
-                        showToast(`🎉 Pembayaran Berhasil! Pesanan a.n. ${trimmedName} segera dimasak.`, 'success');
-                    }
-
-                    setIsSubmitting(false);
-                    if (typeof onClose === 'function') {
-                        onClose();
-                    }
-                },
-                onPending: function(result) {
-                    console.log('Midtrans Payment Pending:', result);
-                    showToast('Menunggu Anda menyelesaikan pembayaran...', 'info');
-                    setIsSubmitting(false);
-                },
-                onError: function(result) {
-                    console.error('Midtrans Payment Error:', result);
-                    showToast('Pembayaran Midtrans gagal atau kadaluarsa.', 'warning');
-                    setIsSubmitting(false);
-                },
-                onClose: function() {
-                    console.log('Customer menutup pop-up Midtrans.');
+                            setIsSubmitting(false);
+                            if (typeof onClose === 'function') {
+                                onClose();
+                            }
+                        },
+                        onPending: function(result) {
+                            console.log('Midtrans Payment Pending:', result);
+                            showToast('Menunggu Anda menyelesaikan pembayaran...', 'info');
+                            setIsSubmitting(false);
+                        },
+                        onError: function(result) {
+                            console.error('Midtrans Payment Error:', result);
+                            showToast('Pembayaran Midtrans gagal atau kadaluarsa.', 'warning');
+                            setIsSubmitting(false);
+                        },
+                        onClose: function() {
+                            console.log('Customer menutup pop-up Midtrans.');
+                            setIsSubmitting(false);
+                        }
+                    });
+                } else if (redirectUrl) {
+                    // Fallback jika iframe diblokir oleh browser HP, buka halaman Midtrans resmi langsung
+                    window.location.href = redirectUrl;
+                } else {
+                    showToast('Gagal memuat modul pembayaran. Coba sesaat lagi.', 'warning');
                     setIsSubmitting(false);
                 }
-            });
+            };
+
+            // Jika script snap belum aktif, muat secara dinamis
+            if (!window.snap) {
+                const existingScript = document.getElementById('midtrans-snap-js');
+                if (existingScript) existingScript.remove();
+
+                const script = document.createElement('script');
+                script.id = 'midtrans-snap-js';
+                script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+                script.setAttribute('data-client-key', clientKey);
+                script.onload = () => {
+                    setTimeout(triggerPay, 150);
+                };
+                script.onerror = () => {
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                    } else {
+                        showToast('Gagal memuat Midtrans Snap SDK.', 'warning');
+                        setIsSubmitting(false);
+                    }
+                };
+                document.head.appendChild(script);
+            } else {
+                triggerPay();
+            }
 
         } catch (err) {
             console.error('Midtrans Pay error:', err);
