@@ -165,7 +165,7 @@
                                      class="w-100 h-100 object-fit-cover" 
                                      :style="product.stok <= 0 ? 'filter: grayscale(85%) brightness(0.85); opacity: 0.75; transition: all 0.3s;' : 'transition: all 0.3s;'"
                                      :alt="product.nama"
-                                     @error="$event.target.src = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'">
+                                     x-on:error="$event.target.src = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'">
                                 
                                 <span class="position-absolute top-0 end-0 m-2 badge bg-dark opacity-75 rounded-pill px-3 py-2 text-uppercase" style="font-size: 0.7rem;" x-text="product.kategori ? product.kategori.nama : 'Lainnya'"></span>
                                 
