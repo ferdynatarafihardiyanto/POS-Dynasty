@@ -140,6 +140,9 @@
         <button type="button" class="btn text-white shadow-sm rounded-3 fw-bold px-4" style="background-color: #8b211e;" onclick="window.print()">
             <i class="bi bi-printer-fill me-1"></i> Cetak / Simpan PDF
         </button>
+        <button type="button" class="btn btn-success shadow-sm rounded-3 fw-semibold" onclick="downloadQrImage()">
+            <i class="bi bi-download me-1"></i> Download Gambar (PNG)
+        </button>
         <button type="button" class="btn btn-dark shadow-sm rounded-3 fw-semibold" onclick="copyLink()">
             <i class="bi bi-clipboard me-1"></i> Salin Link
         </button>
@@ -174,6 +177,24 @@
             }).catch(() => {
                 prompt('Salin link ini:', link);
             });
+        }
+
+        async function downloadQrImage() {
+            const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data={{ urlencode($qrUrl) }}";
+            try {
+                const res = await fetch(qrSrc);
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "QR_Meja_{{ $meja->table_number }}.png";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } catch (e) {
+                window.open(qrSrc, '_blank');
+            }
         }
 
         // Otomatis buka dialog cetak
