@@ -382,12 +382,18 @@ document.addEventListener('alpine:init', () => {
         },
         
         getKasirName(trx) {
-            // Karena user relasi belum fix di DB, kita mock nama kasir dari auth saat ini, 
-            // atau dari catatan pelanggan "NamaPelanggan (Via QRIS)"
+            if (trx.nama_pelanggan && !trx.nama_pelanggan.startsWith('Pelanggan Meja')) {
+                return trx.nama_pelanggan;
+            }
             let catatan = trx.catatan || '';
-            let name = catatan.split(' (Via')[0];
-            if (!name || name.trim() === '') return 'Akbar Hidayat'; // Sesuai referensi
-            return name;
+            if (catatan.includes('Pemesan:')) {
+                let parts = catatan.split('Pemesan:')[1].split('|')[0].trim();
+                if (parts) return parts;
+            }
+            if (trx.meja) {
+                return 'Meja ' + (trx.meja.table_number || trx.meja.id);
+            }
+            return 'Kasir POS';
         },
         
         getTotalItems(trx) {
@@ -396,16 +402,23 @@ document.addEventListener('alpine:init', () => {
         },
         
         getPaymentMethod(trx) {
+            if (trx.pembayaran && trx.pembayaran.metode_pembayaran) {
+                const m = trx.pembayaran.metode_pembayaran.toLowerCase();
+                if (m === 'qris') return 'QRIS';
+                if (m === 'transfer') return 'Debit / VA';
+                if (m === 'cash') return 'Tunai';
+                return trx.pembayaran.metode_pembayaran.toUpperCase();
+            }
             if (!trx.catatan) return 'Tunai';
-            if (trx.catatan.includes('QRIS')) return 'QRIS';
-            if (trx.catatan.includes('DEBIT')) return 'Debit';
+            if (trx.catatan.toUpperCase().includes('QRIS')) return 'QRIS';
+            if (trx.catatan.toUpperCase().includes('DEBIT') || trx.catatan.toUpperCase().includes('TRANSFER')) return 'Debit';
             return 'Tunai';
         },
         
         getPaymentClass(trx) {
             const method = this.getPaymentMethod(trx).toLowerCase();
-            if (method === 'qris') return 'method-qris';
-            if (method === 'debit') return 'method-debit';
+            if (method.includes('qris')) return 'method-qris';
+            if (method.includes('debit') || method.includes('transfer') || method.includes('va')) return 'method-debit';
             return 'method-tunai';
         },
         
