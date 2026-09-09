@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { ArrowLeft, CheckCircle2, Clock, ChefHat, BellRing, Sparkles, ReceiptText, Plus, QrCode } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, ChefHat, BellRing, Sparkles, ReceiptText, Plus, QrCode, Zap } from 'lucide-react';
 import CustomerPayModal from './CustomerPayModal';
 import CustomerReceiptModal from './CustomerReceiptModal';
 
@@ -31,11 +31,24 @@ export default function OrderStatusModal() {
     const currentOrder = activeOrder || orders[0];
 
     const formatRupiah = (num) => {
+        const val = parseFloat(num) || 0;
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
             maximumFractionDigits: 0
-        }).format(num).replace('IDR', 'Rp');
+        }).format(val).replace('IDR', 'Rp');
+    };
+
+    const formatSafeTime = (ts) => {
+        try {
+            if (!ts) return '';
+            const cleanTs = typeof ts === 'string' ? ts.replace(' ', 'T') : ts;
+            const d = new Date(cleanTs);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+        } catch {
+            return '';
+        }
     };
 
     const handleOpenPayModal = () => {
@@ -203,7 +216,7 @@ export default function OrderStatusModal() {
                                         #{currentOrder.orderNumber}
                                     </h3>
                                     <span className="text-[11px] text-amber-200/80">
-                                        {new Date(currentOrder.timestamp || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                                        {formatSafeTime(currentOrder.timestamp || Date.now())}
                                     </span>
                                 </div>
                                 <div className="text-right">
@@ -211,7 +224,7 @@ export default function OrderStatusModal() {
                                         Meja
                                     </span>
                                     <span className="font-display font-black text-2xl text-white">
-                                        {currentOrder.tableNumber}
+                                        {currentOrder.tableNumber || tableInfo?.number || '-'}
                                     </span>
                                 </div>
                             </div>
@@ -421,7 +434,7 @@ export default function OrderStatusModal() {
                                                 )}
                                             </div>
                                             <span className="font-bold text-stone-900 shrink-0">
-                                                {formatRupiah(item.totalPrice || (item.harga * item.jumlah))}
+                                                {formatRupiah(item.totalPrice ?? ((item.unitPrice || item.harga || 0) * (item.quantity || item.jumlah || 1)) ?? 0)}
                                             </span>
                                         </div>
                                     ))}

@@ -17,11 +17,12 @@ export default function OrderHistoryModal() {
     if (!isOrderHistoryOpen) return null;
 
     const formatRupiah = (num) => {
+        const val = parseFloat(num) || 0;
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
             maximumFractionDigits: 0
-        }).format(num).replace('IDR', 'Rp');
+        }).format(val).replace('IDR', 'Rp');
     };
 
     const getStatusBadge = (order) => {
