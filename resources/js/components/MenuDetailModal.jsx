@@ -5,8 +5,8 @@ import { ArrowLeft, Star, Clock, Flame, Sparkles, Check, Plus, Minus, AlertCircl
 export default function MenuDetailModal({ item, onClose }) {
     const { addToCart, tableInfo } = useCart();
 
-    const [quantity, setQuantity] = useState(1);
-    const [notes, setNotes] = useState('');
+    const [quantity, setQuantity] = useState(item?.initialQuantity || 1);
+    const [notes, setNotes] = useState(item?.initialNotes || '');
     const [validationError, setValidationError] = useState('');
     const [isNotesFocused, setIsNotesFocused] = useState(false);
 
@@ -21,6 +21,14 @@ export default function MenuDetailModal({ item, onClose }) {
         if (item?.modifier_groups && item.modifier_groups.length > 0) {
             item.modifier_groups.forEach(g => {
                 init[g.id] = [];
+                if (item.initialModifiers && Array.isArray(item.initialModifiers)) {
+                    const matched = item.initialModifiers.filter(m =>
+                        g.options?.some(opt => opt.id === (m.id || m.option_id))
+                    );
+                    if (matched.length > 0) {
+                        init[g.id] = matched.map(m => g.options.find(opt => opt.id === (m.id || m.option_id))).filter(Boolean);
+                    }
+                }
             });
         }
         return init;

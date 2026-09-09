@@ -14,10 +14,9 @@ import Toast from './components/Toast';
 import { Sparkles, UtensilsCrossed, SearchX } from 'lucide-react';
 
 function MainCatalog() {
-    const { menuList } = useCart();
+    const { menuList, selectedDetailItem, setSelectedDetailItem } = useCart();
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedDetailItem, setSelectedDetailItem] = useState(null);
 
     // Filter menu items by category & search query
     const filteredItems = useMemo(() => {
@@ -117,6 +116,7 @@ function MainCatalog() {
             {/* Modals & Drawers */}
             {selectedDetailItem && (
                 <MenuDetailModal
+                    key={`detail-${selectedDetailItem.id || selectedDetailItem.backend_id}-${selectedDetailItem.initialQuantity || 1}-${selectedDetailItem.initialNotes || ''}`}
                     item={selectedDetailItem}
                     onClose={() => setSelectedDetailItem(null)}
                 />

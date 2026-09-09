@@ -13,6 +13,9 @@ export default function OrderStatusModal() {
         setIsCartOpen,
         cartItems,
         setCartItems,
+        menuList,
+        selectedDetailItem,
+        setSelectedDetailItem,
         activeOrder,
         orders,
         setActiveOrder,
@@ -39,6 +42,30 @@ export default function OrderStatusModal() {
         setIsPayModalOpen(true);
     };
 
+    const openItemDetail = (item) => {
+        if (!item) return;
+        const pId = item.menuItem?.backend_id || item.menuItem?.id || item.produk_id;
+        const pName = (item.menuItem?.nama || item.nama_produk || '').toLowerCase();
+        const fullItem = (menuList || []).find(m => 
+            (pId && (m.id == pId || m.backend_id == pId)) || 
+            (pName && m.nama?.toLowerCase() === pName)
+        );
+
+        const itemToOpen = {
+            ...(fullItem || item.menuItem || {}),
+            id: fullItem?.id || pId || 1,
+            nama: fullItem?.nama || item.menuItem?.nama || item.nama_produk || 'Menu',
+            harga: fullItem?.harga || item.unitPrice || item.harga || 0,
+            gambar: fullItem?.gambar || item.menuItem?.gambar || item.menuItem?.gambar_url || '/images/produk/americano.jpg',
+            initialQuantity: item.quantity || item.jumlah || 1,
+            initialNotes: item.notes || item.catatan || '',
+            initialModifiers: item.customizations?.modifiers || []
+        };
+
+        setIsOrderStatusOpen(false);
+        setSelectedDetailItem(itemToOpen);
+    };
+
     const handleBack = () => {
         if (!isPaid && currentOrder) {
             if (currentOrder.items && currentOrder.items.length > 0) {
@@ -54,12 +81,13 @@ export default function OrderStatusModal() {
                     customizations: it.customizations || { modifiers: [] }
                 }));
                 setCartItems(itemsToRestore);
+
+                // Open Detail Menu (Gambar 2) of the item!
+                openItemDetail(currentOrder.items[0]);
+                return;
             }
-            setIsOrderStatusOpen(false);
-            setIsCartOpen(true);
-        } else {
-            setIsOrderStatusOpen(false);
         }
+        setIsOrderStatusOpen(false);
     };
 
     const isPaid = (currentOrder?.status_pembayaran === 'dibayar') ||
@@ -362,7 +390,12 @@ export default function OrderStatusModal() {
 
                                 <div className="space-y-2.5 divide-y divide-stone-100 text-xs">
                                     {currentOrder.items?.map((item, idx) => (
-                                        <div key={idx} className="pt-2 first:pt-0 flex justify-between gap-2">
+                                        <div
+                                            key={idx}
+                                            onClick={() => !isPaid && openItemDetail(item)}
+                                            className={`pt-2 first:pt-0 flex justify-between gap-2 ${!isPaid ? 'cursor-pointer hover:bg-stone-100/70 p-1.5 -mx-1.5 rounded-xl transition' : ''}`}
+                                            title={!isPaid ? 'Klik untuk melihat / ubah detail menu' : undefined}
+                                        >
                                             <div className="flex-1">
                                                 <div className="font-bold text-stone-800">
                                                     {item.quantity}x {item.menuItem?.nama || item.nama_produk || 'Menu'}

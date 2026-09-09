@@ -184,6 +184,7 @@ export const CartProvider = ({ children }) => {
     const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
     const [isWaiterModalOpen, setIsWaiterModalOpen] = useState(false);
     const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+    const [selectedDetailItem, setSelectedDetailItem] = useState(null);
     const [toast, setToast] = useState(null);
     const [menuList, setMenuList] = useState(ALL_MENU_ITEMS);
     const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
@@ -691,7 +692,9 @@ export const CartProvider = ({ children }) => {
                 isLoadingMenu,
                 backendCategories,
                 availableTables,
-                clearDeviceSession
+                clearDeviceSession,
+                selectedDetailItem,
+                setSelectedDetailItem
             }}
         >
             {children}
