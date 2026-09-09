@@ -1003,6 +1003,12 @@
                 </div>
             </div>
         </div>
+    <!-- Floating Audio Alert saat Pesanan Masuk (Bantu Buka Izin Audio Browser) -->
+    <div x-show="pendingOrderToAnnounce" x-cloak class="position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg" style="z-index: 1085;">
+        <button type="button" @click="openTableOrdersModal()" class="btn btn-danger rounded-pill px-4 py-2.5 fw-bold d-flex align-items-center gap-2 border border-2 border-white shadow-lg">
+            <i class="bi bi-bell-fill fs-5 text-warning"></i>
+            <span>🔔 Pesanan Meja Masuk! Klik untuk Dengar Suara & Buka</span>
+        </button>
     </div>
 </div>
 
@@ -1066,8 +1072,8 @@ document.addEventListener('alpine:init', () => {
         tablePayCashReceived: 0,
         isSubmittingTablePay: false,
         lastTableOrderCount: 0,
-        knownOrderIds: new Set(),
-        isFirstOrderFetch: true,
+        pendingOrderToAnnounce: null,
+        userHasInteracted: false,
         audioCtx: null,
         tableOrdersModalInstance: null,
         tableOrderPayModalInstance: null,
@@ -1138,6 +1144,25 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
             }, 100);
+
+            // Listener otomatis meng-unlock audio browser saat kasir melakukan interaksi pertama
+            const unlockAudioOnGesture = () => {
+                this.userHasInteracted = true;
+                if (this.audioCtx && this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+                if ('speechSynthesis' in window && window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                }
+                if (this.pendingOrderToAnnounce) {
+                    const order = this.pendingOrderToAnnounce;
+                    this.pendingOrderToAnnounce = null;
+                    this.announceOrder(order);
+                }
+            };
+            ['click', 'touchstart', 'keydown'].forEach(evt => {
+                window.addEventListener(evt, unlockAudioOnGesture, { passive: true });
+            });
 
             // Global Keyboard Shortcuts
             window.addEventListener('keydown', (e) => {
@@ -1608,6 +1633,23 @@ document.addEventListener('alpine:init', () => {
             this.toastTimeout = setTimeout(() => { this.showToast = false; }, duration);
         },
 
+        getAnnouncedOrders() {
+            try {
+                const s = sessionStorage.getItem('pos_announced_orders');
+                return s ? new Set(JSON.parse(s)) : new Set();
+            } catch (e) {
+                return new Set();
+            }
+        },
+
+        markOrderAnnounced(orderId) {
+            try {
+                const s = this.getAnnouncedOrders();
+                s.add(orderId);
+                sessionStorage.setItem('pos_announced_orders', JSON.stringify(Array.from(s)));
+            } catch (e) {}
+        },
+
         playChime() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1625,29 +1667,30 @@ document.addEventListener('alpine:init', () => {
                 const gain1 = ctx.createGain();
                 osc1.type = 'sine';
                 osc1.frequency.setValueAtTime(587.33, now); // D5
-                gain1.gain.setValueAtTime(0.25, now);
-                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 osc1.connect(gain1);
                 gain1.connect(ctx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.28);
+                osc1.stop(now + 0.35);
 
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
                 osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(880, now + 0.12); // A5
-                gain2.gain.setValueAtTime(0.3, now + 0.12);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc2.frequency.setValueAtTime(880, now + 0.15); // A5
+                gain2.gain.setValueAtTime(0.35, now + 0.15);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
                 osc2.connect(gain2);
                 gain2.connect(ctx.destination);
-                osc2.start(now + 0.12);
-                osc2.stop(now + 0.5);
+                osc2.start(now + 0.15);
+                osc2.stop(now + 0.6);
             } catch (e) {
-                console.log('Audio chime not allowed or failed:', e);
+                console.log('Audio chime error:', e);
             }
         },
 
         announceOrder(order) {
+            if (!order) return;
             try {
                 this.playChime();
 
@@ -1668,7 +1711,9 @@ document.addEventListener('alpine:init', () => {
 
                 setTimeout(() => {
                     try {
+                        window.speechSynthesis.resume();
                         window.speechSynthesis.cancel();
+
                         const utterance = new SpeechSynthesisUtterance(speechText);
                         utterance.lang = 'id-ID';
                         utterance.rate = 0.95;
@@ -1680,11 +1725,18 @@ document.addEventListener('alpine:init', () => {
                             utterance.voice = idVoice;
                         }
 
+                        utterance.onerror = (event) => {
+                            console.warn('Speech error event:', event.error);
+                            if (event.error === 'not-allowed') {
+                                this.pendingOrderToAnnounce = order;
+                            }
+                        };
+
                         window.speechSynthesis.speak(utterance);
                     } catch (err) {
-                        console.log('Speech error:', err);
+                        console.log('Speech synthesis speak error:', err);
                     }
-                }, 380);
+                }, 400);
             } catch (e) {
                 console.log('announceOrder failed:', e);
             }
@@ -1695,6 +1747,7 @@ document.addEventListener('alpine:init', () => {
             if ('speechSynthesis' in window) {
                 setTimeout(() => {
                     try {
+                        window.speechSynthesis.resume();
                         window.speechSynthesis.cancel();
                         const utterance = new SpeechSynthesisUtterance("Uji coba suara notifikasi POS Dynasty berhasil. Pesanan meja masuk akan disuarakan otomatis dengan nama pemesan dan menu.");
                         utterance.lang = 'id-ID';
@@ -1706,7 +1759,7 @@ document.addEventListener('alpine:init', () => {
                     } catch (err) {
                         console.log('Speech error:', err);
                     }
-                }, 380);
+                }, 400);
             }
             this.triggerToast('🔔 Suara notifikasi dan bel aktif!', 'success');
         },
@@ -1722,23 +1775,26 @@ document.addEventListener('alpine:init', () => {
                 if (res.ok) {
                     const json = await res.json();
                     const newOrders = json.data || [];
+                    this.tableOrders = newOrders;
 
-                    if (this.isFirstOrderFetch) {
-                        this.knownOrderIds = new Set(newOrders.map(o => o.id));
-                        this.isFirstOrderFetch = false;
-                    } else {
-                        // Cari pesanan baru yang belum ada di knownOrderIds
-                        const freshOrders = newOrders.filter(o => !this.knownOrderIds.has(o.id));
-                        if (freshOrders.length > 0) {
-                            freshOrders.forEach(o => this.knownOrderIds.add(o.id));
-                            // Suarakan pesanan baru pertama yang masuk
-                            this.announceOrder(freshOrders[0]);
-                            this.triggerToast(`🔔 Pesanan Baru Meja ${freshOrders[0].meja_nomor} (${freshOrders[0].nama_pelanggan}) Masuk!`, 'warning', 4000);
-                        }
+                    // Cek pesanan yang belum pernah diumumkan di sesi browser ini
+                    const announced = this.getAnnouncedOrders();
+                    const unannounced = newOrders.filter(o => {
+                        return (o.status === 'menunggu_pembayaran' || o.status === 'menunggu_konfirmasi' || o.status === 'diproses') 
+                            && !announced.has(o.id);
+                    });
+
+                    if (unannounced.length > 0) {
+                        const targetOrder = unannounced[0];
+                        // Tandai semua pesanan yang belum diumumkan agar tidak berulang setiap 4 detik
+                        unannounced.forEach(o => this.markOrderAnnounced(o.id));
+
+                        this.pendingOrderToAnnounce = targetOrder;
+                        this.announceOrder(targetOrder);
+                        this.triggerToast(`🔔 Pesanan Baru Meja ${targetOrder.meja_nomor} (${targetOrder.nama_pelanggan}) Masuk!`, 'warning', 5000);
                     }
 
                     this.lastTableOrderCount = newOrders.length;
-                    this.tableOrders = newOrders;
                 }
             } catch (e) {
                 console.log('Error fetching active table orders:', e);
@@ -1746,6 +1802,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         openTableOrdersModal() {
+            this.userHasInteracted = true;
+            if (this.pendingOrderToAnnounce) {
+                const o = this.pendingOrderToAnnounce;
+                this.pendingOrderToAnnounce = null;
+                this.announceOrder(o);
+            }
             this.fetchActiveTableOrders();
             this.tableOrdersModalInstance?.show();
         },
