@@ -10,10 +10,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     const [payMethod, setPayMethod] = useState('qris'); // 'qris' or 'transfer'
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [copiedAccount, setCopiedAccount] = useState(null);
-    const [customerName, setCustomerName] = useState(() => {
-        return order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || '';
-    });
-    const [nameError, setNameError] = useState('');
+    const customerName = (order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || 'Pelanggan').trim();
 
     if (!isOpen || !order) return null;
 
@@ -33,16 +30,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     };
 
     const handleMidtransPayment = async () => {
-        const trimmedName = customerName.trim();
-        if (!trimmedName) {
-            setNameError('Silakan masukkan nama Anda terlebih dahulu untuk dicetak di struk.');
-            return;
-        }
-
-        setNameError('');
-        localStorage.setItem('pos_customer_name', trimmedName);
+        const trimmedName = customerName || 'Pelanggan';
         setIsSubmitting(true);
-
         const cleanOrderNumber = (order.orderNumber || '').replace(/^#/, '');
 
         try {
@@ -164,14 +153,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     };
 
     const handleConfirmPayment = async () => {
-        const trimmedName = customerName.trim();
-        if (!trimmedName) {
-            setNameError('Silakan masukkan nama Anda terlebih dahulu untuk dicetak di struk.');
-            return;
-        }
-
+        const trimmedName = customerName || 'Pelanggan';
         setIsSubmitting(true);
-        setNameError('');
         localStorage.setItem('pos_customer_name', trimmedName);
 
         const cleanOrderNumber = (order.orderNumber || '').replace(/^#/, '');
@@ -278,40 +261,26 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </span>
                     </div>
 
-                    {/* Form Input Nama Pemesan (Untuk Dicetak di Struk) */}
-                    <div className="bg-white p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs space-y-1.5">
-                        <label className="block text-xs font-bold text-stone-800 flex items-center justify-between">
+                    {/* Info Nama Pemesan (Tercatat dari Keranjang Pesanan - Tidak Bisa Diedit Ulang) */}
+                    <div className="bg-stone-50/90 p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs space-y-1.5">
+                        <div className="flex items-center justify-between text-xs font-bold text-stone-800">
                             <span className="flex items-center gap-1.5">
                                 <User className="w-3.5 h-3.5 text-[#881B1E]" />
-                                Nama Pemesan
+                                <span>Nama Pemesan</span>
                             </span>
-                            <span className="text-[10px] text-amber-700 bg-amber-50 font-bold px-2 py-0.5 rounded-full border border-amber-200/60">
-                                Dicetak di Struk
+                            <span className="text-[10px] text-emerald-800 bg-emerald-50 font-bold px-2 py-0.5 rounded-full border border-emerald-200/70 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                Dicatat di Struk
                             </span>
-                        </label>
-                        <input
-                            type="text"
-                            value={customerName}
-                            onChange={(e) => {
-                                setCustomerName(e.target.value);
-                                if (nameError) setNameError('');
-                            }}
-                            placeholder="Masukkan nama Anda (misal: Natan / Budi)..."
-                            maxLength={40}
-                            className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-semibold text-stone-900 bg-stone-50/60 focus:bg-white focus:outline-none transition ${
-                                nameError
-                                    ? 'border-red-400 focus:ring-2 focus:ring-red-400/20'
-                                    : 'border-stone-200 focus:border-[#881B1E] focus:ring-2 focus:ring-[#881B1E]/10'
-                            }`}
-                        />
-                        {nameError && (
-                            <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 pt-0.5">
-                                <AlertCircle className="w-3 h-3 shrink-0" />
-                                {nameError}
-                            </p>
-                        )}
+                        </div>
+
+                        <div className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-900 bg-white shadow-2xs flex items-center justify-between select-none">
+                            <span className="truncate text-stone-900 font-extrabold">{customerName || 'Pelanggan'}</span>
+                            <span className="text-[10px] text-stone-400 font-medium shrink-0">Sesuai Keranjang</span>
+                        </div>
+
                         <p className="text-[10px] text-stone-400 leading-tight">
-                            Nama ini otomatis tercantum pada kolom <strong>Pembeli</strong> di struk nota pembayaran Anda.
+                            Nama ini otomatis tercantum pada kolom <strong>Pembeli</strong> di struk nota pembayaran kasir.
                         </p>
                     </div>
 
