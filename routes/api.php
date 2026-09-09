@@ -96,3 +96,8 @@ Route::post('/pesanan/{nomor_pesanan}/bayar', [\App\Http\Controllers\Customer\Pe
 // Public Store Profile (Untuk Sinkronisasi Struk & Identitas Kafe)
 Route::get('/profil-toko', [\App\Http\Controllers\Customer\PesananController::class, 'getProfilToko']);
 Route::post('/profil-toko', [\App\Http\Controllers\Customer\PesananController::class, 'saveProfilToko']);
+
+// Midtrans Payment Gateway (Sandbox/Production)
+Route::post('/pesanan/{nomor_pesanan}/snap-token', [\App\Http\Controllers\Api\MidtransController::class, 'createSnapToken']);
+Route::post('/pesanan/{nomor_pesanan}/midtrans-confirm', [\App\Http\Controllers\Api\MidtransController::class, 'confirmSuccess']);
+Route::post('/midtrans/notification', [\App\Http\Controllers\Api\MidtransController::class, 'handleNotification']);

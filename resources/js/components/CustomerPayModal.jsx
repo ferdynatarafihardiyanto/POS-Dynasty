@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { X, QrCode, Building2, CheckCircle2, Copy, ShieldCheck, ArrowRight, Loader2, Sparkles, User, AlertCircle } from 'lucide-react';
+import { X, QrCode, Building2, CheckCircle2, Copy, ShieldCheck, ArrowRight, Loader2, Sparkles, User, AlertCircle, Zap } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -30,6 +30,108 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
         setCopiedAccount(type);
         showToast(`Nomor Rekening ${type} disalin!`, 'info');
         setTimeout(() => setCopiedAccount(null), 2500);
+    };
+
+    const handleMidtransPayment = async () => {
+        const trimmedName = customerName.trim();
+        if (!trimmedName) {
+            setNameError('Silakan masukkan nama Anda terlebih dahulu untuk dicetak di struk.');
+            return;
+        }
+
+        setNameError('');
+        localStorage.setItem('pos_customer_name', trimmedName);
+        setIsSubmitting(true);
+
+        const cleanOrderNumber = (order.orderNumber || '').replace(/^#/, '');
+
+        try {
+            // 1. Minta Snap Token dari Backend
+            const res = await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/snap-token`, {
+                nama_pelanggan: trimmedName
+            });
+
+            if (!res.data || !res.data.success || !res.data.data?.snap_token) {
+                throw new Error(res.data?.message || 'Gagal mendapatkan tiket pembayaran Midtrans.');
+            }
+
+            const snapToken = res.data.data.snap_token;
+
+            // 2. Periksa ketersediaan Snap SDK
+            if (!window.snap) {
+                showToast('Modul pembayaran Midtrans sedang dimuat, coba 1 detik lagi...', 'warning');
+                setIsSubmitting(false);
+                return;
+            }
+
+            // 3. Munculkan Pop-up Resmi Midtrans Snap
+            window.snap.pay(snapToken, {
+                onSuccess: async function(result) {
+                    console.log('Midtrans Payment Success:', result);
+                    setIsSubmitting(true);
+
+                    // Konfirmasi sinkron ke server kita
+                    try {
+                        await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/midtrans-confirm`, {
+                            payment_type: result?.payment_type || 'qris'
+                        });
+                    } catch (e) {
+                        console.warn('Confirm fallback notice:', e);
+                    }
+
+                    const updatedOrder = {
+                        ...order,
+                        customerName: trimmedName,
+                        nama_pelanggan: trimmedName,
+                        metode_pembayaran: result?.payment_type || 'midtrans',
+                        status: 'diproses',
+                        status_pembayaran: 'dibayar'
+                    };
+
+                    if (typeof setActiveOrder === 'function') {
+                        setActiveOrder(updatedOrder);
+                    }
+
+                    if (typeof setOrders === 'function') {
+                        setOrders(prev => {
+                            if (!Array.isArray(prev)) return [updatedOrder];
+                            return prev.map(o => {
+                                const oNum = (o?.orderNumber || '').replace(/^#/, '');
+                                return (oNum === cleanOrderNumber || o?.orderNumber === order?.orderNumber) ? updatedOrder : o;
+                            });
+                        });
+                    }
+
+                    if (typeof showToast === 'function') {
+                        showToast(`🎉 Pembayaran Berhasil! Pesanan a.n. ${trimmedName} segera dimasak.`, 'success');
+                    }
+
+                    setIsSubmitting(false);
+                    if (typeof onClose === 'function') {
+                        onClose();
+                    }
+                },
+                onPending: function(result) {
+                    console.log('Midtrans Payment Pending:', result);
+                    showToast('Menunggu Anda menyelesaikan pembayaran...', 'info');
+                    setIsSubmitting(false);
+                },
+                onError: function(result) {
+                    console.error('Midtrans Payment Error:', result);
+                    showToast('Pembayaran Midtrans gagal atau kadaluarsa.', 'warning');
+                    setIsSubmitting(false);
+                },
+                onClose: function() {
+                    console.log('Customer menutup pop-up Midtrans.');
+                    setIsSubmitting(false);
+                }
+            });
+
+        } catch (err) {
+            console.error('Midtrans Pay error:', err);
+            showToast(err?.response?.data?.message || err.message || 'Gagal memproses pembayaran online.', 'warning');
+            setIsSubmitting(false);
+        }
     };
 
     const handleConfirmPayment = async () => {
@@ -182,6 +284,47 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         <p className="text-[10px] text-stone-400 leading-tight">
                             Nama ini otomatis tercantum pada kolom <strong>Pembeli</strong> di struk nota pembayaran Anda.
                         </p>
+                    </div>
+
+                    {/* Tombol Utama: Bayar via Midtrans (Pop-up Snap) */}
+                    <div className="bg-gradient-to-br from-amber-50 via-white to-amber-50/40 p-4 rounded-2xl border-2 border-amber-400/80 shadow-md space-y-2.5 text-center">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-black uppercase text-stone-800 tracking-wider flex items-center gap-1.5">
+                                <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
+                                <span>Bayar Otomatis Midtrans</span>
+                            </span>
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                Sandbox / QRIS / VA
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-stone-600 leading-snug">
+                            Buka pop-up resmi Midtrans untuk bayar via <strong>QRIS, GoPay, ShopeePay, atau Virtual Account Bank (BCA, Mandiri, BRI, BNI)</strong> dengan verifikasi otomatis real-time.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={handleMidtransPayment}
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7A1517] to-[#881B1E] hover:from-[#651012] hover:to-[#7A1517] text-white font-display font-black text-xs shadow-md shadow-[#881B1E]/30 active:scale-98 transition flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                    <span>Menghubungi Midtrans...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                                    <span>BAYAR VIA MIDTRANS SNAP</span>
+                                    <ArrowRight className="w-4 h-4 text-amber-300" />
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 py-1">
+                        <div className="h-px bg-stone-200 flex-1"></div>
+                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">atau opsi manual</span>
+                        <div className="h-px bg-stone-200 flex-1"></div>
                     </div>
 
                     {/* Method Switcher Tabs */}

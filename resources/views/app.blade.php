@@ -23,6 +23,12 @@
         <link rel="stylesheet" href="/build/assets/app-CIotbjir.css">
         <script type="module" src="/build/assets/app-CE9_9mHz.js"></script>
     @endif
+
+    <!-- Midtrans Snap JS SDK (Sandbox / Production) -->
+    <script 
+        src="{{ config('midtrans.snap_js_url') }}" 
+        data-client-key="{{ config('midtrans.client_key') }}">
+    </script>
 </head>
 
 <body class="bg-stone-50 text-stone-900 font-sans antialiased selection:bg-amber-500 selection:text-white min-h-screen">
