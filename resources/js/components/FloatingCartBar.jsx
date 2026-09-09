@@ -16,16 +16,16 @@ export default function FloatingCartBar() {
     };
 
     return (
-        <div className="fixed bottom-3 inset-x-0 z-40 px-4 max-w-md mx-auto pointer-events-none animate-slide-up">
+        <div className="fixed bottom-3 inset-x-0 z-40 px-4 max-w-md mx-auto pointer-events-none animate-slide-up w-full">
             <div
                 onClick={() => setIsCartOpen(true)}
-                className="bg-gradient-to-r from-[#7A1517] via-[#881B1E] to-[#6E1214] text-white p-2.5 pl-3 rounded-2xl shadow-2xl border border-amber-500/30 flex items-center justify-between pointer-events-auto cursor-pointer hover:shadow-amber-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                className="bg-gradient-to-r from-[#661012] via-[#82181A] to-[#661012] text-white p-2.5 pl-3 rounded-2xl shadow-2xl border border-amber-500/30 flex items-center justify-between pointer-events-auto cursor-pointer hover:shadow-amber-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all"
             >
                 {/* Left Side: Cart Icon & Total Label */}
                 <div className="flex items-center gap-3">
                     <div className="relative w-10 h-10 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center shadow-md">
                         <ShoppingBag className="w-5 h-5 fill-stone-950" />
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-[#7A1517] animate-pulse">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-[#661012] animate-pulse">
                             {totalItemCount}
                         </span>
                     </div>
@@ -46,7 +46,7 @@ export default function FloatingCartBar() {
                         e.stopPropagation();
                         setIsCartOpen(true);
                     }}
-                    className="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-display font-extrabold text-xs shadow-md active:scale-95 transition"
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-display font-extrabold text-xs shadow-md active:scale-95 transition cursor-pointer"
                 >
                     <span>Lihat Pesanan</span>
                     <ChevronRight className="w-4 h-4" />
@@ -55,3 +55,4 @@ export default function FloatingCartBar() {
         </div>
     );
 }
+

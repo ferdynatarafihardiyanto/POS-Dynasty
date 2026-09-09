@@ -1,44 +1,110 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback,
+    useMemo
+} from 'react';
 import axios from 'axios';
-import { AVAILABLE_TABLES, ALL_MENU_ITEMS } from '../data/mockData';
+import { getProductImage, AVAILABLE_TABLES } from '../data/mockData';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const CartContext = createContext();
 
+const getQrTokenFromUrl = () => {
+    try {
+        const url = new URL(window.location.href);
+
+        // Support the QR URL format used by the backend:
+        // /menu/meja/{qr_token}
+        const pathMatch = url.pathname.match(/\/menu\/meja\/([^/]+)/);
+        if (pathMatch?.[1]) return decodeURIComponent(pathMatch[1]);
+
+        return (
+            url.searchParams.get('qr_token') ||
+            url.searchParams.get('token') ||
+            null
+        );
+    } catch {
+        return null;
+    }
+};
+
+const normalizeProduct = (product) => {
+    const categoryName = product.kategori?.nama || '';
+    const gambar = product.gambar || getProductImage(product.nama, categoryName);
+
+    return {
+        id: product.id,
+        backend_id: product.id,
+        nama: product.nama,
+        deskripsi: product.deskripsi || '',
+        deskripsi_singkat: product.deskripsi || `${product.nama} pilihan khas Kedai Dynasty.`,
+        harga: Number(product.harga) || 0,
+        stok: typeof product.stok === 'number' ? product.stok : (product.stok ? Number(product.stok) : 99),
+        aktif: Boolean(product.aktif ?? true),
+        kategori_id: product.kategori_id ?? product.kategori?.id,
+        kategori: product.kategori || { id: product.kategori_id, nama: categoryName },
+        gambar: gambar,
+        rating: 4.8,
+        reviews_count: 50 + (product.id * 17) % 200,
+        prep_time: '10 - 15 Menit',
+    };
+};
+
 export const CartProvider = ({ children }) => {
+    // Initial data passed directly from Laravel Blade
+    const initialData = typeof window !== 'undefined' && window.__INITIAL_DATA__ ? window.__INITIAL_DATA__ : null;
+
+    const [tableInfo, setTableInfo] = useState(() => {
+        if (initialData?.tableInfo) return initialData.tableInfo;
+        try {
+            const saved = localStorage.getItem('dynasty_table');
+            return saved ? JSON.parse(saved) : {
+                id: 1,
+                number: '01',
+                name: 'Meja 01',
+                token: '3KiGgju7Zb',
+            };
+        } catch {
+            return {
+                id: 1,
+                number: '01',
+                name: 'Meja 01',
+                token: '3KiGgju7Zb',
+            };
+        }
+    });
+
+    const [availableTables, setAvailableTables] = useState(() => {
+        if (Array.isArray(initialData?.availableTables) && initialData.availableTables.length > 0) {
+            return initialData.availableTables;
+        }
+        return AVAILABLE_TABLES;
+    });
+
+    const [backendCategories, setBackendCategories] = useState(() => {
+        if (Array.isArray(initialData?.categories) && initialData.categories.length > 0) {
+            return initialData.categories;
+        }
+        return [];
+    });
+
+    const [menuList, setMenuList] = useState(() => {
+        if (Array.isArray(initialData?.products) && initialData.products.length > 0) {
+            return initialData.products.map(normalizeProduct);
+        }
+        return [];
+    });
+
     const [cartItems, setCartItems] = useState(() => {
         try {
             const saved = localStorage.getItem('dynasty_cart');
             return saved ? JSON.parse(saved) : [];
         } catch {
             return [];
-        }
-    });
-
-    const [availableTables, setAvailableTables] = useState(AVAILABLE_TABLES);
-    const [tableInfo, setTableInfo] = useState(() => {
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const qrToken = urlParams.get('qr_token') || urlParams.get('token');
-            const mejaParam = urlParams.get('meja') || urlParams.get('table');
-
-            if (qrToken) {
-                const found = AVAILABLE_TABLES.find(t => t.token === qrToken);
-                if (found) return found;
-            }
-            if (mejaParam) {
-                const found = AVAILABLE_TABLES.find(t => t.number === mejaParam);
-                if (found) return found;
-            }
-            const saved = localStorage.getItem('dynasty_table');
-            const parsed = saved ? JSON.parse(saved) : null;
-            if (parsed && AVAILABLE_TABLES.some(t => t.token === parsed.token)) {
-                return parsed;
-            }
-            return AVAILABLE_TABLES[0];
-        } catch {
-            return AVAILABLE_TABLES[0];
         }
     });
 
@@ -57,10 +123,34 @@ export const CartProvider = ({ children }) => {
     const [isWaiterModalOpen, setIsWaiterModalOpen] = useState(false);
     const [isTableModalOpen, setIsTableModalOpen] = useState(false);
     const [toast, setToast] = useState(null);
-    const [menuList, setMenuList] = useState(ALL_MENU_ITEMS);
-    const [backendCategories, setBackendCategories] = useState([]);
+    const [isLoadingMenu, setIsLoadingMenu] = useState(() => !initialData?.products?.length);
+    const [menuError, setMenuError] = useState(null);
 
-    // Persist cart
+    // Filtered orders strictly for the current active table / qrToken
+    const currentTableToken = tableInfo?.token;
+    const tableOrders = useMemo(() => {
+        if (!currentTableToken) return [];
+        return orders.filter(o => o.qrToken && o.qrToken === currentTableToken);
+    }, [orders, currentTableToken]);
+
+    // Keep activeOrder aligned with the currently selected table
+    useEffect(() => {
+        const currentToken = tableInfo?.token;
+        if (!currentToken) {
+            setActiveOrder(null);
+            return;
+        }
+
+        setActiveOrder(prevActive => {
+            if (prevActive && prevActive.qrToken === currentToken) {
+                return prevActive;
+            }
+            const currentTableOrders = orders.filter(o => o.qrToken && o.qrToken === currentToken);
+            return currentTableOrders.length > 0 ? currentTableOrders[0] : null;
+        });
+    }, [tableInfo?.token, orders]);
+
+    // Save state to localStorage
     useEffect(() => {
         try {
             localStorage.setItem('dynasty_cart', JSON.stringify(cartItems));
@@ -69,16 +159,16 @@ export const CartProvider = ({ children }) => {
         }
     }, [cartItems]);
 
-    // Persist table
     useEffect(() => {
         try {
-            localStorage.setItem('dynasty_table', JSON.stringify(tableInfo));
+            if (tableInfo) {
+                localStorage.setItem('dynasty_table', JSON.stringify(tableInfo));
+            }
         } catch (e) {
             console.error('Failed to save table', e);
         }
     }, [tableInfo]);
 
-    // Persist orders
     useEffect(() => {
         try {
             localStorage.setItem('dynasty_orders', JSON.stringify(orders));
@@ -87,96 +177,125 @@ export const CartProvider = ({ children }) => {
         }
     }, [orders]);
 
-    // Fetch live backend menu data if available
+    // Client-side fallback fetch only if server initial data was not available
     useEffect(() => {
-        const fetchBackendMenu = async () => {
+        if (initialData?.products?.length > 0 && initialData?.categories?.length > 0) {
+            setIsLoadingMenu(false);
+            return;
+        }
+
+        const fetchFallbackData = async () => {
+            setIsLoadingMenu(true);
+            setMenuError(null);
+
             try {
-                const res = await axios.get(`${API_URL}/menu`);
-                if (res.data && res.data.data && res.data.data.length > 0) {
-                    const dbItems = res.data.data.map(p => {
-                        // find matching mock item or create fallback
-                        const matchingMock = ALL_MENU_ITEMS.find(m => m.nama.toLowerCase() === p.nama.toLowerCase());
-                        if (matchingMock) {
-                            return { ...matchingMock, id: p.id, backend_id: p.id, harga: p.harga, nama: p.nama };
+                const qrToken = getQrTokenFromUrl();
+
+                if (qrToken) {
+                    try {
+                        const tableResponse = await axios.get(`${API_URL}/meja/${encodeURIComponent(qrToken)}`);
+                        if (tableResponse.data?.data) {
+                            const mejaData = tableResponse.data.data;
+                            setTableInfo({
+                                id: mejaData.id,
+                                number: String(mejaData.nomor_meja || mejaData.table_number || '01'),
+                                name: mejaData.nama_meja || mejaData.name || `Meja ${mejaData.nomor_meja || '01'}`,
+                                token: qrToken,
+                            });
                         }
-                        return {
-                            id: p.id,
-                            backend_id: p.id,
-                            nama: p.nama,
-                            kategori_id: p.kategori ? (p.kategori.nama.toLowerCase().includes('coffee') ? 'minuman' : 'makanan-utama') : 'makanan-utama',
-                            harga: p.harga,
-                            rating: 4.8,
-                            reviews_count: 50,
-                            prep_time: '10 - 15 Menit',
-                            portion_tag: 'Porsi Hangat',
-                            gambar: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80',
-                            deskripsi_singkat: p.deskripsi || 'Sajian istimewa kaya bumbu khas Kedai Dynasty.',
-                            deskripsi: p.deskripsi || 'Sajian istimewa kaya bumbu khas Kedai Dynasty dimasak dengan bahan segar dan rempah alami pilihan.'
-                        };
-                    });
-                    // Merge promo items and db items
-                    const merged = [...ALL_MENU_ITEMS];
-                    dbItems.forEach(dbItem => {
-                        const idx = merged.findIndex(m => m.nama.toLowerCase() === dbItem.nama.toLowerCase());
-                        if (idx !== -1) {
-                            merged[idx] = { ...merged[idx], ...dbItem };
-                        } else {
-                            merged.push(dbItem);
-                        }
-                    });
-                    setMenuList(merged);
-                }
-            } catch (err) {
-                // Silently fallback to rich mock data
-                console.log('Using frontend local menu data');
-            }
-        };
-
-        const fetchCategories = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/menu/kategori`);
-                if (res.data && res.data.data) {
-                    setBackendCategories(res.data.data);
-                }
-            } catch (err) {
-                // Ignore
-            }
-        };
-
-        const fetchTables = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/meja`);
-                if (res.data && res.data.data && res.data.data.length > 0) {
-                    const activeDbTables = res.data.data
-                        .filter(t => t.status === 'active')
-                        .map(t => ({
-                            id: t.id,
-                            number: t.table_number,
-                            name: t.name || `Meja ${t.table_number}`,
-                            token: t.qr_token,
-                            capacity: `${parseInt(t.table_number, 10) % 2 === 0 ? '4' : '2'} Orang`
-                        }));
-
-                    if (activeDbTables.length > 0) {
-                        setAvailableTables(activeDbTables);
-                        setTableInfo(current => {
-                            const match = activeDbTables.find(t => t.token === current?.token || t.number === current?.number);
-                            if (match) {
-                                return match;
-                            }
-                            return activeDbTables[0];
-                        });
+                    } catch (e) {
+                        console.warn('Could not load specific table info via API', e);
                     }
                 }
+
+                const [menuRes, catRes] = await Promise.all([
+                    axios.get(`${API_URL}/menu`),
+                    axios.get(`${API_URL}/menu/kategori`),
+                ]);
+
+                const prods = Array.isArray(menuRes.data?.data) ? menuRes.data.data.map(normalizeProduct) : [];
+                const cats = Array.isArray(catRes.data?.data) ? catRes.data.data : [];
+
+                setMenuList(prods);
+                setBackendCategories(cats);
+
+                try {
+                    const tablesRes = await axios.get(`${API_URL}/meja`);
+                    if (Array.isArray(tablesRes.data?.data)) {
+                        setAvailableTables(tablesRes.data.data.map(t => ({
+                            id: t.id,
+                            number: String(t.table_number || t.nomor_meja),
+                            name: t.name || t.nama_meja || `Meja ${t.table_number || t.nomor_meja}`,
+                            token: t.qr_token || t.kode_meja,
+                        })));
+                    }
+                } catch (e) {
+                    console.warn('Could not load available tables', e);
+                }
             } catch (err) {
-                // Ignore
+                console.error('Failed to load menu data:', err);
+                setMenuError('Gagal memuat daftar menu dari server.');
+            } finally {
+                setIsLoadingMenu(false);
             }
         };
 
-        fetchBackendMenu();
-        fetchCategories();
-        fetchTables();
+        fetchFallbackData();
     }, []);
+
+    // Refresh live order statuses from backend
+    const refreshOrders = useCallback(async () => {
+        const qrToken = tableInfo?.token || getQrTokenFromUrl();
+        if (!qrToken) return;
+
+        const currentTableOrders = orders.filter(o => o.qrToken && o.qrToken === qrToken);
+        if (currentTableOrders.length === 0) return;
+
+        try {
+            const response = await axios.get(`${API_URL}/pesanan`, {
+                params: { qr_token: qrToken }
+            });
+
+            const backendOrders = Array.isArray(response.data?.data) ? response.data.data : [];
+            if (backendOrders.length === 0) return;
+
+            setOrders(prevOrders =>
+                prevOrders.map(localOrder => {
+                    if (localOrder.qrToken !== qrToken) return localOrder;
+
+                    const matched = backendOrders.find(b => b.nomor_pesanan === localOrder.orderNumber);
+                    if (!matched) return localOrder;
+
+                    return {
+                        ...localOrder,
+                        status: matched.status || localOrder.status,
+                        grandTotal: matched.total_harga ?? localOrder.grandTotal,
+                    };
+                })
+            );
+
+            setActiveOrder(prevActive => {
+                if (!prevActive || prevActive.qrToken !== qrToken) return prevActive;
+                const matched = backendOrders.find(b => b.nomor_pesanan === prevActive.orderNumber);
+                if (!matched) return prevActive;
+
+                return {
+                    ...prevActive,
+                    status: matched.status || prevActive.status,
+                    grandTotal: matched.total_harga ?? prevActive.grandTotal,
+                };
+            });
+        } catch (e) {
+            console.warn('Could not refresh orders status from server', e);
+        }
+    }, [tableInfo?.token, orders]);
+
+    useEffect(() => {
+        if (tableOrders.length > 0) {
+            const interval = setInterval(refreshOrders, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [refreshOrders, tableOrders.length]);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type, id: Date.now() });
@@ -185,164 +304,166 @@ export const CartProvider = ({ children }) => {
         }, 3200);
     };
 
-    const addToCart = (item, customizations = {}, quantity = 1, notes = '') => {
-        const carbPrice = customizations.carb ? (customizations.carb.price || 0) : 0;
-        const spicePrice = customizations.spice ? (customizations.spice.price || 0) : 0;
-        const toppingsPrice = customizations.toppings ? customizations.toppings.reduce((acc, t) => acc + (t.price || 0), 0) : 0;
-        const unitPrice = (item.harga || 0) + carbPrice + spicePrice + toppingsPrice;
+    const addToCart = (item, quantity = 1, notes = '') => {
+        const availableStock = item.stok ?? 99;
+        if (availableStock <= 0) {
+            showToast(`Maaf, menu ${item.nama} sedang habis.`, 'warning');
+            return;
+        }
 
-        const cartItemId = `${item.id}-${customizations.carb?.id || 'none'}-${customizations.spice?.id || 'none'}-${(customizations.toppings || []).map(t => t.id).sort().join(',')}-${notes.trim()}`;
+        const cartItemId = `${item.id}-${notes.trim()}`;
+        const unitPrice = item.harga || 0;
 
         setCartItems(prev => {
-            const existingIndex = prev.findIndex(ci => ci.cartItemId === cartItemId);
+            const existingIndex = prev.findIndex(c => c.cartItemId === cartItemId);
+
             if (existingIndex > -1) {
                 const updated = [...prev];
-                updated[existingIndex].quantity += quantity;
-                updated[existingIndex].totalPrice = updated[existingIndex].quantity * unitPrice;
+                const newQty = updated[existingIndex].quantity + quantity;
+                if (newQty > availableStock) {
+                    showToast(`Maksimal stok tersedia hanya ${availableStock}`, 'warning');
+                    updated[existingIndex].quantity = availableStock;
+                    updated[existingIndex].totalPrice = availableStock * unitPrice;
+                } else {
+                    updated[existingIndex].quantity = newQty;
+                    updated[existingIndex].totalPrice = newQty * unitPrice;
+                }
                 return updated;
-            } else {
-                return [
-                    ...prev,
-                    {
-                        cartItemId,
-                        menuItem: item,
-                        customizations,
-                        notes,
-                        quantity,
-                        unitPrice,
-                        totalPrice: unitPrice * quantity
-                    }
-                ];
             }
+
+            const initialQty = Math.min(quantity, availableStock);
+            return [
+                ...prev,
+                {
+                    cartItemId,
+                    menuItem: item,
+                    notes,
+                    quantity: initialQty,
+                    unitPrice,
+                    totalPrice: unitPrice * initialQty,
+                }
+            ];
         });
 
-        showToast(`${quantity}x ${item.nama} ditambahkan ke keranjang! 🎉`, 'success');
+        showToast(`${quantity}x ${item.nama} ditambahkan ke pesanan! ☕`, 'success');
     };
 
     const updateQuantity = (cartItemId, delta) => {
-        setCartItems(prev => {
-            return prev
+        setCartItems(prev =>
+            prev
                 .map(item => {
                     if (item.cartItemId === cartItemId) {
+                        const maxStock = item.menuItem.stok ?? 99;
                         const newQty = item.quantity + delta;
+
+                        if (newQty > maxStock) {
+                            showToast(`Stok maksimal untuk menu ini adalah ${maxStock}`, 'warning');
+                            return item;
+                        }
+
                         return newQty > 0
-                            ? { ...item, quantity: newQty, totalPrice: newQty * item.unitPrice }
+                            ? {
+                                ...item,
+                                quantity: newQty,
+                                totalPrice: newQty * item.unitPrice,
+                            }
                             : null;
                     }
                     return item;
                 })
-                .filter(Boolean);
-        });
+                .filter(Boolean)
+        );
     };
 
     const removeFromCart = (cartItemId) => {
-        setCartItems(prev => prev.filter(i => i.cartItemId !== cartItemId));
-        showToast('Menu dihapus dari keranjang', 'info');
+        setCartItems(prev => prev.filter(item => item.cartItemId !== cartItemId));
+        showToast('Menu dihapus dari pesanan', 'info');
     };
 
     const clearCart = () => {
         setCartItems([]);
     };
 
-    // Calculate Totals
-    const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
-    const taxPB1 = Math.round(subtotal * 0.10); // Pajak Resto 10%
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+    const taxPB1 = Math.round(subtotal * 0.1);
     const grandTotal = subtotal + taxPB1;
-    const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+    const totalItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const submitOrder = async (orderNotes = '') => {
         if (cartItems.length === 0) {
-            showToast('Keranjang belanja masih kosong', 'warning');
+            showToast('Keranjang pesanan masih kosong', 'warning');
             return null;
         }
 
-        const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
-        
-        // Group items by backend product ID so backend validation passes
-        const productMap = {};
-        cartItems.forEach(item => {
-            const pid = parseInt(item.menuItem.backend_id || item.menuItem.id, 10) || 1;
-            productMap[pid] = (productMap[pid] || 0) + item.quantity;
-        });
+        const qrToken = tableInfo?.token || getQrTokenFromUrl();
 
-        const activeToken = tableInfo?.token || (availableTables[0]?.token) || '3KiGgju7Zb';
-
-        const payloadBackend = {
-            qr_token: activeToken,
-            catatan: orderNotes || `Pesanan dari Meja ${tableInfo.number}`,
-            produk: Object.entries(productMap).map(([pid, qty]) => ({
-                produk_id: parseInt(pid, 10),
-                jumlah: qty
-            }))
-        };
-
-        let backendSuccess = false;
-        let createdOrder = null;
-
-        try {
-            const res = await axios.post(`${API_URL}/pesanan`, payloadBackend);
-            if (res.data && res.data.data) {
-                backendSuccess = true;
-                createdOrder = {
-                    orderNumber: res.data.data.nomor_pesanan || orderNumber,
-                    tableNumber: tableInfo.number,
-                    tableName: tableInfo.name,
-                    status: res.data.data.status || 'menunggu_konfirmasi',
-                    items: [...cartItems],
-                    subtotal,
-                    tax: taxPB1,
-                    grandTotal: res.data.data.total_harga || grandTotal,
-                    notes: orderNotes,
-                    timestamp: new Date().toISOString()
-                };
-            }
-        } catch (err) {
-            console.log('Backend API order endpoint unreached or error, proceeding with frontend state simulation:', err.message);
+        if (!qrToken) {
+            showToast('QR meja belum terdeteksi. Silakan pilih meja terlebih dahulu.', 'warning');
+            setIsTableModalOpen(true);
+            return null;
         }
 
-        if (!backendSuccess) {
-            createdOrder = {
-                orderNumber,
-                tableNumber: tableInfo.number,
-                tableName: tableInfo.name,
-                status: 'menunggu_konfirmasi',
+        // Aggregate quantities per product_id strictly following backend contract
+        const productMap = {};
+        cartItems.forEach(item => {
+            const productId = parseInt(item.menuItem.backend_id || item.menuItem.id, 10);
+            if (!Number.isNaN(productId)) {
+                productMap[productId] = (productMap[productId] || 0) + item.quantity;
+            }
+        });
+
+        // Construct exact backend payload
+        const payloadBackend = {
+            qr_token: qrToken,
+            catatan: orderNotes || (tableInfo?.number ? `Pesanan dari Meja ${tableInfo.number}` : ''),
+            produk: Object.entries(productMap).map(([productId, quantity]) => ({
+                produk_id: parseInt(productId, 10),
+                jumlah: quantity,
+            })),
+        };
+
+        try {
+            const response = await axios.post(`${API_URL}/pesanan`, payloadBackend);
+            const data = response.data?.data;
+
+            if (!data) {
+                throw new Error('Response dari server tidak valid.');
+            }
+
+            const createdOrder = {
+                qrToken: qrToken,
+                orderNumber: data.nomor_pesanan,
+                tableNumber: String(data.meja ?? tableInfo?.number),
+                tableName: tableInfo?.name || `Meja ${data.meja ?? tableInfo?.number}`,
+                status: data.status || 'menunggu_pembayaran',
                 items: [...cartItems],
                 subtotal,
                 tax: taxPB1,
-                grandTotal,
+                grandTotal: data.total_harga ?? grandTotal,
                 notes: orderNotes,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                detail: data.detail || [],
             };
+
+            setOrders(prev => [createdOrder, ...prev]);
+            setActiveOrder(createdOrder);
+            clearCart();
+            setIsCartOpen(false);
+            setIsOrderStatusOpen(true);
+            showToast(`Pesanan #${createdOrder.orderNumber} berhasil dibuat! 🎉`, 'success');
+
+            return createdOrder;
+        } catch (error) {
+            console.error('Failed to submit order to backend:', error);
+            const message = error?.response?.data?.message || 'Pesanan gagal diproses oleh server. Silakan coba lagi.';
+            showToast(message, 'error');
+            return null;
         }
-
-        setOrders(prev => [createdOrder, ...prev]);
-        setActiveOrder(createdOrder);
-        clearCart();
-        setIsCartOpen(false);
-        setIsOrderStatusOpen(true);
-        showToast('Pesanan berhasil dikirim ke Dapur! 🍳👨‍🍳', 'success');
-
-        // Simulate order status progression for a responsive experience
-        setTimeout(() => {
-            setActiveOrder(current => {
-                if (!current || current.orderNumber !== createdOrder.orderNumber) return current;
-                return { ...current, status: 'diproses' };
-            });
-        }, 12000);
-
-        setTimeout(() => {
-            setActiveOrder(current => {
-                if (!current || current.orderNumber !== createdOrder.orderNumber) return current;
-                return { ...current, status: 'disajikan' };
-            });
-        }, 28000);
-
-        return createdOrder;
     };
 
     const callWaiter = (action, note = '') => {
         setIsWaiterModalOpen(false);
-        showToast(`🔔 Panggilan pelayan terkirim: "${action.label}" untuk Meja ${tableInfo.number}. Pelayan segera datang!`, 'success');
+        showToast(`Permintaan "${action.label}" telah dicatat untuk Meja ${tableInfo.number}`, 'info');
     };
 
     return (
@@ -359,7 +480,8 @@ export const CartProvider = ({ children }) => {
                 totalItemCount,
                 tableInfo,
                 setTableInfo,
-                orders,
+                orders: tableOrders,
+                allOrders: orders,
                 activeOrder,
                 setActiveOrder,
                 submitOrder,
@@ -376,7 +498,10 @@ export const CartProvider = ({ children }) => {
                 callWaiter,
                 menuList,
                 backendCategories,
-                availableTables
+                availableTables,
+                isLoadingMenu,
+                menuError,
+                refreshOrders,
             }}
         >
             {children}
@@ -385,3 +510,4 @@ export const CartProvider = ({ children }) => {
 };
 
 export const useCart = () => useContext(CartContext);
+

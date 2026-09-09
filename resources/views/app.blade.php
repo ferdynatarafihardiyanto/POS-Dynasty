@@ -11,6 +11,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <script>
+        window.__INITIAL_DATA__ = {
+            tableInfo: @json($tableInfo ?? null),
+            categories: @json($categories ?? []),
+            products: @json($products ?? []),
+            availableTables: @json($availableTables ?? []),
+            qrToken: @json($qrToken ?? null),
+            csrfToken: '{{ csrf_token() }}'
+        };
+    </script>
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
