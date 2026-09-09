@@ -109,8 +109,25 @@ class PesananController extends Controller
             return response()->json(['message' => 'Meja tidak ditemukan'], 404);
         }
 
+        $orderNumbersParam = $request->query('order_numbers');
+        $deviceOrderNumbers = [];
+        if ($orderNumbersParam) {
+            $deviceOrderNumbers = is_array($orderNumbersParam)
+                ? $orderNumbersParam
+                : array_filter(array_map('trim', explode(',', $orderNumbersParam)));
+        }
+
+        // Keamanan & Privasi: Jika perangkat belum pernah memesan, jangan tampilkan pesanan orang lain!
+        if (empty($deviceOrderNumbers)) {
+            return response()->json([
+                'message' => 'Belum ada riwayat pesanan untuk perangkat ini',
+                'data' => []
+            ]);
+        }
+
         $pesanans = Pesanan::with(['detailPesanan', 'pembayaran'])
             ->where('meja_id', $meja->id)
+            ->whereIn('nomor_pesanan', $deviceOrderNumbers)
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($p) use ($meja) {

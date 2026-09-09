@@ -12,7 +12,8 @@ export default function OrderStatusModal() {
         activeOrder,
         orders,
         setActiveOrder,
-        tableInfo
+        tableInfo,
+        clearDeviceSession
     } = useCart();
 
     const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -417,11 +418,12 @@ export default function OrderStatusModal() {
 
                             <button
                                 type="button"
-                                onClick={() => setIsOrderStatusOpen(false)}
+                                onClick={clearDeviceSession}
                                 className="flex-1 py-3 px-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                title="Selesai bersantap dan mulai sesi pesanan baru"
                             >
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>Kembali ke Menu</span>
+                                <Plus className="w-4 h-4" />
+                                <span>Selesai & Pesan Baru</span>
                             </button>
                         </div>
                     ) : isPaid ? (

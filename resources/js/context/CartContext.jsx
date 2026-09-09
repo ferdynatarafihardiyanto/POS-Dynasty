@@ -64,6 +64,43 @@ function getCategoryIcon(categoryName) {
     return '🍽️';
 }
 
+const getDeviceOrderNumbers = (token = null) => {
+    try {
+        const raw = localStorage.getItem('dynasty_device_orders');
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            return parsed
+                .filter(item => {
+                    if (typeof item === 'string') return true;
+                    // Filter orders older than 24 hours
+                    if (item.timestamp && (Date.now() - new Date(item.timestamp).getTime() > 24 * 60 * 60 * 1000)) return false;
+                    return !token || !item.token || item.token === token;
+                })
+                .map(item => (typeof item === 'string' ? item : item.orderNumber));
+        }
+        return [];
+    } catch {
+        return [];
+    }
+};
+
+const saveDeviceOrderNumber = (orderNumber, token) => {
+    try {
+        const raw = localStorage.getItem('dynasty_device_orders');
+        const parsed = raw ? JSON.parse(raw) : [];
+        const cleanNum = (orderNumber || '').replace(/^#/, '');
+        const newEntry = { orderNumber: cleanNum, token, timestamp: new Date().toISOString() };
+        const updated = [newEntry, ...parsed.filter(item => {
+            const num = typeof item === 'string' ? item : item.orderNumber;
+            return num !== cleanNum;
+        })];
+        localStorage.setItem('dynasty_device_orders', JSON.stringify(updated));
+    } catch (e) {
+        console.error('Failed to save device order', e);
+    }
+};
+
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
@@ -126,7 +163,10 @@ export const CartProvider = ({ children }) => {
     const [orders, setOrders] = useState(() => {
         try {
             const saved = localStorage.getItem('dynasty_orders');
-            return saved ? JSON.parse(saved) : [];
+            const parsed = saved ? JSON.parse(saved) : [];
+            const myNumbers = getDeviceOrderNumbers();
+            if (myNumbers.length === 0) return [];
+            return parsed.filter(o => myNumbers.includes((o.orderNumber || '').replace(/^#/, '')));
         } catch {
             return [];
         }
@@ -361,54 +401,67 @@ export const CartProvider = ({ children }) => {
         const activeToken = tableInfo?.token || (availableTables[0]?.token);
         if (!activeToken) return;
 
+        const myNumbers = getDeviceOrderNumbers(activeToken);
+        if (myNumbers.length === 0) {
+            setOrders([]);
+            setActiveOrder(null);
+            return;
+        }
+
         try {
             const res = await axios.get(`${API_URL}/pesanan/riwayat`, {
-                params: { qr_token: activeToken }
+                params: {
+                    qr_token: activeToken,
+                    order_numbers: myNumbers.join(',')
+                }
             });
             if (res.data && Array.isArray(res.data.data)) {
-                const historyOrders = res.data.data.map(p => ({
-                    orderNumber: p.nomor_pesanan,
-                    tableNumber: p.meja?.table_number || p.meja?.nomor_meja || p.meja || tableInfo.number,
-                    tableName: `Meja ${p.meja?.table_number || p.meja?.nomor_meja || p.meja || tableInfo.number}`,
-                    status: p.status,
-                    status_pembayaran: p.status_pembayaran || 'menunggu_pembayaran',
-                    items: (p.items || p.detail_pesanan || []).map((dp, idx) => ({
-                        cartItemId: `hist-${p.id || p.nomor_pesanan}-${idx}`,
-                        quantity: dp.jumlah,
-                        unitPrice: parseFloat(dp.harga || dp.harga_satuan || 0),
-                        totalPrice: parseFloat(dp.subtotal || 0),
-                        notes: dp.catatan || '',
-                        menuItem: {
-                            nama: dp.nama_produk || dp.produk?.nama || 'Menu',
-                            gambar_url: dp.gambar_url || dp.produk?.gambar_url || null,
-                            kategori_nama: dp.kategori || dp.produk?.kategori?.nama || ''
-                        },
-                        customizations: {
-                            modifiers: (dp.modifiers || dp.modifiers_snapshot || []).map(m => ({
-                                id: m.option_id || m.id,
-                                nama: m.option_nama || m.nama || (m.group_nama ? `${m.group_nama}: ${m.option_nama}` : 'Varian'),
-                                harga_tambahan: parseFloat(m.harga_tambahan || 0)
-                            }))
-                        }
-                    })),
-                    subtotal: parseFloat(p.subtotal || p.total_harga || 0),
-                    tax: parseFloat(p.pajak || 0),
-                    grandTotal: parseFloat(p.total_harga || 0),
-                    notes: p.catatan,
-                    timestamp: p.created_at
-                }));
+                const historyOrders = res.data.data
+                    .filter(p => myNumbers.includes((p.nomor_pesanan || '').replace(/^#/, '')))
+                    .map(p => ({
+                        orderNumber: p.nomor_pesanan,
+                        tableNumber: p.meja?.table_number || p.meja?.nomor_meja || p.meja || tableInfo.number,
+                        tableName: `Meja ${p.meja?.table_number || p.meja?.nomor_meja || p.meja || tableInfo.number}`,
+                        status: p.status,
+                        status_pembayaran: p.status_pembayaran || 'menunggu_pembayaran',
+                        items: (p.items || p.detail_pesanan || []).map((dp, idx) => ({
+                            cartItemId: `hist-${p.id || p.nomor_pesanan}-${idx}`,
+                            quantity: dp.jumlah,
+                            unitPrice: parseFloat(dp.harga || dp.harga_satuan || 0),
+                            totalPrice: parseFloat(dp.subtotal || 0),
+                            notes: dp.catatan || '',
+                            menuItem: {
+                                nama: dp.nama_produk || dp.produk?.nama || 'Menu',
+                                gambar_url: dp.gambar_url || dp.produk?.gambar_url || null,
+                                kategori_nama: dp.kategori || dp.produk?.kategori?.nama || ''
+                            },
+                            customizations: {
+                                modifiers: (dp.modifiers || dp.modifiers_snapshot || []).map(m => ({
+                                    id: m.option_id || m.id,
+                                    nama: m.option_nama || m.nama || (m.group_nama ? `${m.group_nama}: ${m.option_nama}` : 'Varian'),
+                                    harga_tambahan: parseFloat(m.harga_tambahan || 0)
+                                }))
+                            }
+                        })),
+                        subtotal: parseFloat(p.subtotal || p.total_harga || 0),
+                        tax: parseFloat(p.pajak || 0),
+                        grandTotal: parseFloat(p.total_harga || 0),
+                        notes: p.catatan,
+                        timestamp: p.created_at
+                    }));
 
                 setOrders(historyOrders);
 
                 setActiveOrder(current => {
                     if (current) {
-                        const match = historyOrders.find(o => o.orderNumber === current.orderNumber);
+                        const curNum = (current.orderNumber || '').replace(/^#/, '');
+                        const match = historyOrders.find(o => (o.orderNumber || '').replace(/^#/, '') === curNum);
                         return match ? { ...current, ...match } : current;
                     } else {
                         const ongoing = historyOrders.find(o => 
                             ['menunggu_konfirmasi', 'menunggu_pembayaran', 'diproses', 'disajikan'].includes(o.status)
                         );
-                        return ongoing || (historyOrders.length > 0 ? historyOrders[0] : null);
+                        return ongoing || null;
                     }
                 });
             }
@@ -556,6 +609,9 @@ export const CartProvider = ({ children }) => {
             };
         }
 
+        const cleanOrderNumber = (createdOrder.orderNumber || '').replace(/^#/, '');
+        saveDeviceOrderNumber(cleanOrderNumber, activeToken);
+
         setOrders(prev => [createdOrder, ...prev]);
         setActiveOrder(createdOrder);
         clearCart();
@@ -567,6 +623,22 @@ export const CartProvider = ({ children }) => {
         fetchOrderHistory();
 
         return createdOrder;
+    };
+
+    const clearDeviceSession = () => {
+        try {
+            localStorage.removeItem('dynasty_device_orders');
+            localStorage.removeItem('dynasty_orders');
+            localStorage.removeItem('dynasty_cart');
+            setOrders([]);
+            setActiveOrder(null);
+            setCartItems([]);
+            setIsOrderStatusOpen(false);
+            setIsOrderHistoryOpen(false);
+            showToast('Sesi pesanan selesai. Selamat menikmati hidangan!', 'success');
+        } catch (e) {
+            console.error('Failed to clear device session', e);
+        }
     };
 
     const callWaiter = (action, note = '') => {
@@ -611,7 +683,8 @@ export const CartProvider = ({ children }) => {
                 promoItems,
                 isLoadingMenu,
                 backendCategories,
-                availableTables
+                availableTables,
+                clearDeviceSession
             }}
         >
             {children}

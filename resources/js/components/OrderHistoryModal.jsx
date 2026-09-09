@@ -10,7 +10,8 @@ export default function OrderHistoryModal() {
         setActiveOrder,
         setIsOrderStatusOpen,
         tableInfo,
-        fetchOrderHistory
+        fetchOrderHistory,
+        clearDeviceSession
     } = useCart();
 
     if (!isOrderHistoryOpen) return null;
@@ -213,10 +214,20 @@ export default function OrderHistoryModal() {
                 </div>
 
                 {/* Footer button */}
-                <div className="p-4 bg-white border-t border-stone-200/80 shadow-xs">
+                <div className="p-4 bg-white border-t border-stone-200/80 shadow-xs flex items-center gap-2">
+                    {orders.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={clearDeviceSession}
+                            className="py-3 px-4 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-display font-bold text-xs shadow-xs active:scale-95 transition"
+                            title="Bersihkan riwayat dan mulai sesi pesanan baru"
+                        >
+                            Reset Sesi
+                        </button>
+                    )}
                     <button
                         onClick={() => setIsOrderHistoryOpen(false)}
-                        className="w-full py-3 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
+                        className="flex-1 py-3 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
                     >
                         <span>Tutup Riwayat</span>
                     </button>
