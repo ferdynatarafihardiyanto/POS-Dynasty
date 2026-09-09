@@ -223,7 +223,7 @@ export default function OrderStatusModal() {
                                         <div className="flex items-center gap-2">
                                             <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-spin" />
                                             <span className="font-display font-extrabold text-xs text-amber-950 uppercase tracking-wide">
-                                                Langkah 1: Bayar via HP (QRIS / TF)
+                                                Langkah 1: Bayar via Midtrans Snap
                                             </span>
                                         </div>
                                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-stone-950 shadow-2xs">
@@ -232,7 +232,7 @@ export default function OrderStatusModal() {
                                     </div>
 
                                     <p className="text-xs text-amber-900 leading-relaxed">
-                                        Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP menggunakan <strong>QRIS Instan</strong> atau <strong>Transfer Bank (TF)</strong> agar pesanan segera dimasak oleh dapur.
+                                        Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP via <strong>Midtrans Snap (QRIS / VA Bank)</strong> agar pesanan segera dimasak oleh dapur.
                                     </p>
 
                                     {/* Tombol Utama Bayar dari HP */}
@@ -241,8 +241,9 @@ export default function OrderStatusModal() {
                                         onClick={handleOpenPayModal}
                                         className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-extrabold text-xs shadow-lg shadow-emerald-800/20 active:scale-95 transition flex items-center justify-center gap-2 group cursor-pointer"
                                     >
-                                        <QrCode className="w-4 h-4 text-emerald-200 group-hover:scale-110 transition-transform" />
-                                        <span>Bayar Sekarang Lewat HP (QRIS / TF)</span>
+                                        <Zap className="w-4 h-4 text-amber-300 fill-amber-300 group-hover:scale-110 transition-transform" />
+                                        <span>Bayar via Midtrans Snap (QRIS / VA)</span>
+                                        <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
 
                                     <div className="text-[11px] text-amber-800/80 flex items-center gap-1.5 pt-1 border-t border-amber-200/60">
