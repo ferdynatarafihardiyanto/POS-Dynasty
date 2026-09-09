@@ -83,6 +83,13 @@ class MidtransController extends Controller
      */
     public function handleNotification(Request $request)
     {
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'status' => 'ok',
+                'message' => 'Midtrans Webhook endpoint is active and listening.'
+            ], 200);
+        }
+
         try {
             $payload = $request->all();
             Log::info('Midtrans Webhook Received:', $payload);

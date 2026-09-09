@@ -100,4 +100,4 @@ Route::post('/profil-toko', [\App\Http\Controllers\Customer\PesananController::c
 // Midtrans Payment Gateway (Sandbox/Production)
 Route::post('/pesanan/{nomor_pesanan}/snap-token', [\App\Http\Controllers\Api\MidtransController::class, 'createSnapToken']);
 Route::post('/pesanan/{nomor_pesanan}/midtrans-confirm', [\App\Http\Controllers\Api\MidtransController::class, 'confirmSuccess']);
-Route::post('/midtrans/notification', [\App\Http\Controllers\Api\MidtransController::class, 'handleNotification']);
+Route::match(['get', 'post'], '/midtrans/notification', [\App\Http\Controllers\Api\MidtransController::class, 'handleNotification']);
