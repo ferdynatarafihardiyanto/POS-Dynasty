@@ -9,6 +9,10 @@ export default function OrderStatusModal() {
         isOrderStatusOpen,
         setIsOrderStatusOpen,
         setIsOrderHistoryOpen,
+        isCartOpen,
+        setIsCartOpen,
+        cartItems,
+        setCartItems,
         activeOrder,
         orders,
         setActiveOrder,
@@ -33,6 +37,29 @@ export default function OrderStatusModal() {
 
     const handleOpenPayModal = () => {
         setIsPayModalOpen(true);
+    };
+
+    const handleBack = () => {
+        if (!isPaid && currentOrder) {
+            if (currentOrder.items && currentOrder.items.length > 0) {
+                const itemsToRestore = currentOrder.items.map((it, idx) => ({
+                    ...it,
+                    cartItemId: it.cartItemId || `cart-restored-${Date.now()}-${idx}`,
+                    menuItem: {
+                        ...it.menuItem,
+                        gambar: it.menuItem?.gambar || it.menuItem?.gambar_url || it.gambar_url || '/images/produk/americano.jpg',
+                        nama: it.menuItem?.nama || it.nama_produk || 'Menu',
+                        harga: it.menuItem?.harga || it.unitPrice || 0
+                    },
+                    customizations: it.customizations || { modifiers: [] }
+                }));
+                setCartItems(itemsToRestore);
+            }
+            setIsOrderStatusOpen(false);
+            setIsCartOpen(true);
+        } else {
+            setIsOrderStatusOpen(false);
+        }
     };
 
     const isPaid = (currentOrder?.status_pembayaran === 'dibayar') ||
@@ -101,8 +128,9 @@ export default function OrderStatusModal() {
                 {/* Header */}
                 <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-3 border-b border-stone-200/80 flex items-center justify-between shadow-xs">
                     <button
-                        onClick={() => setIsOrderStatusOpen(false)}
+                        onClick={handleBack}
                         className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95"
+                        title="Kembali ke Keranjang Pesanan"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>

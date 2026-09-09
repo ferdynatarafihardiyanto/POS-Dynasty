@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { ShoppingBag, ArrowLeft, Trash2, Plus, Minus, User, AlertCircle } from 'lucide-react';
 
@@ -15,15 +15,43 @@ export default function CartDrawer() {
         grandTotal,
         totalItemCount,
         tableInfo,
+        activeOrder,
         submitOrder
     } = useCart();
 
+    const extractNameAndNotes = (order) => {
+        let name = order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || '';
+        let notes = order?.notes || '';
+        if (notes && notes.startsWith('Pemesan:')) {
+            const parts = notes.split('|');
+            if (!name) {
+                name = parts[0].replace('Pemesan:', '').trim();
+            }
+            notes = parts.length > 1 ? parts.slice(1).join('|').trim() : '';
+        }
+        return { name, notes };
+    };
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customerName, setCustomerName] = useState(() => {
-        return localStorage.getItem('pos_customer_name') || '';
+        return extractNameAndNotes(activeOrder).name;
     });
-    const [orderNotes, setOrderNotes] = useState('');
+    const [orderNotes, setOrderNotes] = useState(() => {
+        return extractNameAndNotes(activeOrder).notes;
+    });
     const [nameError, setNameError] = useState('');
+
+    useEffect(() => {
+        if (activeOrder) {
+            const { name, notes } = extractNameAndNotes(activeOrder);
+            if (name && !customerName) {
+                setCustomerName(name);
+            }
+            if (notes && !orderNotes) {
+                setOrderNotes(notes);
+            }
+        }
+    }, [activeOrder]);
 
     if (!isCartOpen) return null;
 
@@ -115,8 +143,8 @@ export default function CartDrawer() {
                                         <div className="flex gap-3">
                                             {/* Thumbnail */}
                                             <img
-                                                src={item.menuItem.gambar}
-                                                alt={item.menuItem.nama}
+                                                src={item.menuItem?.gambar || item.menuItem?.gambar_url || '/images/produk/americano.jpg'}
+                                                alt={item.menuItem?.nama || 'Menu'}
                                                 className="w-16 h-16 rounded-xl object-cover bg-stone-100 shrink-0"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
