@@ -20,8 +20,8 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @else
-        <link rel="stylesheet" href="/build/assets/app-DmLRPBaY.css">
-        <script type="module" src="/build/assets/app-BM3VArTu.js"></script>
+        <link rel="stylesheet" href="/build/assets/app-CIotbjir.css">
+        <script type="module" src="/build/assets/app-CE9_9mHz.js"></script>
     @endif
 </head>
 
