@@ -26,16 +26,17 @@ class MidtransController extends Controller
      */
     public function createSnapToken(Request $request, $nomor_pesanan)
     {
-        $nomor_pesanan = ltrim($nomor_pesanan, '#');
+        $nomor_pesanan = urldecode(ltrim($nomor_pesanan, '#'));
 
         $pesanan = Pesanan::with(['detailPesanan.produk', 'meja'])
             ->where('nomor_pesanan', $nomor_pesanan)
+            ->orWhere('nomor_pesanan', '#' . $nomor_pesanan)
             ->first();
 
         if (!$pesanan) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pesanan tidak ditemukan'
+                'message' => 'Pesanan ' . $nomor_pesanan . ' tidak ditemukan'
             ], 404);
         }
 
