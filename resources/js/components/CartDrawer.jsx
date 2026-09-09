@@ -19,36 +19,26 @@ export default function CartDrawer() {
         submitOrder
     } = useCart();
 
-    const extractNameAndNotes = (order) => {
+    const extractCustomerName = (order) => {
         let name = order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || '';
-        let notes = order?.notes || '';
-        if (notes && notes.startsWith('Pemesan:')) {
-            const parts = notes.split('|');
-            if (!name) {
-                name = parts[0].replace('Pemesan:', '').trim();
-            }
-            notes = parts.length > 1 ? parts.slice(1).join('|').trim() : '';
+        if (!name && order?.notes && order.notes.startsWith('Pemesan:')) {
+            const parts = order.notes.split('|');
+            name = parts[0].replace('Pemesan:', '').trim();
         }
-        return { name, notes };
+        return name;
     };
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customerName, setCustomerName] = useState(() => {
-        return extractNameAndNotes(activeOrder).name;
-    });
-    const [orderNotes, setOrderNotes] = useState(() => {
-        return extractNameAndNotes(activeOrder).notes;
+        return extractCustomerName(activeOrder);
     });
     const [nameError, setNameError] = useState('');
 
     useEffect(() => {
         if (activeOrder) {
-            const { name, notes } = extractNameAndNotes(activeOrder);
+            const name = extractCustomerName(activeOrder);
             if (name && !customerName) {
                 setCustomerName(name);
-            }
-            if (notes && !orderNotes) {
-                setOrderNotes(notes);
             }
         }
     }, [activeOrder]);
@@ -72,7 +62,7 @@ export default function CartDrawer() {
         localStorage.setItem('pos_customer_name', trimmedName);
         setIsSubmitting(true);
         try {
-            await submitOrder(orderNotes, trimmedName);
+            await submitOrder('', trimmedName);
         } finally {
             setIsSubmitting(false);
         }
@@ -237,8 +227,8 @@ export default function CartDrawer() {
                                 <span>Tambah Menu Lainnya</span>
                             </button>
 
-                            {/* Input Identitas Pemesan & Catatan Tambahan */}
-                            <div className="bg-white p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs space-y-3">
+                            {/* Input Identitas Pemesan */}
+                            <div className="bg-white p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs">
                                 <div>
                                     <label className="block text-xs font-bold text-stone-800 flex items-center justify-between mb-1.5">
                                         <span className="flex items-center gap-1.5">
@@ -271,20 +261,6 @@ export default function CartDrawer() {
                                             {nameError}
                                         </p>
                                     )}
-                                </div>
-
-                                <div>
-                                    <label className="block text-[11px] font-semibold text-stone-600 mb-1">
-                                        Catatan untuk Dapur (Opsional)
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={orderNotes}
-                                        onChange={(e) => setOrderNotes(e.target.value)}
-                                        placeholder="Contoh: jangan terlalu manis, es dipisah..."
-                                        maxLength={100}
-                                        className="w-full px-3.5 py-2 rounded-xl border border-stone-200 text-xs text-stone-800 bg-stone-50/60 focus:bg-white focus:outline-none focus:border-amber-600 transition"
-                                    />
                                 </div>
                             </div>
 

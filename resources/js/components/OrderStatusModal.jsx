@@ -408,11 +408,19 @@ export default function OrderStatusModal() {
                                         <span>Total Bayar</span>
                                         <span>{formatRupiah(currentOrder.grandTotal)}</span>
                                     </div>
-                                    {currentOrder.notes && (
-                                        <div className="mt-2 pt-2 border-t border-stone-100 bg-amber-50/70 p-2 rounded-xl text-[11px] text-amber-900">
-                                            <span className="font-bold">📝 Catatan:</span> "{currentOrder.notes}"
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        let displayNote = currentOrder.notes || '';
+                                        if (displayNote.startsWith('Pemesan:')) {
+                                            const parts = displayNote.split('|');
+                                            displayNote = parts.length > 1 ? parts.slice(1).join('|').trim() : '';
+                                        }
+                                        if (!displayNote) return null;
+                                        return (
+                                            <div className="mt-2 pt-2 border-t border-stone-100 bg-amber-50/70 p-2 rounded-xl text-[11px] text-amber-900">
+                                                <span className="font-bold">📝 Catatan:</span> "{displayNote}"
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </>
