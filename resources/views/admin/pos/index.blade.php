@@ -1003,11 +1003,11 @@
                 </div>
             </div>
         </div>
-    <!-- Floating Audio Alert saat Pesanan Masuk (Bantu Buka Izin Audio Browser) -->
+    <!-- Floating Audio Alert saat Pembayaran Masuk (Bantu Buka Izin Audio Browser) -->
     <div x-show="pendingOrderToAnnounce" x-cloak class="position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg" style="z-index: 1085;">
-        <button type="button" @click="openTableOrdersModal()" class="btn btn-danger rounded-pill px-4 py-2.5 fw-bold d-flex align-items-center gap-2 border border-2 border-white shadow-lg">
-            <i class="bi bi-bell-fill fs-5 text-warning"></i>
-            <span>🔔 Pesanan Meja Masuk! Klik untuk Dengar Suara & Buka</span>
+        <button type="button" @click="openTableOrdersModal()" class="btn btn-success rounded-pill px-4 py-2.5 fw-bold d-flex align-items-center gap-2 border border-2 border-white shadow-lg">
+            <i class="bi bi-check-circle-fill fs-5 text-white"></i>
+            <span>💳 Pembayaran Meja Masuk! Klik untuk Dengar Suara & Buka</span>
         </button>
     </div>
 </div>
@@ -1704,7 +1704,10 @@ document.addEventListener('alpine:init', () => {
                     itemsText = order.items.map(item => `${item.jumlah} ${item.nama_produk}`).join(', ');
                 }
 
-                let speechText = `Pesanan baru dari Meja ${meja}, atas nama ${nama}`;
+                const isPaid = (order.status_pembayaran === 'dibayar' || order.status === 'diproses');
+                let speechText = isPaid
+                    ? `Pesanan sudah dibayar dari Meja ${meja}, atas nama ${nama}`
+                    : `Pesanan belum dibayar dari Meja ${meja}, atas nama ${nama}`;
                 if (itemsText) {
                     speechText += `, memesan: ${itemsText}.`;
                 }
@@ -1749,7 +1752,7 @@ document.addEventListener('alpine:init', () => {
                     try {
                         window.speechSynthesis.resume();
                         window.speechSynthesis.cancel();
-                        const utterance = new SpeechSynthesisUtterance("Uji coba suara notifikasi POS Dynasty berhasil. Pesanan meja masuk akan disuarakan otomatis dengan nama pemesan dan menu.");
+                        const utterance = new SpeechSynthesisUtterance("Uji coba suara notifikasi POS Dynasty berhasil. Pesanan meja masuk yang sudah dibayar akan disuarakan otomatis.");
                         utterance.lang = 'id-ID';
                         utterance.rate = 0.95;
                         const voices = window.speechSynthesis.getVoices();
@@ -1777,21 +1780,21 @@ document.addEventListener('alpine:init', () => {
                     const newOrders = json.data || [];
                     this.tableOrders = newOrders;
 
-                    // Cek pesanan yang belum pernah diumumkan di sesi browser ini
+                    // Suara otomatis HANYA berbunyi ketika customer SUDAH MEMBAYAR (status_pembayaran === 'dibayar' atau status === 'diproses')
                     const announced = this.getAnnouncedOrders();
-                    const unannounced = newOrders.filter(o => {
-                        return (o.status === 'menunggu_pembayaran' || o.status === 'menunggu_konfirmasi' || o.status === 'diproses') 
-                            && !announced.has(o.id);
+                    const unannouncedPaid = newOrders.filter(o => {
+                        const isPaid = (o.status_pembayaran === 'dibayar' || o.status === 'diproses');
+                        return isPaid && !announced.has(o.id);
                     });
 
-                    if (unannounced.length > 0) {
-                        const targetOrder = unannounced[0];
-                        // Tandai semua pesanan yang belum diumumkan agar tidak berulang setiap 4 detik
-                        unannounced.forEach(o => this.markOrderAnnounced(o.id));
+                    if (unannouncedPaid.length > 0) {
+                        const targetOrder = unannouncedPaid[0];
+                        // Tandai sudah diumumkan agar tidak berulang setiap 4 detik
+                        unannouncedPaid.forEach(o => this.markOrderAnnounced(o.id));
 
                         this.pendingOrderToAnnounce = targetOrder;
                         this.announceOrder(targetOrder);
-                        this.triggerToast(`🔔 Pesanan Baru Meja ${targetOrder.meja_nomor} (${targetOrder.nama_pelanggan}) Masuk!`, 'warning', 5000);
+                        this.triggerToast(`💳 Pembayaran Masuk! Meja ${targetOrder.meja_nomor} (${targetOrder.nama_pelanggan}) Lunas QRIS/Online!`, 'success', 5000);
                     }
 
                     this.lastTableOrderCount = newOrders.length;
