@@ -758,7 +758,13 @@
                             <div class="text-muted small">Kelola status dan respon pesanan langsung dari meja customer</div>
                         </div>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold d-flex align-items-center gap-1.5 shadow-xs"
+                            @click="testVoiceNotification()" title="Uji Suara Panggilan dan Bel">
+                            <i class="bi bi-volume-up-fill"></i> Test Suara
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
                 <div class="modal-body p-4 bg-light">
                     <!-- Filter Status Pills -->
@@ -804,15 +810,25 @@
                     <div class="d-flex flex-column gap-3">
                         <template x-for="order in filteredTableOrders" :key="order.id">
                             <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <div class="card-header bg-white border-bottom p-3 d-flex align-items-center justify-content-between">
+                                <div class="card-header bg-white border-bottom p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="badge px-2.5 py-1.5 rounded-3 text-white fw-bold fs-6" style="background-color: #8b211e;">
                                             <i class="bi bi-grid-fill me-1"></i> Meja <span x-text="order.meja_nomor"></span>
                                         </span>
                                         <div>
-                                            <div class="fw-bold text-dark small" x-text="order.nomor_pesanan"></div>
-                                            <div class="text-muted" style="font-size: 0.7rem;">
-                                                <i class="bi bi-clock me-1"></i> Pukul <span x-text="order.waktu"></span> WIB
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <div class="fw-bold text-dark small" x-text="order.nomor_pesanan"></div>
+                                                <span class="badge rounded-pill px-2.5 py-1 text-dark fw-bold border" style="background-color: #fef3c7; border-color: #fde68a !important; font-size: 0.78rem;">
+                                                    <i class="bi bi-person-fill text-amber-800 me-1"></i> <span x-text="order.nama_pelanggan || 'Pelanggan'"></span>
+                                                </span>
+                                            </div>
+                                            <div class="text-muted d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.7rem;">
+                                                <span><i class="bi bi-clock me-1"></i> Pukul <span x-text="order.waktu"></span> WIB</span>
+                                                <template x-if="order.catatan_khusus">
+                                                    <span class="text-danger fw-semibold">
+                                                        <i class="bi bi-chat-left-text-fill me-1"></i>Catatan: "<span x-text="order.catatan_khusus"></span>"
+                                                    </span>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -844,7 +860,7 @@
                                                 <template x-for="item in order.items" :key="item.id">
                                                     <tr class="border-bottom border-light">
                                                         <td class="py-2" style="width: 35px;">
-                                                            <span class="badge bg-light text-dark border fw-bold" x-text="item.jumlah + 'x'"></span>
+                                                             <span class="badge bg-light text-dark border fw-bold" x-text="item.jumlah + 'x'"></span>
                                                         </td>
                                                         <td class="py-2">
                                                             <div class="fw-bold text-dark small" x-text="item.nama_produk"></div>
@@ -879,6 +895,12 @@
 
                                         <!-- Action Buttons -->
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <!-- Tombol Putar Suara Notifikasi -->
+                                            <button type="button" class="btn btn-sm btn-light border rounded-3 fw-bold px-2.5 py-1.5 d-flex align-items-center gap-1 shadow-2xs"
+                                                @click="announceOrder(order)" title="Dengarkan Kembali Panggilan Suara Pesanan Ini">
+                                                <i class="bi bi-volume-up-fill text-danger"></i>
+                                                <span style="font-size: 0.75rem;">Panggil Suara</span>
+                                            </button>
                                             <!-- Tombol Terima Pembayaran jika Belum Bayar -->
                                             <template x-if="order.status === 'menunggu_pembayaran' || order.status === 'menunggu_konfirmasi'">
                                                 <button type="button" class="btn btn-sm text-white rounded-3 fw-bold px-3 py-1.5 shadow-sm"
@@ -1044,6 +1066,9 @@ document.addEventListener('alpine:init', () => {
         tablePayCashReceived: 0,
         isSubmittingTablePay: false,
         lastTableOrderCount: 0,
+        knownOrderIds: new Set(),
+        isFirstOrderFetch: true,
+        audioCtx: null,
         tableOrdersModalInstance: null,
         tableOrderPayModalInstance: null,
         tablePollInterval: null,
@@ -1587,33 +1612,103 @@ document.addEventListener('alpine:init', () => {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return;
-                const ctx = new AudioContext();
+                if (!this.audioCtx) {
+                    this.audioCtx = new AudioContext();
+                }
+                const ctx = this.audioCtx;
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
                 const now = ctx.currentTime;
                 
                 const osc1 = ctx.createOscillator();
                 const gain1 = ctx.createGain();
                 osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(587.33, now);
-                gain1.gain.setValueAtTime(0.2, now);
-                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                osc1.frequency.setValueAtTime(587.33, now); // D5
+                gain1.gain.setValueAtTime(0.25, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
                 osc1.connect(gain1);
                 gain1.connect(ctx.destination);
                 osc1.start(now);
-                osc1.stop(now + 0.25);
+                osc1.stop(now + 0.28);
 
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
                 osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(880, now + 0.12);
-                gain2.gain.setValueAtTime(0.25, now + 0.12);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                osc2.frequency.setValueAtTime(880, now + 0.12); // A5
+                gain2.gain.setValueAtTime(0.3, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
                 osc2.connect(gain2);
                 gain2.connect(ctx.destination);
                 osc2.start(now + 0.12);
-                osc2.stop(now + 0.45);
+                osc2.stop(now + 0.5);
             } catch (e) {
                 console.log('Audio chime not allowed or failed:', e);
             }
+        },
+
+        announceOrder(order) {
+            try {
+                this.playChime();
+
+                if (!('speechSynthesis' in window)) return;
+
+                const meja = order.meja_nomor || order.meja_id || '';
+                const nama = order.nama_pelanggan || 'Pelanggan';
+
+                let itemsText = '';
+                if (order.items && order.items.length > 0) {
+                    itemsText = order.items.map(item => `${item.jumlah} ${item.nama_produk}`).join(', ');
+                }
+
+                let speechText = `Pesanan baru dari Meja ${meja}, atas nama ${nama}`;
+                if (itemsText) {
+                    speechText += `, memesan: ${itemsText}.`;
+                }
+
+                setTimeout(() => {
+                    try {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(speechText);
+                        utterance.lang = 'id-ID';
+                        utterance.rate = 0.95;
+                        utterance.pitch = 1.05;
+
+                        const voices = window.speechSynthesis.getVoices();
+                        const idVoice = voices.find(v => (v.lang === 'id-ID' || v.lang.startsWith('id') || v.lang.toLowerCase().includes('indonesia')));
+                        if (idVoice) {
+                            utterance.voice = idVoice;
+                        }
+
+                        window.speechSynthesis.speak(utterance);
+                    } catch (err) {
+                        console.log('Speech error:', err);
+                    }
+                }, 380);
+            } catch (e) {
+                console.log('announceOrder failed:', e);
+            }
+        },
+
+        testVoiceNotification() {
+            this.playChime();
+            if ('speechSynthesis' in window) {
+                setTimeout(() => {
+                    try {
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance("Uji coba suara notifikasi POS Dynasty berhasil. Pesanan meja masuk akan disuarakan otomatis dengan nama pemesan dan menu.");
+                        utterance.lang = 'id-ID';
+                        utterance.rate = 0.95;
+                        const voices = window.speechSynthesis.getVoices();
+                        const idVoice = voices.find(v => (v.lang === 'id-ID' || v.lang.startsWith('id') || v.lang.toLowerCase().includes('indonesia')));
+                        if (idVoice) utterance.voice = idVoice;
+                        window.speechSynthesis.speak(utterance);
+                    } catch (err) {
+                        console.log('Speech error:', err);
+                    }
+                }, 380);
+            }
+            this.triggerToast('🔔 Suara notifikasi dan bel aktif!', 'success');
         },
 
         async fetchActiveTableOrders() {
@@ -1627,10 +1722,21 @@ document.addEventListener('alpine:init', () => {
                 if (res.ok) {
                     const json = await res.json();
                     const newOrders = json.data || [];
-                    if (newOrders.length > this.lastTableOrderCount && this.lastTableOrderCount !== 0) {
-                        this.playChime();
-                        this.triggerToast();
+
+                    if (this.isFirstOrderFetch) {
+                        this.knownOrderIds = new Set(newOrders.map(o => o.id));
+                        this.isFirstOrderFetch = false;
+                    } else {
+                        // Cari pesanan baru yang belum ada di knownOrderIds
+                        const freshOrders = newOrders.filter(o => !this.knownOrderIds.has(o.id));
+                        if (freshOrders.length > 0) {
+                            freshOrders.forEach(o => this.knownOrderIds.add(o.id));
+                            // Suarakan pesanan baru pertama yang masuk
+                            this.announceOrder(freshOrders[0]);
+                            this.triggerToast(`🔔 Pesanan Baru Meja ${freshOrders[0].meja_nomor} (${freshOrders[0].nama_pelanggan}) Masuk!`, 'warning', 4000);
+                        }
                     }
+
                     this.lastTableOrderCount = newOrders.length;
                     this.tableOrders = newOrders;
                 }
@@ -1698,7 +1804,7 @@ document.addEventListener('alpine:init', () => {
                     this.completedOrder = {
                         pesanan_id: json.data.pesanan_id,
                         nomor_pesanan: json.data.nomor_pesanan,
-                        customerName: this.payingTableOrder.catatan || 'Pelanggan Meja ' + this.payingTableOrder.meja_nomor,
+                        customerName: this.payingTableOrder.nama_pelanggan || this.payingTableOrder.catatan || ('Pelanggan Meja ' + this.payingTableOrder.meja_nomor),
                         tableName: this.payingTableOrder.meja_nama || ('Meja ' + this.payingTableOrder.meja_nomor),
                         cashierName: '{{ Auth::user()->name }}',
                         items: this.payingTableOrder.items.map(item => ({

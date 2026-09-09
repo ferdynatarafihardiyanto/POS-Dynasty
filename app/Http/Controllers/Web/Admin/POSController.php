@@ -85,12 +85,27 @@ class POSController extends Controller
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($p) {
+                $rawCatatan = $p->catatan;
+                $catatanKhusus = '';
+                if (!empty($rawCatatan)) {
+                    if (preg_match('/^Pemesan:\s*[^|]+(?:\s*\|\s*(.*))?$/i', $rawCatatan, $m)) {
+                        $catatanKhusus = isset($m[1]) ? trim($m[1]) : '';
+                    } elseif (!str_starts_with($rawCatatan, 'Pesanan Meja')) {
+                        if (str_contains($rawCatatan, ' - ')) {
+                            $parts = explode(' - ', $rawCatatan, 2);
+                            $catatanKhusus = trim($parts[1]);
+                        }
+                    }
+                }
+
                 return [
                     'id' => $p->id,
                     'nomor_pesanan' => $p->nomor_pesanan,
                     'meja_id' => $p->meja_id,
                     'meja_nomor' => $p->meja ? ($p->meja->table_number ? str_pad($p->meja->table_number, 2, '0', STR_PAD_LEFT) : $p->meja->id) : '-',
                     'meja_nama' => $p->meja ? ($p->meja->name ?? ('Meja ' . $p->meja->table_number)) : 'Meja Umum',
+                    'nama_pelanggan' => $p->nama_pelanggan,
+                    'catatan_khusus' => $catatanKhusus,
                     'status' => $p->status,
                     'status_pembayaran' => $p->status_pembayaran,
                     'metode_pembayaran' => $p->pembayaran ? $p->pembayaran->metode_pembayaran : null,

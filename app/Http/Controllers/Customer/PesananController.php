@@ -232,10 +232,13 @@ class PesananController extends Controller
         if ($request->filled('nama_pelanggan')) {
             $namaPelanggan = trim($request->nama_pelanggan);
             $currentCatatan = $pesanan->catatan ?? '';
-            if (empty($currentCatatan) || str_starts_with($currentCatatan, 'Pesanan Meja')) {
-                $pesanan->catatan = $namaPelanggan;
+            if (preg_match('/^Pemesan:\s*([^|]+)(?:\s*\|\s*(.*))?$/i', $currentCatatan, $matches)) {
+                $extraNote = isset($matches[2]) ? trim($matches[2]) : '';
+                $pesanan->catatan = "Pemesan: {$namaPelanggan}" . ($extraNote ? " | {$extraNote}" : "");
+            } elseif (empty($currentCatatan) || str_starts_with($currentCatatan, 'Pesanan Meja')) {
+                $pesanan->catatan = "Pemesan: {$namaPelanggan}";
             } elseif (!str_contains($currentCatatan, $namaPelanggan)) {
-                $pesanan->catatan = $namaPelanggan . ' - ' . $currentCatatan;
+                $pesanan->catatan = "Pemesan: {$namaPelanggan} | {$currentCatatan}";
             }
             $pesanan->save();
         }
