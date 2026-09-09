@@ -22,6 +22,10 @@ export default function MenuCard({ item, onSelect }) {
                     alt={item.nama}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/produk/americano.jpg';
+                    }}
                 />
 
                 {/* Badges Overlay (Kategori Asli POS) */}

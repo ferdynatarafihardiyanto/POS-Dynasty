@@ -54,6 +54,10 @@ export default function PromoBanner({ onSelectItem }) {
                                 alt={item.nama}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 loading="lazy"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/images/produk/americano.jpg';
+                                }}
                             />
                             {/* Badges Asli dari POS */}
                             <div className="absolute top-2 left-2 flex flex-col gap-1">

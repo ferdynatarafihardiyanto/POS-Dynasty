@@ -5,18 +5,19 @@ import { AVAILABLE_TABLES, ALL_MENU_ITEMS, CATEGORIES as DEFAULT_CATEGORIES } fr
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const FOOD_IMAGE_MAP = {
-    'americano': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
-    'latte': 'https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?auto=format&fit=crop&w=800&q=80',
-    'cappuccino': 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=800&q=80',
-    'matcha': 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=800&q=80',
-    'chocolate': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?auto=format&fit=crop&w=800&q=80',
-    'coklat': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?auto=format&fit=crop&w=800&q=80',
-    'sandwich': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
-    'croissant': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80',
-    'french fries': 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=80',
-    'kentang': 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=80',
-    'kopi': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
-    'coffee': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
+    'americano': '/images/produk/americano.jpg',
+    'latte': '/images/produk/latte.jpg',
+    'cappuccino': '/images/produk/cappuccino.jpg',
+    'matcha': '/images/produk/matcha_latte.jpg',
+    'chocolate': '/images/produk/chocolate.jpg',
+    'coklat': '/images/produk/chocolate.jpg',
+    'sandwich': '/images/produk/sandwich.jpg',
+    'croissant': '/images/produk/croissant.jpg',
+    'french fries': '/images/produk/french_fries.jpg',
+    'fries': '/images/produk/french_fries.jpg',
+    'kentang': '/images/produk/french_fries.jpg',
+    'kopi': '/images/produk/americano.jpg',
+    'coffee': '/images/produk/americano.jpg',
     'tea': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80',
     'teh': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80',
     'burger': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80',
@@ -28,17 +29,22 @@ const FOOD_IMAGE_MAP = {
 };
 
 const CATEGORY_IMAGE_MAP = {
-    'coffee': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80',
-    'non coffee': 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=800&q=80',
-    'food': 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80',
-    'snack': 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=80',
-    'minuman': 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=800&q=80',
-    'makanan': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+    'coffee': '/images/produk/americano.jpg',
+    'non coffee': '/images/produk/matcha_latte.jpg',
+    'food': '/images/produk/sandwich.jpg',
+    'snack': '/images/produk/french_fries.jpg',
+    'minuman': '/images/produk/matcha_latte.jpg',
+    'makanan': '/images/produk/sandwich.jpg'
 };
 
-function getFoodImage(name, categoryName, customImg) {
+function getFoodImage(name, categoryName, customImg, customImgUrl) {
+    if (customImgUrl) {
+        return customImgUrl;
+    }
     if (customImg && customImg !== '-' && customImg.length > 3) {
-        return customImg.startsWith('http') ? customImg : `/storage/${customImg}`;
+        if (customImg.startsWith('http')) return customImg;
+        if (customImg.startsWith('images/')) return `/${customImg}`;
+        return `/storage/${customImg}`;
     }
     const lowerName = (name || '').toLowerCase();
     for (const [key, url] of Object.entries(FOOD_IMAGE_MAP)) {
@@ -48,7 +54,7 @@ function getFoodImage(name, categoryName, customImg) {
     for (const [key, url] of Object.entries(CATEGORY_IMAGE_MAP)) {
         if (lowerCat.includes(key)) return url;
     }
-    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+    return '/images/produk/americano.jpg';
 }
 
 function getCategoryIcon(categoryName) {
@@ -234,7 +240,7 @@ export const CartProvider = ({ children }) => {
                             kategori_nama: catName,
                             harga: parseFloat(p.harga),
                             stok: p.stok,
-                            gambar: getFoodImage(p.nama, catName, p.gambar),
+                            gambar: p.gambar_url || getFoodImage(p.nama, catName, p.gambar, p.gambar_url),
                             deskripsi_singkat: p.deskripsi || '',
                             deskripsi: p.deskripsi || '',
                             modifier_groups: p.modifier_groups || []

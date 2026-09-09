@@ -55,6 +55,8 @@ class MenuController extends Controller
                 'nama' => $produk->nama,
                 'deskripsi' => $produk->deskripsi,
                 'harga' => $produk->harga,
+                'gambar' => $produk->gambar,
+                'gambar_url' => $produk->gambar_url,
                 'kategori' => [
                     'id' => $produk->kategori->id,
                     'nama' => $produk->kategori->nama
@@ -92,13 +94,15 @@ class MenuController extends Controller
             ->whereHas('kategori', function ($q) {
                 $q->where('aktif', true);
             })
-            ->get(['id', 'nama', 'harga', 'kategori_id']);
+            ->get(['id', 'nama', 'harga', 'kategori_id', 'gambar']);
 
         $produkFormatted = $produk->map(function ($p) {
             return [
                 'id' => $p->id,
                 'nama' => $p->nama,
-                'harga' => $p->harga
+                'harga' => $p->harga,
+                'gambar' => $p->gambar,
+                'gambar_url' => $p->gambar_url
             ];
         });
 

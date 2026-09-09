@@ -161,10 +161,11 @@
                              :style="product.stok <= 0 ? 'cursor: not-allowed;' : 'cursor: pointer;'"
                              @click="handleProductClick(product)">
                             <div class="position-relative bg-light overflow-hidden" style="height: 150px;">
-                                <img :src="product.gambar ? '/storage/' + product.gambar : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'" 
+                                <img :src="getProductImage(product)" 
                                      class="w-100 h-100 object-fit-cover" 
                                      :style="product.stok <= 0 ? 'filter: grayscale(85%) brightness(0.85); opacity: 0.75; transition: all 0.3s;' : 'transition: all 0.3s;'"
-                                     :alt="product.nama">
+                                     :alt="product.nama"
+                                     @error="$event.target.src = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80'">
                                 
                                 <span class="position-absolute top-0 end-0 m-2 badge bg-dark opacity-75 rounded-pill px-3 py-2 text-uppercase" style="font-size: 0.7rem;" x-text="product.kategori ? product.kategori.nama : 'Lainnya'"></span>
                                 
@@ -1242,6 +1243,33 @@ document.addEventListener('alpine:init', () => {
         
         formatRupiah(number) {
             return 'Rp ' + Math.round(number).toLocaleString('id-ID');
+        },
+
+        getProductImage(product) {
+            if (!product) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80';
+            if (product.gambar_url) return product.gambar_url;
+            if (product.gambar) {
+                if (product.gambar.startsWith('http')) return product.gambar;
+                if (product.gambar.startsWith('images/')) return '/' + product.gambar;
+                return '/storage/' + product.gambar;
+            }
+            const name = (product.nama || '').toLowerCase();
+            if (name.includes('americano')) return '/images/produk/americano.jpg';
+            if (name.includes('latte') && !name.includes('matcha')) return '/images/produk/latte.jpg';
+            if (name.includes('cappuccino')) return '/images/produk/cappuccino.jpg';
+            if (name.includes('matcha')) return '/images/produk/matcha_latte.jpg';
+            if (name.includes('choc') || name.includes('coklat')) return '/images/produk/chocolate.jpg';
+            if (name.includes('sandwich')) return '/images/produk/sandwich.jpg';
+            if (name.includes('croissant')) return '/images/produk/croissant.jpg';
+            if (name.includes('fries') || name.includes('kentang')) return '/images/produk/french_fries.jpg';
+
+            const cat = (product.kategori?.nama || '').toLowerCase();
+            if (cat.includes('coffee') && !cat.includes('non')) return '/images/produk/americano.jpg';
+            if (cat.includes('non coffee')) return '/images/produk/matcha_latte.jpg';
+            if (cat.includes('food') || cat.includes('makanan')) return '/images/produk/sandwich.jpg';
+            if (cat.includes('snack')) return '/images/produk/french_fries.jpg';
+
+            return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
         },
         
         handleProductClick(product) {

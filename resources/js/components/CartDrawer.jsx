@@ -118,6 +118,10 @@ export default function CartDrawer() {
                                                 src={item.menuItem.gambar}
                                                 alt={item.menuItem.nama}
                                                 className="w-16 h-16 rounded-xl object-cover bg-stone-100 shrink-0"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = '/images/produk/americano.jpg';
+                                                }}
                                             />
 
                                             {/* Details */}

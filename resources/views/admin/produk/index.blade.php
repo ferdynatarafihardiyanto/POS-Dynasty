@@ -216,8 +216,8 @@
                             <td class="text-muted fw-bold">BRG-{{ str_pad($p->id, 3, '0', STR_PAD_LEFT) }}</td>
                             <td class="fw-bold text-dark">
                                 <div class="d-flex align-items-center gap-2">
-                                    @if($p->gambar)
-                                        <img src="{{ asset('storage/' . $p->gambar) }}" alt="{{ $p->nama }}" class="rounded-2 border object-fit-cover shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
+                                    @if($p->gambar_url)
+                                        <img src="{{ $p->gambar_url }}" alt="{{ $p->nama }}" class="rounded-2 border object-fit-cover shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;" onerror="this.onerror=null;this.src='/images/produk/americano.jpg';">
                                     @else
                                         <div class="rounded-2 border bg-light d-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 38px; height: 38px; flex-shrink: 0;">
                                             <i class="bi bi-cup-hot" style="font-size: 1.1rem; color: #8b211e;"></i>

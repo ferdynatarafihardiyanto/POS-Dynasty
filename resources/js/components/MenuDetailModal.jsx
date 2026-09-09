@@ -206,6 +206,10 @@ export default function MenuDetailModal({ item, onClose }) {
                             src={item.gambar}
                             alt={item.nama}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/images/produk/americano.jpg';
+                            }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
