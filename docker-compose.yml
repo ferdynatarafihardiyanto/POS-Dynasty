@@ -39,6 +39,19 @@ services:
     ports:
       - "3307:3306"
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pos_dynasty_pma
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      - db
+
 volumes:
   app_storage:
   db_data:
