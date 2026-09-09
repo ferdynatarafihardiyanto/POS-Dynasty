@@ -10,6 +10,8 @@ class TransaksiController extends Controller
 {
     public function index(Request $request)
     {
+        $periode = $request->get('periode', 'all');
+
         $paidCondition = function ($q) {
             $q->whereHas('pembayaran', function ($p) {
                 $p->where('status', 'berhasil');
