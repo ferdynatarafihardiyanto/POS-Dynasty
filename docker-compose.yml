@@ -20,6 +20,10 @@ services:
       DB_DATABASE: pos_dynasty
       DB_USERNAME: pos_user
       DB_PASSWORD: pos_password123
+      MIDTRANS_MERCHANT_ID: "G441882517"
+      MIDTRANS_CLIENT_KEY: "SB-Mid-client-Qx6UwA5DFHHUPt2B"
+      MIDTRANS_SERVER_KEY: "SB-Mid-server-pk8dlBip3clCK6pGOmkSAF18"
+      MIDTRANS_IS_PRODUCTION: "false"
     depends_on:
       - db
     volumes:
