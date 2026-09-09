@@ -83,6 +83,11 @@ export const CartProvider = ({ children }) => {
             const qrToken = urlParams.get('qr_token') || urlParams.get('token');
             const mejaParam = urlParams.get('meja') || urlParams.get('table');
 
+            // Cek juga nomor meja dari URL path, contoh: /meja/01 atau /meja/1
+            const pathMatch = window.location.pathname.match(/\/meja\/([a-zA-Z0-9_-]+)/);
+            const pathMeja = pathMatch ? pathMatch[1] : null;
+            const effectiveMeja = mejaParam || pathMeja;
+
             if (qrToken) {
                 const found = AVAILABLE_TABLES.find(t => t.token === qrToken);
                 if (found) return found;
@@ -93,13 +98,19 @@ export const CartProvider = ({ children }) => {
                     capacity: 'Dine-In'
                 };
             }
-            if (mejaParam) {
+            if (effectiveMeja) {
                 const found = AVAILABLE_TABLES.find(t => 
-                    t.number === mejaParam || 
-                    t.number === mejaParam.padStart(2, '0') || 
-                    t.token === mejaParam
+                    t.number === effectiveMeja || 
+                    t.number === effectiveMeja.padStart(2, '0') || 
+                    t.token === effectiveMeja
                 );
                 if (found) return found;
+                return {
+                    number: effectiveMeja.padStart(2, '0'),
+                    name: 'Meja ' + effectiveMeja,
+                    token: '',
+                    capacity: 'Dine-In'
+                };
             }
             const saved = localStorage.getItem('dynasty_table');
             const parsed = saved ? JSON.parse(saved) : null;

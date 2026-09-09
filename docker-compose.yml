@@ -24,6 +24,10 @@ services:
       - db
     volumes:
       - app_storage:/var/www/storage
+      - ./resources/views:/var/www/resources/views
+      - ./routes:/var/www/routes
+      - ./app:/var/www/app
+      - ./public/build:/var/www/public/build
 
   db:
     image: mariadb:10.11

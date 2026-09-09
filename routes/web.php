@@ -11,6 +11,9 @@ Route::get('/', function () {
 Route::get('/menu', function () {
     return view('app');
 });
+Route::get('/meja/{number?}', function () {
+    return view('app');
+});
 
 Route::prefix('admin')->name('admin.')->group(function () {
     

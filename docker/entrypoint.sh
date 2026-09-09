@@ -27,10 +27,10 @@ if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ]; then
     php /var/www/artisan migrate --force || true
 fi
 
-# Optimasi Laravel Cache
-php /var/www/artisan config:cache || true
-php /var/www/artisan route:cache || true
-php /var/www/artisan view:cache || true
+# Bersihkan cache agar rute dan tampilan selalu update
+php /var/www/artisan config:clear || true
+php /var/www/artisan route:clear || true
+php /var/www/artisan view:clear || true
 
 # Atur kepemilikan permission storage & cache
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
