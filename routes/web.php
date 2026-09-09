@@ -29,6 +29,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Master Data CRUD
         Route::resource('kategori', \App\Http\Controllers\Web\Admin\KategoriController::class)->except(['show']);
         Route::resource('produk', \App\Http\Controllers\Web\Admin\ProdukController::class)->except(['show']);
+        Route::get('/meja/{meja}/print', [\App\Http\Controllers\Web\Admin\CafeTableController::class, 'print'])->name('meja.print');
         Route::resource('meja', \App\Http\Controllers\Web\Admin\CafeTableController::class)->except(['show'])->parameters([
             'meja' => 'meja'
         ]);

@@ -133,7 +133,7 @@
                                     <td class="text-muted">{{ $m->name ?? '-' }}</td>
                                     <td class="text-muted font-monospace small bg-light rounded px-2">{{ $m->qr_token }}</td>
                                     <td class="text-end">
-                                        <button class="btn-action btn-action-print" title="Lihat & Cetak QR" onclick="showQRModal('{{ $m->table_number }}', '{{ $m->qr_token }}')"><i class="bi bi-qr-code"></i></button>
+                                        <a href="{{ route('admin.meja.print', $m->id) }}" target="_blank" class="btn-action btn-action-print text-primary" title="Cetak QR Meja (PDF)"><i class="bi bi-qr-code fs-5"></i></a>
                                         <button type="button" class="btn-action btn-action-edit" title="Edit" data-bs-toggle="modal" data-bs-target="#editMejaModal{{ $m->id }}"><i class="bi bi-pencil"></i></button>
                                         <form action="{{ route('admin.meja.destroy', $m->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus meja ini?')">
                                             @csrf @method('DELETE')

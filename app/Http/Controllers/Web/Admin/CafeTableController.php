@@ -54,4 +54,10 @@ class CafeTableController extends Controller
         $meja->delete();
         return redirect()->route('admin.meja.index')->with('success', 'Meja berhasil dihapus.');
     }
+
+    public function print(CafeTable $meja)
+    {
+        $qrUrl = url('/?qr_token=' . $meja->qr_token);
+        return view('admin.meja.print', compact('meja', 'qrUrl'));
+    }
 }
