@@ -31,8 +31,9 @@
                 
                 <li class="mt-3 mb-1 text-muted text-uppercase small fw-bold px-3">Transaksi</li>
                 <li>
-                    <a href="{{ route('admin.pos.index') }}" class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }}">
-                        <i class="bi bi-shop me-2"></i> POS / Kasir
+                    <a href="{{ route('admin.pos.index') }}" class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }} d-flex align-items-center">
+                        <i class="bi bi-shop me-2"></i> <span>POS / Kasir</span>
+                        <span class="badge rounded-pill bg-danger ms-auto global-table-order-badge d-none" style="font-size: 0.7rem;"></span>
                     </a>
                 </li>
                 <li>
@@ -123,5 +124,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @include('partials.global_order_notifier')
+    @stack('scripts')
 </body>
 </html>

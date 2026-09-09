@@ -1015,6 +1015,7 @@
 @push('scripts')
 <script src="{{ asset('js/receipt-printer.js') }}"></script>
 <script>
+window.posSystemActive = true;
 document.addEventListener('alpine:init', () => {
     Alpine.data('posSystem', () => ({
         categories: window.posData.categories,

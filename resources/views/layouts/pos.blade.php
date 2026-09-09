@@ -216,8 +216,9 @@
             
             <div class="flex-grow-1 overflow-auto py-3">
                 <div class="nav-item">
-                    <a href="{{ route('admin.pos.index') }}" class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }}">
-                        <i class="bi bi-cart3"></i> Kasir
+                    <a href="{{ route('admin.pos.index') }}" class="nav-link {{ request()->routeIs('admin.pos.*') ? 'active' : '' }} d-flex align-items-center">
+                        <i class="bi bi-cart3"></i> <span>Kasir</span>
+                        <span class="badge rounded-pill bg-danger ms-auto global-table-order-badge d-none" style="font-size: 0.7rem;"></span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -349,6 +350,7 @@
             }
         });
     </script>
+    @include('partials.global_order_notifier')
     @stack('scripts')
 </body>
 </html>
