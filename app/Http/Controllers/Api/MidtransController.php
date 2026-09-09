@@ -87,15 +87,25 @@ class MidtransController extends Controller
             $payload = $request->all();
             Log::info('Midtrans Webhook Received:', $payload);
 
+            // Deteksi tes ping probe dari dashboard Midtrans
+            $orderId = $payload['order_id'] ?? '';
+            $signature = $payload['signature_key'] ?? '';
+            if (empty($signature) || str_contains((string)$orderId, 'payment_notif_test')) {
+                return response()->json([
+                    'status' => 'ok',
+                    'message' => 'Test notification received successfully'
+                ], 200);
+            }
+
             $result = $this->midtransService->handleNotification($payload);
 
-            return response()->json($result);
+            return response()->json($result, 200);
         } catch (Exception $e) {
             Log::error('Midtrans Webhook Error:', ['message' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 400);
+            ], 200);
         }
     }
 

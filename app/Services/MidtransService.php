@@ -124,6 +124,18 @@ class MidtransService
         $grossAmount = $payload['gross_amount'] ?? null;
         $signatureKey = $payload['signature_key'] ?? null;
 
+        // Deteksi probe tes ping dari Dashboard Midtrans ("Test notification URL")
+        if (
+            (!$orderId && !$signatureKey) || 
+            (is_string($orderId) && str_contains($orderId, 'payment_notif_test'))
+        ) {
+            Log::info('Midtrans Health Check / Test Probe Notification Received.');
+            return [
+                'success' => true,
+                'message' => 'Midtrans Test notification received successfully'
+            ];
+        }
+
         if (!$orderId || !$statusCode || !$grossAmount || !$signatureKey) {
             throw new Exception('Data notifikasi Midtrans tidak lengkap.');
         }
