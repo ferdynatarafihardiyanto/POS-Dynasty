@@ -231,35 +231,35 @@ export default function OrderStatusModal() {
 
                             {/* Payment Status Card (Khusus HP: QRIS / TF) */}
                             {!isPaid ? (
-                                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/60 border-2 border-amber-300 shadow-xs space-y-3">
+                                <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-spin" />
-                                            <span className="font-display font-extrabold text-xs text-amber-950 uppercase tracking-wide">
+                                            <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                            <span className="font-display font-bold text-xs text-stone-900 uppercase tracking-wide">
                                                 Langkah 1: Bayar via Midtrans Snap
                                             </span>
                                         </div>
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-stone-950 shadow-2xs">
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200/60">
                                             Belum Bayar
                                         </span>
                                     </div>
 
-                                    <p className="text-xs text-amber-900 leading-relaxed">
-                                        Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP via <strong>Midtrans Snap (QRIS / VA Bank)</strong> agar pesanan segera dimasak oleh dapur.
+                                    <p className="text-xs text-stone-600 leading-relaxed">
+                                        Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP via <strong className="font-semibold text-stone-800">Midtrans Snap (QRIS / VA Bank)</strong> agar pesanan segera dimasak oleh dapur.
                                     </p>
 
                                     {/* Tombol Utama Bayar dari HP */}
                                     <button
                                         type="button"
                                         onClick={handleOpenPayModal}
-                                        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-extrabold text-xs shadow-lg shadow-emerald-800/20 active:scale-95 transition flex items-center justify-center gap-2 group cursor-pointer"
+                                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs shadow-sm hover:shadow active:scale-[0.99] transition flex items-center justify-center gap-2 group cursor-pointer"
                                     >
-                                        <Zap className="w-4 h-4 text-amber-300 fill-amber-300 group-hover:scale-110 transition-transform" />
+                                        <Zap className="w-4 h-4 text-amber-300 fill-amber-300 group-hover:scale-105 transition-transform" />
                                         <span>Bayar via Midtrans Snap (QRIS / VA)</span>
-                                        <ArrowRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
+                                        <ArrowRight className="w-4 h-4 text-emerald-100 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
 
-                                    <div className="text-[11px] text-amber-800/80 flex items-center gap-1.5 pt-1 border-t border-amber-200/60">
+                                    <div className="text-[11px] text-stone-500 flex items-center gap-1.5 pt-2 border-t border-stone-100">
                                         <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                         <span>Pelacakan langsung proses dapur akan otomatis aktif setelah pembayaran.</span>
                                     </div>
@@ -334,10 +334,10 @@ export default function OrderStatusModal() {
                                             return (
                                                 <div key={step.key} className="flex items-start gap-3 relative z-10">
                                                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors shrink-0 ${isCompleted
-                                                            ? (isAllFinished && step.key === 'selesai'
-                                                                ? 'bg-emerald-600 text-white font-black shadow-sm ring-4 ring-emerald-100'
-                                                                : 'bg-amber-400 text-stone-950 font-black shadow-sm ring-4 ring-amber-100')
-                                                            : 'bg-stone-100 text-stone-400'
+                                                        ? (isAllFinished && step.key === 'selesai'
+                                                            ? 'bg-emerald-600 text-white font-black shadow-sm ring-4 ring-emerald-100'
+                                                            : 'bg-amber-400 text-stone-950 font-black shadow-sm ring-4 ring-amber-100')
+                                                        : 'bg-stone-100 text-stone-400'
                                                         }`}>
                                                         <StepIcon className="w-3.5 h-3.5" />
                                                     </div>
@@ -345,12 +345,12 @@ export default function OrderStatusModal() {
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between">
                                                             <span className={`font-display text-xs ${isCurrent
-                                                                    ? (isAllFinished && step.key === 'selesai'
-                                                                        ? 'font-extrabold text-emerald-800'
-                                                                        : 'font-extrabold text-[#881B1E]')
-                                                                    : isCompleted
-                                                                        ? 'font-bold text-stone-800'
-                                                                        : 'font-medium text-stone-400'
+                                                                ? (isAllFinished && step.key === 'selesai'
+                                                                    ? 'font-extrabold text-emerald-800'
+                                                                    : 'font-extrabold text-[#881B1E]')
+                                                                : isCompleted
+                                                                    ? 'font-bold text-stone-800'
+                                                                    : 'font-medium text-stone-400'
                                                                 }`}>
                                                                 {step.label}
                                                             </span>
