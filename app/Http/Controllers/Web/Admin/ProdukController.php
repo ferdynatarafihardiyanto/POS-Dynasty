@@ -11,11 +11,26 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+use Illuminate\Support\Facades\Schema;
+
 class ProdukController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Produk::with(['kategori', 'modifierGroups', 'bundleItems']);
+        try {
+            $hasTipeProduk = Schema::hasColumn('produk', 'tipe_produk');
+            $hasBundleTable = Schema::hasTable('produk_bundle_items');
+        } catch (\Throwable $e) {
+            $hasTipeProduk = false;
+            $hasBundleTable = false;
+        }
+
+        $relations = ['kategori', 'modifierGroups'];
+        if ($hasBundleTable) {
+            $relations[] = 'bundleItems';
+        }
+
+        $query = Produk::with($relations);
 
         if ($request->filled('kategori')) {
             $query->where('kategori_id', $request->kategori);
@@ -38,7 +53,13 @@ class ProdukController extends Controller
         $kategoris = Kategori::where('aktif', true)->get();
         $modifierGroups = \App\Models\ModifierGroup::where('aktif', true)->get();
         $satuans = \App\Models\Satuan::where('aktif', true)->orderBy('nama')->get();
-        $allProduks = Produk::where('tipe_produk', 'standar')->where('aktif', true)->get();
+        
+        $allProduksQuery = Produk::where('aktif', true);
+        if ($hasTipeProduk) {
+            $allProduksQuery->where('tipe_produk', 'standar');
+        }
+        $allProduks = $allProduksQuery->get();
+
         return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups', 'satuans', 'allProduks'));
     }
 
@@ -68,6 +89,10 @@ class ProdukController extends Controller
         ];
 
         $html = view('admin.produk.pdf', compact('produks', 'filters'))->render();
+
+        if (!class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            return redirect()->back()->with('error', 'Paket DomPDF belum terpasang di server. Silakan jalankan composer install di server.');
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
             ->setPaper('a4', 'landscape')
