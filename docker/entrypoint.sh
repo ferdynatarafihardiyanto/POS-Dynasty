@@ -27,6 +27,12 @@ if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ]; then
     php /var/www/artisan migrate --force || true
 fi
 
+# Pastikan dependensi composer terbaru terpasang
+if [ -f /var/www/composer.json ]; then
+    echo "[Entrypoint] Verifying composer dependencies..."
+    composer install --no-dev --optimize-autoloader --no-interaction || true
+fi
+
 # Bersihkan cache agar rute dan tampilan selalu update
 php /var/www/artisan config:clear || true
 php /var/www/artisan route:clear || true
