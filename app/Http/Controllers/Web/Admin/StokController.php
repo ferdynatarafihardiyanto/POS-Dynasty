@@ -175,14 +175,30 @@ class StokController extends Controller
             'search'  => $request->search,
         ];
 
-        $html = view('admin.stok.pdf', compact('riwayats', 'filters'))->render();
+        // Jika dipanggil dengan mode=print, tampilkan halaman cetak HTML ramah browser
+        if ($request->query('mode') === 'print') {
+            return view('admin.stok.pdf', compact('riwayats', 'filters') + ['isPdf' => false]);
+        }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
-            ->setPaper('a4', 'landscape')
-            ->setOption('isRemoteEnabled', true)
-            ->setOption('defaultFont', 'sans-serif');
+        // Jika paket DomPDF terpasang, coba generate file .pdf untuk didownload
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            try {
+                $html = view('admin.stok.pdf', compact('riwayats', 'filters') + ['isPdf' => true])->render();
 
-        $filename = 'mutasi-stok-' . now()->format('Ymd-His') . '.pdf';
-        return $pdf->download($filename);
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+                    ->setPaper('a4', 'landscape')
+                    ->setOption('isRemoteEnabled', true)
+                    ->setOption('defaultFont', 'sans-serif');
+
+                $filename = 'mutasi-stok-' . now()->format('Ymd-His') . '.pdf';
+                return $pdf->download($filename);
+            } catch (\Throwable $e) {
+                \Log::warning('DomPDF generation failed, falling back to browser print view: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback aman: jika paket DomPDF belum siap di container server,
+        // alihkan ke tampilan print-friendly HTML agar TIDAK terjadi 500 Server Error
+        return view('admin.stok.pdf', compact('riwayats', 'filters') + ['isPdf' => false, 'fallback' => true]);
     }
 }

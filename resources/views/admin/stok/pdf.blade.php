@@ -13,80 +13,80 @@
             background: #fff;
         }
         .page-header {
+            background-color: #8b211e;
             background: linear-gradient(135deg, #8b211e 0%, #6b1915 100%);
             color: white;
-            padding: 20px 30px;
-            margin-bottom: 20px;
+            padding: 16px 24px;
+            margin-bottom: 16px;
         }
-        .brand { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
-        .report-title { font-size: 14px; opacity: 0.85; margin-top: 4px; }
-        .meta { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+        .brand { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+        .report-title { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+        .meta { font-size: 9.5px; opacity: 0.7; margin-top: 2px; }
         .filters {
-            margin: 0 30px 16px;
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
+            margin: 0 24px 12px;
         }
         .filter-badge {
+            display: inline-block;
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            padding: 3px 12px;
-            font-size: 10px;
+            border-radius: 16px;
+            padding: 3px 10px;
+            font-size: 9.5px;
             color: #64748b;
+            margin-right: 8px;
+            margin-bottom: 6px;
         }
         .filter-badge strong { color: #1a1a2e; }
-        .summary-cards {
-            display: flex;
-            gap: 12px;
-            margin: 0 30px 16px;
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin-bottom: 14px;
         }
         .card {
-            flex: 1;
-            border-radius: 10px;
-            padding: 12px 16px;
+            border-radius: 8px;
+            padding: 10px 14px;
             border: 1px solid #e5e7eb;
         }
-        .card-masuk { background: #f0fdf4; border-color: #bbf7d0; }
-        .card-keluar { background: #fff1f2; border-color: #fecdd3; }
-        .card-penyesuaian { background: #fffbeb; border-color: #fde68a; }
-        .card-total { background: #f0f4ff; border-color: #c7d2fe; }
-        .card-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 4px; }
-        .card-value { font-size: 18px; font-weight: 700; }
+        .card-masuk { background-color: #f0fdf4; border-color: #bbf7d0; }
+        .card-keluar { background-color: #fff1f2; border-color: #fecdd3; }
+        .card-penyesuaian { background-color: #fffbeb; border-color: #fde68a; }
+        .card-total { background-color: #f0f4ff; border-color: #c7d2fe; }
+        .card-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 3px; }
+        .card-value { font-size: 16px; font-weight: 700; }
         .card-masuk .card-value { color: #16a34a; }
         .card-keluar .card-value { color: #dc2626; }
         .card-penyesuaian .card-value { color: #d97706; }
         .card-total .card-value { color: #4f46e5; }
 
-        table {
+        table.data-table {
             width: 100%;
             border-collapse: collapse;
             margin: 0 0 20px;
         }
         thead tr {
-            background: #8b211e;
+            background-color: #8b211e;
             color: white;
         }
         thead th {
-            padding: 9px 10px;
+            padding: 8px 10px;
             text-align: left;
-            font-size: 9.5px;
+            font-size: 9px;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
             font-weight: 600;
         }
-        tbody tr:nth-child(even) { background: #f9fafb; }
-        tbody tr:hover { background: #f1f5f9; }
+        tbody tr:nth-child(even) { background-color: #f9fafb; }
         tbody td {
-            padding: 8px 10px;
+            padding: 7px 10px;
             border-bottom: 1px solid #f3f4f6;
             vertical-align: middle;
         }
         .badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 8.5px;
             font-weight: 700;
             text-transform: uppercase;
         }
@@ -96,24 +96,25 @@
         .qty-masuk { color: #16a34a; font-weight: 700; }
         .qty-keluar { color: #dc2626; font-weight: 700; }
         .qty-penyesuaian { color: #d97706; font-weight: 700; }
-        .text-muted { color: #9ca3af; font-size: 9.5px; }
+        .text-muted { color: #9ca3af; font-size: 9px; }
         .footer {
             text-align: center;
-            padding: 16px 30px;
+            padding: 14px 24px;
             border-top: 1px solid #e5e7eb;
             color: #9ca3af;
-            font-size: 9px;
+            font-size: 8.5px;
         }
-        .table-wrapper { padding: 0 30px; }
+        .table-wrapper { padding: 0 24px; }
         @media print {
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
         }
         .print-btn-area {
-            padding: 12px 30px;
+            padding: 12px 24px;
             background: #f8fafc;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
+            align-items: center;
             gap: 10px;
         }
         .btn {
@@ -128,15 +129,22 @@
             gap: 6px;
         }
         .btn-print { background: #8b211e; color: white; }
-        .btn-back { background: #e5e7eb; color: #374151; text-decoration: none; }
+        .btn-back { background: #e2e8f0; color: #334155; text-decoration: none; }
     </style>
 </head>
 <body>
 
+@if(empty($isPdf))
 <div class="print-btn-area no-print">
     <button class="btn btn-print" onclick="window.print()">🖨️ Print / Simpan PDF</button>
     <a href="{{ route('admin.stok.index', array_filter(['tipe' => $filters['tipe'], 'tanggal' => $filters['tanggal'], 'search' => $filters['search']])) }}" class="btn btn-back">← Kembali</a>
+    @if(!empty($fallback))
+        <span style="font-size: 11px; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 12px; border-radius: 6px; margin-left: auto;">
+            ℹ️ Mode Cetak Langsung Browser (Gunakan tombol <strong>Print / Simpan PDF</strong> untuk menyimpan sebagai PDF)
+        </span>
+    @endif
 </div>
+@endif
 
 <div class="page-header">
     <div class="brand">☕ Dynasty</div>
@@ -153,34 +161,46 @@
 
 @if($activeFilters)
 <div class="filters">
-    <span style="font-size:10px; color:#6b7280; font-weight:600;">Filter aktif:</span>
+    <span style="font-size:9.5px; color:#6b7280; font-weight:600; margin-right: 6px;">Filter aktif:</span>
     @foreach($activeFilters as $key => $val)
         <span class="filter-badge"><strong>{{ $key }}:</strong> {{ ucfirst($val) }}</span>
     @endforeach
 </div>
 @endif
 
-<div class="summary-cards">
-    <div class="card card-masuk">
-        <div class="card-label">Stok Masuk</div>
-        <div class="card-value">{{ $totalMasuk }}</div>
-    </div>
-    <div class="card card-keluar">
-        <div class="card-label">Stok Keluar</div>
-        <div class="card-value">{{ $totalKeluar }}</div>
-    </div>
-    <div class="card card-penyesuaian">
-        <div class="card-label">Penyesuaian</div>
-        <div class="card-value">{{ $totalPenyesuaian }}</div>
-    </div>
-    <div class="card card-total">
-        <div class="card-label">Total Entri</div>
-        <div class="card-value">{{ $riwayats->count() }}</div>
-    </div>
+<div class="table-wrapper">
+    <table class="summary-table">
+        <tr>
+            <td style="width: 25%; vertical-align: top; padding: 0 4px 0 0;">
+                <div class="card card-masuk">
+                    <div class="card-label">Stok Masuk</div>
+                    <div class="card-value">{{ $totalMasuk }}</div>
+                </div>
+            </td>
+            <td style="width: 25%; vertical-align: top; padding: 0 4px;">
+                <div class="card card-keluar">
+                    <div class="card-label">Stok Keluar</div>
+                    <div class="card-value">{{ $totalKeluar }}</div>
+                </div>
+            </td>
+            <td style="width: 25%; vertical-align: top; padding: 0 4px;">
+                <div class="card card-penyesuaian">
+                    <div class="card-label">Penyesuaian</div>
+                    <div class="card-value">{{ $totalPenyesuaian }}</div>
+                </div>
+            </td>
+            <td style="width: 25%; vertical-align: top; padding: 0 0 0 4px;">
+                <div class="card card-total">
+                    <div class="card-label">Total Entri</div>
+                    <div class="card-value">{{ $riwayats->count() }}</div>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 <div class="table-wrapper">
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>#</th>

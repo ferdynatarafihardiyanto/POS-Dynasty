@@ -17,16 +17,24 @@ else
 fi
 
 # 3. Jalankan container dengan volume terbaru
-echo "🐳 [2/4] Memperbarui container Docker..."
+echo "🐳 [2/5] Memperbarui container Docker..."
 $DOCKER_CMD up -d
 
-# 4. Jalankan migrasi database otomatis
-echo "🗄️ [3/4] Menjalankan migrasi database otomatis..."
+# 4. Install dependensi Composer terbaru (seperti barryvdh/laravel-dompdf untuk PDF)
+echo "📦 [3/5] Memperbarui paket dependensi Composer di server..."
+$DOCKER_CMD exec -T app composer install --no-dev --optimize-autoloader --no-interaction || true
+
+# 5. Jalankan migrasi database otomatis
+echo "🗄️ [4/5] Menjalankan migrasi database otomatis..."
 $DOCKER_CMD exec -T app php artisan migrate --force
 
-# 5. Bersihkan cache aplikasi agar fitur & logo langsung muncul
-echo "🧹 [4/4] Membersihkan cache aplikasi..."
+# 6. Bersihkan cache aplikasi agar fitur & logo langsung muncul
+echo "🧹 [5/5] Membersihkan cache aplikasi..."
 $DOCKER_CMD exec -T app php artisan optimize:clear
+
+# 7. Restart container app agar package PHP baru dimuat oleh PHP-FPM
+echo "🔄 Merestart service app..."
+$DOCKER_CMD restart app
 
 echo "=================================================="
 echo "✅ [POS DYNASTY] Selesai! Aplikasi berhasil diupdate."
