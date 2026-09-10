@@ -144,17 +144,17 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     };
 
     return (
-        <div className="fixed inset-0 z-60 bg-stone-950/75 backdrop-blur-xs flex justify-center items-end sm:items-center p-0 sm:p-4 animate-fade-in">
-            <div className="w-full max-w-md bg-stone-50 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-slide-up relative">
+        <div className="fixed inset-0 z-60 bg-stone-950/50 backdrop-blur-[2px] flex justify-center items-end sm:items-center p-0 sm:p-4 animate-fade-in">
+            <div className="w-full max-w-md bg-stone-50 rounded-t-2xl sm:rounded-2xl shadow-xl flex flex-col max-h-[92vh] overflow-hidden animate-slide-up relative border border-stone-200">
 
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-white px-4 py-3.5 border-b border-stone-200/80 flex items-center justify-between shadow-xs">
+                <div className="sticky top-0 z-10 bg-white px-4 py-3.5 border-b border-stone-200 flex items-center justify-between">
                     <div>
-                        <h3 className="font-display font-black text-stone-900 text-sm flex items-center gap-1.5">
+                        <h3 className="font-display font-bold text-stone-900 text-sm flex items-center gap-1.5">
                             <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
                             Pembayaran Midtrans Snap
                         </h3>
-                        <p className="text-[11px] text-stone-500 font-medium">
+                        <p className="text-[11px] text-stone-500 font-medium mt-0.5">
                             Dine-in • Meja {order.tableNumber || tableInfo.number} • #{order.orderNumber}
                         </p>
                     </div>
@@ -162,43 +162,44 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                        className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer disabled:opacity-50"
+                        aria-label="Tutup"
                     >
                         <X className="w-4 h-4" />
                     </button>
                 </div>
 
                 {/* Body Content */}
-                <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3.5">
+                <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3">
 
                     {/* Total Tagihan Card */}
-                    <div className="bg-gradient-to-br from-[#7A1517] to-[#881B1E] text-white p-4 rounded-2xl shadow-md text-center">
-                        <span className="text-[10px] uppercase font-bold text-amber-300 tracking-wider block mb-0.5">
+                    <div className="bg-[#881B1E] text-white p-4 rounded-xl shadow-xs text-center">
+                        <span className="text-[11px] uppercase font-bold text-amber-200/90 tracking-wider block mb-0.5">
                             Total yang Harus Dibayar
                         </span>
-                        <div className="font-display font-black text-2xl tracking-tight text-white">
+                        <div className="font-display font-extrabold text-2xl tracking-tight text-white">
                             {formatRupiah(order.grandTotal)}
                         </div>
-                        <span className="text-[10px] text-amber-200/80 block mt-1">
+                        <span className="text-[11px] text-stone-200/80 block mt-1">
                             Termasuk rincian menu dan pajak resto
                         </span>
                     </div>
 
                     {/* Info Nama Pemesan (Tercatat dari Keranjang Pesanan) */}
-                    <div className="bg-stone-50/90 p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs space-y-1.5">
+                    <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-2xs space-y-2">
                         <div className="flex items-center justify-between text-xs font-bold text-stone-800">
                             <span className="flex items-center gap-1.5">
                                 <User className="w-3.5 h-3.5 text-[#881B1E]" />
                                 <span>Nama Pemesan</span>
                             </span>
-                            <span className="text-[10px] text-emerald-800 bg-emerald-50 font-bold px-2 py-0.5 rounded-full border border-emerald-200/70 flex items-center gap-1">
+                            <span className="text-[10px] text-stone-600 bg-stone-100 font-semibold px-2 py-0.5 rounded-md border border-stone-200 flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 Dicatat di Struk
                             </span>
                         </div>
 
-                        <div className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-900 bg-white shadow-2xs flex items-center justify-between select-none">
-                            <span className="truncate text-stone-900 font-extrabold">{customerName || 'Pelanggan'}</span>
+                        <div className="w-full px-3.5 py-2 rounded-lg border border-stone-200 text-xs font-bold text-stone-900 bg-stone-50 flex items-center justify-between select-none">
+                            <span className="truncate text-stone-900 font-bold">{customerName || 'Pelanggan'}</span>
                             <span className="text-[10px] text-stone-400 font-medium shrink-0">Sesuai Keranjang</span>
                         </div>
 
@@ -208,13 +209,13 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     </div>
 
                     {/* Midtrans Channel Highlight Card */}
-                    <div className="bg-gradient-to-br from-amber-50 via-white to-amber-50/40 p-4 rounded-2xl border-2 border-amber-300 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
-                            <span className="text-xs font-black uppercase text-stone-800 tracking-wide flex items-center gap-1.5">
-                                <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
+                    <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-2xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                            <span className="text-xs font-bold uppercase text-stone-900 tracking-wide flex items-center gap-1.5">
+                                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                                 <span>Metode Resmi Midtrans</span>
                             </span>
-                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-md">
                                 Verifikasi Otomatis
                             </span>
                         </div>
@@ -224,28 +225,28 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </p>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="p-2.5 rounded-xl bg-white border border-stone-200 shadow-2xs flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-red-50 text-[#881B1E] flex items-center justify-center shrink-0">
-                                    <QrCode className="w-4 h-4" />
+                            <div className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-md bg-stone-200/70 text-stone-700 flex items-center justify-center shrink-0">
+                                    <QrCode className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
                                     <span className="font-bold text-stone-900 block leading-tight text-[11px]">QRIS Instan</span>
-                                    <span className="text-[10px] text-stone-400 block truncate">GoPay, OVO, Dana, ShopeePay</span>
+                                    <span className="text-[10px] text-stone-500 block truncate">GoPay, OVO, Dana, ShopeePay</span>
                                 </div>
                             </div>
 
-                            <div className="p-2.5 rounded-xl bg-white border border-stone-200 shadow-2xs flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center shrink-0">
-                                    <Building2 className="w-4 h-4" />
+                            <div className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-md bg-stone-200/70 text-stone-700 flex items-center justify-center shrink-0">
+                                    <Building2 className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
                                     <span className="font-bold text-stone-900 block leading-tight text-[11px]">Virtual Account</span>
-                                    <span className="text-[10px] text-stone-400 block truncate">BCA, Mandiri, BRI, BNI</span>
+                                    <span className="text-[10px] text-stone-500 block truncate">BCA, Mandiri, BRI, BNI</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="space-y-1.5 pt-1 text-[11px] text-stone-500">
+                        <div className="space-y-1.5 pt-1 text-[11px] text-stone-500 border-t border-stone-100">
                             <div className="flex items-center gap-1.5">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 <span>Status pesanan otomatis lunas tanpa perlu konfirmasi manual</span>
@@ -260,23 +261,23 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                 </div>
 
                 {/* Footer Action */}
-                <div className="p-4 bg-white border-t border-stone-200/80 shadow-xs space-y-2">
+                <div className="p-4 bg-white border-t border-stone-200 space-y-2">
                     <button
                         type="button"
                         onClick={handleMidtransPayment}
                         disabled={isSubmitting}
-                        className="w-full py-4 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 hover:from-emerald-500 hover:to-emerald-600 text-white font-display font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-emerald-950/20 active:scale-98 transition flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide shadow-sm hover:shadow active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>
-                                <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                <Loader2 className="w-4 h-4 animate-spin text-white" />
                                 <span>Menghubungi Midtrans...</span>
                             </>
                         ) : (
                             <>
-                                <Zap className="w-5 h-5 text-amber-300 fill-amber-300" />
+                                <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
                                 <span>BAYAR VIA MIDTRANS SNAP</span>
-                                <ArrowRight className="w-5 h-5 text-emerald-200" />
+                                <ArrowRight className="w-4 h-4 text-emerald-100" />
                             </>
                         )}
                     </button>
@@ -285,7 +286,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         type="button"
                         onClick={onClose}
                         disabled={isSubmitting}
-                        className="w-full py-2 text-center text-xs text-stone-500 hover:text-stone-800 font-semibold transition cursor-pointer"
+                        className="w-full py-2 text-center text-xs text-stone-500 hover:text-stone-800 font-medium transition cursor-pointer disabled:opacity-50"
                     >
                         Tutup & Cek Status Pesanan
                     </button>
