@@ -349,12 +349,20 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Harga beli / HPP (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="hpp" placeholder="Rp 0" required>
+                                <label class="form-label">Harga beli / HPP <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                    <input type="text" class="form-control" placeholder="0" oninput="formatRupiah(this)" required>
+                                    <input type="hidden" name="hpp">
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Harga jual (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="harga" placeholder="Rp 0" required>
+                                <label class="form-label">Harga jual <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                    <input type="text" class="form-control" placeholder="0" oninput="formatRupiah(this)" required>
+                                    <input type="hidden" name="harga">
+                                </div>
                             </div>
                         </div>
 
@@ -542,12 +550,20 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Harga beli / HPP (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="hpp" value="{{ $p->hpp }}" required>
+                                <label class="form-label">Harga beli / HPP <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                    <input type="text" class="form-control" value="{{ number_format($p->hpp, 0, ',', '.') }}" oninput="formatRupiah(this)" required>
+                                    <input type="hidden" name="hpp" value="{{ $p->hpp }}">
+                                </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Harga jual (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="harga" value="{{ $p->harga }}" required>
+                                <label class="form-label">Harga jual <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                    <input type="text" class="form-control" value="{{ number_format($p->harga, 0, ',', '.') }}" oninput="formatRupiah(this)" required>
+                                    <input type="hidden" name="harga" value="{{ $p->harga }}">
+                                </div>
                             </div>
                         </div>
 
@@ -693,6 +709,32 @@
                 }
             };
             reader.readAsDataURL(file);
+        }
+    }
+
+    // Format Rupiah function
+    function formatRupiah(input) {
+        let value = input.value.replace(/[^,\d]/g, '').toString();
+        let hiddenInput = input.parentElement.querySelector('input[type="hidden"]');
+        
+        if (value) {
+            let split = value.split(','),
+                sisa = split[0].length % 3,
+                rupiah = split[0].substr(0, sisa),
+                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+
+            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+            input.value = rupiah;
+            
+            if(hiddenInput) hiddenInput.value = value.replace(/\./g, '');
+        } else {
+            input.value = '';
+            if(hiddenInput) hiddenInput.value = '';
         }
     }
 </script>

@@ -168,8 +168,12 @@
                                                 </div>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label fw-bold small text-muted">Harga Beli / Modal (Rp) <span class="text-danger">*</span></label>
-                                                <input type="number" class="form-control shadow-none" name="harga_beli" value="{{ old('harga_beli', $bb->harga_beli) }}" required min="0" step="any">
+                                                <label class="form-label fw-bold small text-muted">Harga Beli / Modal <span class="text-danger">*</span></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                                    <input type="text" class="form-control shadow-none" value="{{ number_format(old('harga_beli', $bb->harga_beli), 0, ',', '.') }}" oninput="formatRupiah(this)" required>
+                                                    <input type="hidden" name="harga_beli" value="{{ old('harga_beli', $bb->harga_beli) }}">
+                                                </div>
                                             </div>
                                             <div class="row g-3 mb-3">
                                                 <div class="col-6">
@@ -250,8 +254,12 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Harga Beli / Modal (Rp) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control shadow-none" name="harga_beli" placeholder="Rp 0" required min="0" step="any">
+                            <label class="form-label fw-bold small text-muted">Harga Beli / Modal <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                <input type="text" class="form-control shadow-none" placeholder="0" oninput="formatRupiah(this)" required>
+                                <input type="hidden" name="harga_beli">
+                            </div>
                         </div>
                         <div class="row g-3 mb-3">
                             <div class="col-6">
@@ -285,6 +293,31 @@
     }
     updateHeaderTime();
     setInterval(updateHeaderTime, 1000);
+
+    function formatRupiah(input) {
+        let value = input.value.replace(/[^,\d]/g, '').toString();
+        let hiddenInput = input.parentElement.querySelector('input[type="hidden"]');
+        
+        if (value) {
+            let split = value.split(','),
+                sisa = split[0].length % 3,
+                rupiah = split[0].substr(0, sisa),
+                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+
+            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+            input.value = rupiah;
+            
+            if(hiddenInput) hiddenInput.value = value.replace(/\./g, '');
+        } else {
+            input.value = '';
+            if(hiddenInput) hiddenInput.value = '';
+        }
+    }
 </script>
 @endpush
 @endsection
