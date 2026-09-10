@@ -15,6 +15,13 @@ class UpdateProdukRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'aktif' => $this->has('aktif') ? true : false,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
