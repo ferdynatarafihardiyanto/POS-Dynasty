@@ -270,8 +270,12 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Nominal pengeluaran (Rp) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="nominal" placeholder="Rp 0" required>
+                            <label class="form-label">Nominal pengeluaran <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold text-muted">Rp</span>
+                                <input type="text" class="form-control" placeholder="0" oninput="formatRupiah(this)" required>
+                                <input type="hidden" name="nominal">
+                            </div>
                         </div>
 
                         <div class="mb-3">
