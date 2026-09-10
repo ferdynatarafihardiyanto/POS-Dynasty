@@ -12,7 +12,7 @@ class ModifierOptionController extends Controller
     public function store(StoreModifierOptionRequest $request)
     {
         $data = $request->validated();
-        $data['aktif'] = $request->boolean('aktif');
+        $data['aktif'] = $request->has('aktif') ? $request->boolean('aktif') : true;
         ModifierOption::create($data);
         return redirect()->route('admin.modifier-groups.edit', $data['modifier_group_id'])->with('success', 'Opsi Modifier berhasil ditambahkan.');
     }

@@ -82,15 +82,17 @@
 
 <div class="pos-main" x-data="transaksiSystem()">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between p-4 bg-white border-bottom">
-        <div>
-            <h4 class="mb-0 fw-bold">Riwayat Transaksi</h4>
-            <div class="text-muted small">Lihat dan kelola riwayat penjualan</div>
+    <div class="d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center" id="openSidebarBtn" title="Buka Navigasi" style="width: 38px; height: 38px;">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark fs-5 fs-md-4">Riwayat Transaksi</h4>
+                <div class="text-muted small">Lihat dan kelola riwayat penjualan</div>
+            </div>
         </div>
         <div class="d-flex align-items-center gap-4">
-            <button class="btn btn-light rounded-circle position-relative p-2 border">
-                <i class="bi bi-bell"></i>
-            </button>
             <div class="border rounded px-3 py-1 text-center bg-light">
                 <div class="small text-muted" style="font-size: 0.7rem;">WAKTU</div>
                 <div class="fw-bold" x-text="currentTime">--:--:-- WIB</div>
@@ -279,6 +281,11 @@
                                             <div class="fw-bold text-dark" x-text="formatRupiah(item.subtotal)"></div>
                                         </div>
                                         <div class="text-muted small" x-text="formatRupiah(item.harga) + ' x ' + item.jumlah"></div>
+                                        <template x-if="item.catatan">
+                                            <div class="small mt-1 text-danger fst-italic">
+                                                <i class="bi bi-chat-left-text me-1"></i>Catatan: <span x-text="item.catatan"></span>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
@@ -377,12 +384,18 @@ document.addEventListener('alpine:init', () => {
         },
         
         getKasirName(trx) {
-            // Karena user relasi belum fix di DB, kita mock nama kasir dari auth saat ini, 
-            // atau dari catatan pelanggan "NamaPelanggan (Via QRIS)"
+            if (trx.nama_pelanggan && !trx.nama_pelanggan.startsWith('Pelanggan Meja')) {
+                return trx.nama_pelanggan;
+            }
             let catatan = trx.catatan || '';
-            let name = catatan.split(' (Via')[0];
-            if (!name || name.trim() === '') return 'Akbar Hidayat'; // Sesuai referensi
-            return name;
+            if (catatan.includes('Pemesan:')) {
+                let parts = catatan.split('Pemesan:')[1].split('|')[0].trim();
+                if (parts) return parts;
+            }
+            if (trx.meja) {
+                return 'Meja ' + (trx.meja.table_number || trx.meja.id);
+            }
+            return 'Kasir POS';
         },
         
         getTotalItems(trx) {
@@ -391,16 +404,23 @@ document.addEventListener('alpine:init', () => {
         },
         
         getPaymentMethod(trx) {
+            if (trx.pembayaran && trx.pembayaran.metode_pembayaran) {
+                const m = trx.pembayaran.metode_pembayaran.toLowerCase();
+                if (m === 'qris') return 'QRIS';
+                if (m === 'transfer') return 'Debit / VA';
+                if (m === 'cash') return 'Tunai';
+                return trx.pembayaran.metode_pembayaran.toUpperCase();
+            }
             if (!trx.catatan) return 'Tunai';
-            if (trx.catatan.includes('QRIS')) return 'QRIS';
-            if (trx.catatan.includes('DEBIT')) return 'Debit';
+            if (trx.catatan.toUpperCase().includes('QRIS')) return 'QRIS';
+            if (trx.catatan.toUpperCase().includes('DEBIT') || trx.catatan.toUpperCase().includes('TRANSFER')) return 'Debit';
             return 'Tunai';
         },
         
         getPaymentClass(trx) {
             const method = this.getPaymentMethod(trx).toLowerCase();
-            if (method === 'qris') return 'method-qris';
-            if (method === 'debit') return 'method-debit';
+            if (method.includes('qris')) return 'method-qris';
+            if (method.includes('debit') || method.includes('transfer') || method.includes('va')) return 'method-debit';
             return 'method-tunai';
         },
         

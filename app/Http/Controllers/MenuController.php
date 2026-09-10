@@ -11,11 +11,15 @@ class MenuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Produk::with('kategori')
-            ->where('aktif', true)
-            ->whereHas('kategori', function ($q) {
-                $q->where('aktif', true);
-            });
+        $query = Produk::with(['kategori', 'modifierGroups' => function($q) {
+            $q->where('modifier_groups.aktif', true)->with(['options' => function($q2) {
+                $q2->where('aktif', true);
+            }]);
+        }])
+        ->where('aktif', true)
+        ->whereHas('kategori', function ($q) {
+            $q->where('aktif', true);
+        });
 
         if ($request->has('kategori_id') && $request->kategori_id != '') {
             $query->where('kategori_id', $request->kategori_id);
@@ -51,6 +55,8 @@ class MenuController extends Controller
                 'nama' => $produk->nama,
                 'deskripsi' => $produk->deskripsi,
                 'harga' => $produk->harga,
+                'gambar' => $produk->gambar,
+                'gambar_url' => $produk->gambar_url,
                 'kategori' => [
                     'id' => $produk->kategori->id,
                     'nama' => $produk->kategori->nama
@@ -88,13 +94,15 @@ class MenuController extends Controller
             ->whereHas('kategori', function ($q) {
                 $q->where('aktif', true);
             })
-            ->get(['id', 'nama', 'harga', 'kategori_id']);
+            ->get(['id', 'nama', 'harga', 'kategori_id', 'gambar']);
 
         $produkFormatted = $produk->map(function ($p) {
             return [
                 'id' => $p->id,
                 'nama' => $p->nama,
-                'harga' => $p->harga
+                'harga' => $p->harga,
+                'gambar' => $p->gambar,
+                'gambar_url' => $p->gambar_url
             ];
         });
 

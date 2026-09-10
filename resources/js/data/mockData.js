@@ -1,92 +1,161 @@
-/**
- * Presentation Layer Metadata for Kedai Dynasty UI
- * Note: Database data (names, prices, IDs, stock, categories, orders) comes from Laravel.
- * This file only provides visual enhancements (icons, high-res cafe photography, quick actions).
- */
+export const CATEGORIES = [
+    { id: 'all', nama: 'Semua Menu', icon: '🍽️' },
+    { id: 'popular', nama: 'Menu Populer', icon: '🔥' },
+    { id: '1', nama: 'Coffee', icon: '☕' },
+    { id: '2', nama: 'Non Coffee', icon: '🍵' },
+    { id: '3', nama: 'Food', icon: '🥪' },
+    { id: '4', nama: 'Snack', icon: '🍟' },
+];
 
-export const CATEGORY_ICONS = {
-    'all': '🍽️',
-    'popular': '🔥',
-    'coffee': '☕',
-    'kopi': '☕',
-    'non coffee': '🧋',
-    'non-coffee': '🧋',
-    'non kopi': '🧋',
-    'milk based': '🥛',
-    'food': '🍛',
-    'makanan': '🍛',
-    'mie': '🍜',
-    'roti bakar': '🍞',
-    'snack': '🍟',
-    'dessert': '🍰',
-};
+export const PROMO_ITEMS = [
+    {
+        id: 1,
+        backend_id: 1,
+        nama: 'Americano',
+        kategori_id: 1,
+        kategori_nama: 'Coffee',
+        harga: 18000,
+        harga_coret: 22000,
+        diskon: 'PROMO',
+        badge: 'Favorite Coffee',
+        is_promo: true,
+        rating: 4.9,
+        reviews_count: 128,
+        prep_time: '5 Menit',
+        portion_tag: 'Espresso Blend',
+        gambar: '/images/produk/americano.jpg',
+        deskripsi_singkat: 'Espresso racikan biji kopi pilihan dengan air mineral segar panas/dingin.',
+        deskripsi: 'Espresso kaya rasa yang diseduh dari perpaduan biji kopi arabika dan robusta pilihan terbaik, disajikan segar dengan pilihan dingin menyegarkan atau panas yang menenangkan.',
+    },
+    {
+        id: 2,
+        backend_id: 2,
+        nama: 'Latte',
+        kategori_id: 1,
+        kategori_nama: 'Coffee',
+        harga: 22000,
+        harga_coret: 26000,
+        diskon: 'BEST SELLER',
+        badge: 'CHEF CHOICE',
+        is_promo: true,
+        rating: 4.9,
+        reviews_count: 215,
+        prep_time: '7 Menit',
+        portion_tag: 'Creamy Milk',
+        gambar: '/images/produk/latte.jpg',
+        deskripsi_singkat: 'Espresso kaya rasa dengan steamed milk lembut dan latte art cantik.',
+        deskripsi: 'Paduan sempurna antara double shot espresso dengan susu segar creamy bersuhu pas, menghasilkan tekstur velvet mikrobusa yang lembut dan nikmat.',
+    },
+    {
+        id: 7,
+        backend_id: 7,
+        nama: 'Croissant',
+        kategori_id: 3,
+        kategori_nama: 'Food',
+        harga: 25000,
+        harga_coret: 28000,
+        diskon: 'FRESH BAKE',
+        badge: 'Fresh Daily',
+        is_promo: true,
+        rating: 4.8,
+        reviews_count: 88,
+        prep_time: '5 Menit',
+        portion_tag: 'Buttery Pastry',
+        gambar: '/images/produk/croissant.jpg',
+        deskripsi_singkat: 'Pastry khas Prancis renyah keemasan dengan lapisan butter wangi.',
+        deskripsi: 'Croissant butter asli Prancis yang dipanggang segar setiap hari, renyah di luar dengan rongga udara lembut berlapis aroma mentega premium di dalam.',
+    },
+    {
+        id: 4,
+        backend_id: 4,
+        nama: 'Matcha Latte',
+        kategori_id: 2,
+        kategori_nama: 'Non Coffee',
+        harga: 25000,
+        harga_coret: 28000,
+        diskon: 'POPULAR',
+        badge: 'Japanese Pure',
+        is_promo: true,
+        rating: 4.9,
+        reviews_count: 164,
+        prep_time: '5 Menit',
+        portion_tag: 'Pure Uji Matcha',
+        gambar: '/images/produk/matcha_latte.jpg',
+        deskripsi_singkat: 'Bubuk matcha murni Jepang berpadu dengan susu segar lembut dan manis pas.',
+        deskripsi: 'Minuman matcha otentik khas Jepang dari daun teh hijau pilihan, dipadukan dengan kelembutan fresh milk yang seimbang, harum dan menyegarkan.',
+    }
+];
 
-export const getCategoryIcon = (categoryName = '', categoryId = null) => {
-    if (categoryId === 'all') return '🍽️';
-    if (categoryId === 'popular') return '🔥';
-    
-    const key = String(categoryName).toLowerCase().trim();
-    for (const [name, icon] of Object.entries(CATEGORY_ICONS)) {
-        if (key.includes(name)) return icon;
+export const ALL_MENU_ITEMS = [
+    PROMO_ITEMS[0],
+    PROMO_ITEMS[1],
+    {
+        id: 3,
+        backend_id: 3,
+        nama: 'Cappuccino',
+        kategori_id: 1,
+        kategori_nama: 'Coffee',
+        harga: 24000,
+        badge: 'Classic',
+        rating: 4.8,
+        reviews_count: 142,
+        prep_time: '7 Menit',
+        portion_tag: 'Thick Foam',
+        gambar: '/images/produk/cappuccino.jpg',
+        deskripsi_singkat: 'Espresso dengan lapisan foam susu tebal dan taburan kakao lembut.',
+        deskripsi: 'Keseimbangan rasa espresso yang mantap dengan foam susu tebal nan lembut, memberikan sensasi klasik kopi Italia yang memanjakan lidah.',
+    },
+    PROMO_ITEMS[3],
+    {
+        id: 5,
+        backend_id: 5,
+        nama: 'Chocolate',
+        kategori_id: 2,
+        kategori_nama: 'Non Coffee',
+        harga: 20000,
+        badge: 'Comfort Drink',
+        rating: 4.9,
+        reviews_count: 175,
+        prep_time: '5 Menit',
+        portion_tag: 'Rich Cocoa',
+        gambar: '/images/produk/chocolate.jpg',
+        deskripsi_singkat: 'Coklat pekat premium kaya rasa yang lumer manis gurih di mulut.',
+        deskripsi: 'Minuman coklat olahan kakao murni berkualitas tinggi dengan tekstur creamy dan aroma manis pekat yang menghangatkan suasana.',
+    },
+    {
+        id: 6,
+        backend_id: 6,
+        nama: 'Sandwich',
+        kategori_id: 3,
+        kategori_nama: 'Food',
+        harga: 30000,
+        badge: 'Hearty Meal',
+        rating: 4.8,
+        reviews_count: 95,
+        prep_time: '10 Menit',
+        portion_tag: 'Toasted Club',
+        gambar: '/images/produk/sandwich.jpg',
+        deskripsi_singkat: 'Roti panggang isi daging gurih, selada segar, keju dan saus lezat.',
+        deskripsi: 'Sandwich club lapis roti panggang gandum dengan isian smoked meat gurih, telur, selada hidroponik segar, tomat manis, dan balutan saus mayo rempah.',
+    },
+    PROMO_ITEMS[2],
+    {
+        id: 8,
+        backend_id: 8,
+        nama: 'French Fries',
+        kategori_id: 4,
+        kategori_nama: 'Snack',
+        harga: 15000,
+        badge: 'Crispy Snack',
+        rating: 4.8,
+        reviews_count: 220,
+        prep_time: '8 Menit',
+        portion_tag: 'Golden Crispy',
+        gambar: '/images/produk/french_fries.jpg',
+        deskripsi_singkat: 'Kentang goreng stik renyah gurih disajikan dengan saus cocolan.',
+        deskripsi: 'Kentang impor potongan stik digoreng keemasan garing di luar dan lembut di dalam, ditaburi bumbu garam gurih, disajikan bersama saus sambal dan tomat.',
     }
-    return '🍽️';
-};
-
-// Curated high quality food & beverage photos mapped to product keywords
-export const getProductImage = (productName = '', categoryName = '') => {
-    const name = String(productName).toLowerCase();
-    const cat = String(categoryName).toLowerCase();
-
-    if (name.includes('americano') || name.includes('black coffee') || name.includes('espresso')) {
-        return 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('latte') || name.includes('cappuccino') || name.includes('kopi susu')) {
-        return 'https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('v60') || name.includes('manual brew') || name.includes('kopi')) {
-        return 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('matcha')) {
-        return 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('choco') || name.includes('coklat') || name.includes('milo')) {
-        return 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('tea') || name.includes('teh') || name.includes('lemonade')) {
-        return 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('shake') || name.includes('milk') || name.includes('velvet') || name.includes('taro')) {
-        return 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('sandwich') || name.includes('roti') || name.includes('toast')) {
-        return 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('croissant') || name.includes('pastry')) {
-        return 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('fries') || name.includes('kentang')) {
-        return 'https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('mie') || name.includes('noodle') || name.includes('spaghetti') || name.includes('pasta')) {
-        return 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80';
-    }
-    if (name.includes('nasi') || name.includes('chicken') || name.includes('katsu') || name.includes('platter')) {
-        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
-    }
-
-    // Default by category
-    if (cat.includes('coffee') || cat.includes('kopi')) {
-        return 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80';
-    }
-    if (cat.includes('snack')) {
-        return 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=800&q=80';
-    }
-    if (cat.includes('food') || cat.includes('makan')) {
-        return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80';
-    }
-
-    return 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80';
-};
+];
 
 export const WAITER_QUICK_ACTIONS = [
     { id: 'cutlery', label: 'Minta Sendok / Garpu / Piring', icon: '🍴', desc: 'Pelayan akan membawakan perlengkapan makan tambahan' },
@@ -97,10 +166,9 @@ export const WAITER_QUICK_ACTIONS = [
 ];
 
 export const AVAILABLE_TABLES = [
-    { number: '01', name: 'Meja 01 (Indoor Depan)', token: '3KiGgju7Zb', capacity: '2 Orang' },
-    { number: '02', name: 'Meja 02 (Indoor Tengah)', token: 'ZX822wMXX5', capacity: '4 Orang' },
-    { number: '03', name: 'Meja 03 (Indoor Sofa)', token: '6q2VRvfV0r', capacity: '6 Orang' },
-    { number: '04', name: 'Meja 04 (Outdoor Garden)', token: 'KT1DTfb8cD', capacity: '4 Orang' },
-    { number: '05', name: 'Meja 05 (Outdoor Balcony)', token: 'namXX41oft', capacity: '2 Orang' },
+    { number: '01', name: 'Meja 01', token: 'tUTSNEGGhT', capacity: '2 Orang' },
+    { number: '02', name: 'Meja 02', token: 'wQMk92PcpG', capacity: '4 Orang' },
+    { number: '03', name: 'Meja 03', token: 'r6Xi4WXchd', capacity: '6 Orang' },
+    { number: '04', name: 'Meja 04', token: '66Lt7D0Lto', capacity: '4 Orang' },
+    { number: '05', name: 'Meja 05', token: 'OyI3qLTW3U', capacity: '2 Orang' },
 ];
-

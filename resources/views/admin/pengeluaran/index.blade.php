@@ -93,15 +93,17 @@
 @section('content')
 <div class="pos-main">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between p-4 bg-white border-bottom">
-        <div>
-            <h4 class="mb-0 fw-bold text-dark">Pengeluaran Toko</h4>
-            <div class="text-muted small">Catat dan kelola pengeluaran operasional</div>
+    <div class="d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center" id="openSidebarBtn" title="Buka Navigasi" style="width: 38px; height: 38px;">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+            <div>
+                <h4 class="mb-0 fw-bold text-dark fs-5 fs-md-4">Pengeluaran Toko</h4>
+                <div class="text-muted small">Catat dan kelola pengeluaran operasional</div>
+            </div>
         </div>
         <div class="d-flex align-items-center gap-4">
-            <button class="btn btn-light rounded-circle position-relative p-2 border">
-                <i class="bi bi-bell"></i>
-            </button>
             <div class="border rounded px-3 py-1 text-center bg-light">
                 <div class="small text-muted" style="font-size: 0.7rem;">WAKTU</div>
                 <div class="fw-bold" id="currentTimeHeader">--:--:-- WIB</div>

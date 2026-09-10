@@ -15,18 +15,29 @@ class UpdateProdukRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'aktif' => $this->has('aktif') ? true : false,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
             'kategori_id' => 'required|exists:kategori,id',
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'hpp' => 'required|integer|min:0',
             'harga' => 'required|integer|min:0',
             'stok' => 'required|integer|min:0',
             'aktif' => 'nullable|boolean',
+            'tipe_produk' => 'nullable|string|in:standar,bundling',
             'modifier_groups' => 'nullable|array',
-            'modifier_groups.*' => 'integer|distinct|exists:modifier_groups,id'
+            'modifier_groups.*' => 'integer|distinct|exists:modifier_groups,id',
+            'bundle_items' => 'nullable|array',
+            'bundle_items.*' => 'integer|min:0'
         ];
     }
 }

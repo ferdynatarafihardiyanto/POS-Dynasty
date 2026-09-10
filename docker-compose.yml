@@ -1,0 +1,67 @@
+version: '3.3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pos_dynasty_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      APP_NAME: "POS Dynasty Cafe"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "http://localhost:8080"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: pos_dynasty
+      DB_USERNAME: pos_user
+      DB_PASSWORD: pos_password123
+      MIDTRANS_MERCHANT_ID: "G441882517"
+      MIDTRANS_CLIENT_KEY: "SB-Mid-client-Qx6UwA5DFHHUPt2B"
+      MIDTRANS_SERVER_KEY: "SB-Mid-server-pk8dlBip3clCK6pGOmkSAF18"
+      MIDTRANS_IS_PRODUCTION: "false"
+    depends_on:
+      - db
+    volumes:
+      - app_storage:/var/www/storage
+      - ./resources/views:/var/www/resources/views
+      - ./routes:/var/www/routes
+      - ./app:/var/www/app
+      - ./config:/var/www/config
+      - ./public/build:/var/www/public/build
+      - ./public/images:/var/www/public/images
+
+  db:
+    image: mariadb:10.11
+    container_name: pos_dynasty_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: pos_dynasty
+      MYSQL_USER: pos_user
+      MYSQL_PASSWORD: pos_password123
+      MYSQL_ROOT_PASSWORD: root_password123
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: pos_dynasty_pma
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      - db
+
+volumes:
+  app_storage:
+  db_data:

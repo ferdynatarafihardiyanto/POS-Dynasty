@@ -12,6 +12,9 @@ export default function TableScannerModal() {
 
     const handleSelectTable = (table) => {
         setTableInfo(table);
+        try {
+            localStorage.setItem('dynasty_table', JSON.stringify(table));
+        } catch (e) {}
         setIsTableModalOpen(false);
         showToast(`Tersambung ke ${table.name || 'Meja ' + table.number}! 📍`, 'success');
     };

@@ -1,0 +1,16 @@
+<?php
+
+return [
+    'merchant_id' => env('MIDTRANS_MERCHANT_ID', 'G441882517'),
+    'client_key' => env('MIDTRANS_CLIENT_KEY', 'SB-Mid-client-Qx6UwA5DFHHUPt2B'),
+    'server_key' => env('MIDTRANS_SERVER_KEY', 'SB-Mid-server-pk8dlBip3clCK6pGOmkSAF18'),
+    'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+    'is_sanitized' => env('MIDTRANS_IS_SANITIZED', true),
+    'is_3ds' => env('MIDTRANS_IS_3DS', true),
+    'snap_url' => env('MIDTRANS_IS_PRODUCTION', false)
+        ? 'https://app.midtrans.com/snap/v1/transactions'
+        : 'https://app.sandbox.midtrans.com/snap/v1/transactions',
+    'snap_js_url' => env('MIDTRANS_IS_PRODUCTION', false)
+        ? 'https://app.midtrans.com/snap/snap.js'
+        : 'https://app.sandbox.midtrans.com/snap/snap.js',
+];

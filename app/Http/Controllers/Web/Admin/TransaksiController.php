@@ -11,7 +11,15 @@ class TransaksiController extends Controller
     public function index(Request $request)
     {
         $periode = $request->get('periode', 'all');
-        $query = Pesanan::with(['detailPesanan'])->where('status', 'dibayar');
+
+        $paidCondition = function ($q) {
+            $q->whereHas('pembayaran', function ($p) {
+                $p->where('status', 'berhasil');
+            })->orWhereIn('status', ['dibayar', 'diproses', 'disajikan', 'selesai']);
+        };
+
+        $query = Pesanan::with(['detailPesanan.produk', 'pembayaran', 'meja'])
+            ->where($paidCondition);
         
         $now = \Carbon\Carbon::now('Asia/Jakarta');
         

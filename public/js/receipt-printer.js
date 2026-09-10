@@ -175,6 +175,30 @@ window.ReceiptPrinter = {
      */
     generateReceiptHtml(data, config) {
         const width = config.paperWidth === '80mm' ? '80mm' : '58mm';
+        
+        // Ambil profil toko dari localStorage (Sinkron dengan Profil Toko)
+        let storeProfile = {
+            namaToko: 'Kedai Kopi Dinasty',
+            slogan: 'Authentic Coffee & Eatery',
+            alamat: 'Jl. Jambangan Kebon Agung No. 12 B, Jambangan, Kec. Jambangan, Surabaya, Jawa Timur 60232',
+            telepon: '0812-3456-7890',
+            sosmed: 'kedaikopidinasty.tokoa.id',
+            pesanFooterStruk: "Terima kasih atas kunjungan Anda!\nSilakan datang kembali.",
+            cetakLogoStruk: true,
+            wifiList: [
+                { ssid: 'KEDAI DINASTY 5G', password: 'wargadinasty' },
+                { ssid: 'KEDAI DINASTY LT 2', password: 'cobatanyabarista' }
+            ]
+        };
+        try {
+            const savedProf = localStorage.getItem('dynasty_store_profile');
+            if (savedProf) {
+                storeProfile = Object.assign({}, storeProfile, JSON.parse(savedProf));
+            }
+        } catch(e) {}
+
+        const savedLogo = localStorage.getItem('dynasty_logo_data') || storeProfile.logo_url || null;
+
         let itemsHtml = '';
         if (data.items && data.items.length > 0) {
             data.items.forEach(item => {
@@ -187,6 +211,9 @@ window.ReceiptPrinter = {
                             item.selectedOptions.map(o => `+ ${o.nama}`).join('<br>') +
                             `</div>` : ''
                         }
+                        ${item.catatan ? 
+                            `<div style="font-size: 10px; font-style: italic; color: #444; padding-left: 8px;">* Catatan: ${item.catatan}</div>` : ''
+                        }
                         <div style="display: flex; justify-content: space-between;">
                             <span>${item.quantity} x ${this.formatRupiah(item.unitPrice)}</span>
                             <span>${this.formatRupiah(subtotal)}</span>
@@ -194,6 +221,16 @@ window.ReceiptPrinter = {
                     </div>
                 `;
             });
+        }
+
+        // Generate WiFi HTML
+        let wifiHtml = '';
+        if (storeProfile.wifiList && storeProfile.wifiList.length > 0) {
+            storeProfile.wifiList.forEach(w => {
+                wifiHtml += `<div>Wifi : ${w.ssid || ''}</div><div>Pass : ${w.password || ''}</div>`;
+            });
+        } else {
+            wifiHtml = `<div>Wifi : KEDAI DINASTY 5G</div><div>Pass : wargadinasty</div><div>Wifi : KEDAI DINASTY LT 2</div><div>Pass : cobatanyabarista</div>`;
         }
 
         return `<!DOCTYPE html>
@@ -206,7 +243,8 @@ window.ReceiptPrinter = {
                     font-family: 'Courier New', Courier, monospace;
                     width: ${width};
                     margin: 0 auto;
-                    padding: 0;
+                    padding: 2mm 3mm;
+                    box-sizing: border-box;
                     font-size: 12px;
                     color: #000;
                 }
@@ -214,48 +252,66 @@ window.ReceiptPrinter = {
                 .fw-bold { font-weight: bold; }
                 .divider { border-top: 1px dashed #000; margin: 6px 0; }
                 .row-item { display: flex; justify-content: space-between; }
+                img.thermal-bw {
+                    filter: grayscale(100%) contrast(180%) brightness(85%);
+                    -webkit-filter: grayscale(100%) contrast(180%) brightness(85%);
+                    mix-blend-mode: multiply;
+                }
                 @media print {
-                    body { margin: 0; padding: 0; width: ${width}; }
+                    body { margin: 0; padding: 2mm 3mm; width: ${width}; box-sizing: border-box; }
+                    img.thermal-bw {
+                        filter: grayscale(100%) contrast(180%) brightness(85%) !important;
+                        -webkit-filter: grayscale(100%) contrast(180%) brightness(85%) !important;
+                    }
                 }
             </style>
         </head>
         <body>
-            <div class="text-center">
-                <div class="fw-bold" style="font-size: 15px;">KEDAI DYNASTY</div>
-                <div style="font-size: 11px;">Jl. Contoh No. 123</div>
-                <div style="font-size: 10px;">Telp: 08123456789</div>
+            <div class="text-center" style="margin-bottom: 6px;">
+                ${savedLogo && storeProfile.cetakLogoStruk !== false ? `
+                    <div style="margin-bottom: 4px;">
+                        <img src="${savedLogo}" alt="Logo" class="thermal-bw" style="max-height: 52px; max-width: 68px; object-fit: contain;">
+                    </div>
+                ` : ''}
+                <div class="fw-bold" style="font-size: 15px; text-transform: uppercase;">${storeProfile.namaToko || 'Kedai Kopi Dinasty'}</div>
+                ${storeProfile.slogan ? `<div style="font-size: 10px; font-weight: bold; text-transform: uppercase;">${storeProfile.slogan}</div>` : ''}
+                <div style="font-size: 10px; line-height: 1.3; padding: 0 4px;">${storeProfile.alamat || 'Jl. Jambangan Kebon Agung No. 12 B, Surabaya'}</div>
+                ${storeProfile.telepon ? `<div style="font-size: 9.5px;">Telp: ${storeProfile.telepon}</div>` : ''}
             </div>
             <div class="divider"></div>
             <div style="font-size: 11px;">
-                <div>No: ${data.nomor_pesanan || '-'}</div>
-                <div>Waktu: ${data.time || new Date().toLocaleString('id-ID')}</div>
-                <div>Kasir: ${data.cashierName || 'Kasir'}</div>
-                <div>Pelanggan: ${data.customerName || 'Pelanggan Umum'}</div>
-                <div>Meja: ${data.tableName || '-'}</div>
+                <div style="display: flex; justify-content: space-between;"><span>Pembeli:</span><span class="fw-bold">${data.customerName || 'natan'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>Pembayaran:</span><span>${(data.paymentMethod || 'Cash').toUpperCase()}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>Tanggal:</span><span>${data.time || new Date().toLocaleString('id-ID')}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>No Struk:</span><span class="fw-bold">${data.nomor_pesanan || 'SR44646'}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span>Kasir:</span><span>${data.cashierName || 'Masdarul'}</span></div>
             </div>
             <div class="divider"></div>
             ${itemsHtml}
             <div class="divider"></div>
             <div class="row-item fw-bold">
-                <span>Total:</span>
+                <span>TOTAL ${(data.items ? data.items.reduce((s, i) => s + (i.quantity || 1), 0) : 1)} QTY</span>
                 <span>${this.formatRupiah(data.total || 0)}</span>
             </div>
             <div class="row-item">
-                <span>Metode:</span>
-                <span style="text-transform: uppercase;">${data.paymentMethod || 'TUNAI'}</span>
-            </div>
-            <div class="row-item">
                 <span>Bayar:</span>
-                <span>${this.formatRupiah(data.cashReceived || 0)}</span>
+                <span>${this.formatRupiah(data.cashReceived || data.total || 0)}</span>
             </div>
             <div class="row-item">
                 <span>Kembali:</span>
                 <span>${this.formatRupiah(data.changeAmount || 0)}</span>
             </div>
             <div class="divider"></div>
-            <div class="text-center" style="margin-top: 8px;">
-                <div>Terima Kasih</div>
-                <div>Silakan datang kembali</div>
+            <div style="font-size: 10px; line-height: 1.4; margin-top: 4px; text-align: left;">
+                ${wifiHtml}
+            </div>
+            ${storeProfile.pesanFooterStruk ? `
+                <div class="text-center" style="margin-top: 8px; font-size: 10px; white-space: pre-line;">
+                    ${storeProfile.pesanFooterStruk}
+                </div>
+            ` : ''}
+            <div class="text-center" style="margin-top: 6px; font-size: 11px; font-weight: bold;">
+                <div>${storeProfile.sosmed || 'kedaikopidinasty.tokoa.id'}</div>
             </div>
         </body>
         </html>`;
@@ -267,20 +323,21 @@ window.ReceiptPrinter = {
     generatePlainTextReceipt(data, config) {
         const lineLen = config.paperWidth === '80mm' ? 42 : 32;
         const line = "-".repeat(lineLen);
-        let text = "       KEDAI DYNASTY\n";
-        text += "     Jl. Contoh No. 123\n";
-        text += "     Telp: 08123456789\n";
+        let text = "       KEDAI KOPI DINASTY\n";
+        text += " Jl. Jambangan Kebon Agung No. 12 B\n";
+        text += " Jambangan, Surabaya, Jatim 60232\n";
         text += line + "\n";
-        text += `No: ${data.nomor_pesanan || '-'}\n`;
-        text += `Waktu: ${data.time || '-'}\n`;
-        text += `Pelanggan: ${data.customerName || 'Pelanggan Umum'}\n`;
-        text += `Meja: ${data.tableName || '-'}\n`;
+        text += `Pembeli:    ${data.customerName || 'natan'}\n`;
+        text += `Pembayaran: ${(data.paymentMethod || 'Cash').toUpperCase()}\n`;
+        text += `Tanggal:    ${data.time || '-'}\n`;
+        text += `No Struk:   ${data.nomor_pesanan || 'SR44646'}\n`;
+        text += `Kasir:      ${data.cashierName || 'Masdarul'}\n`;
         text += line + "\n";
         
         if (data.items) {
             data.items.forEach(item => {
                 text += `${item.product.nama}\n`;
-                const qtyPrice = `${item.quantity} x ${this.formatRupiah(item.unitPrice)}`;
+                const qtyPrice = `${this.formatRupiah(item.unitPrice)} x ${item.quantity}`;
                 const total = `${this.formatRupiah(item.quantity * item.unitPrice)}`;
                 const spaces = Math.max(1, lineLen - qtyPrice.length - total.length);
                 text += qtyPrice + " ".repeat(spaces) + total + "\n";
@@ -288,13 +345,18 @@ window.ReceiptPrinter = {
         }
         
         text += line + "\n";
-        text += `Total: ${this.formatRupiah(data.total || 0)}\n`;
-        text += `Metode: ${(data.paymentMethod || 'TUNAI').toUpperCase()}\n`;
-        text += `Bayar: ${this.formatRupiah(data.cashReceived || 0)}\n`;
-        text += `Kembali: ${this.formatRupiah(data.changeAmount || 0)}\n`;
+        const totalQty = data.items ? data.items.reduce((s, i) => s + (i.quantity || 1), 0) : 1;
+        text += `TOTAL ${totalQty} QTY: ` + " ".repeat(Math.max(1, lineLen - 15 - this.formatRupiah(data.total || 0).length)) + `${this.formatRupiah(data.total || 0)}\n`;
+        text += `Bayar:      ${this.formatRupiah(data.cashReceived || data.total || 0)}\n`;
+        text += `Kembali:    ${this.formatRupiah(data.changeAmount || 0)}\n`;
         text += line + "\n";
-        text += "       Terima Kasih\n";
-        text += "  Silakan datang kembali\n\n\n";
+        text += "Wifi : KEDAI DINASTY 5G\n";
+        text += "Pass : wargadinasty\n";
+        text += "Wifi : KEDAI DINASTY LT 2\n";
+        text += "Pass : cobatanyabarista\n";
+        text += "Gunawangsa 13rf floor\n";
+        text += "Pass : abangjago\n\n";
+        text += "    kedaikopidinasty.tokoa.id\n\n\n";
         return text;
     },
 

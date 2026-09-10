@@ -7,12 +7,13 @@ use App\Models\CafeTable;
 use App\Http\Requests\StoreCafeTableRequest;
 use App\Http\Requests\UpdateCafeTableRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CafeTableController extends Controller
 {
     public function index()
     {
-        $mejas = CafeTable::latest()->paginate(10);
+        $mejas = CafeTable::orderByRaw('CAST(table_number AS UNSIGNED) ASC, table_number ASC')->paginate(10);
         return view('admin.meja.index', compact('mejas'));
     }
 
@@ -24,7 +25,8 @@ class CafeTableController extends Controller
     public function store(StoreCafeTableRequest $request)
     {
         $data = $request->validated();
-        $data['qr_token'] = uniqid('T');
+        $data['status'] = $data['status'] ?? 'active';
+        $data['qr_token'] = Str::random(10);
         CafeTable::create($data);
         return redirect()->route('admin.meja.index')->with('success', 'Meja berhasil ditambahkan.');
     }
@@ -36,7 +38,11 @@ class CafeTableController extends Controller
 
     public function update(UpdateCafeTableRequest $request, CafeTable $meja)
     {
-        $meja->update($request->validated());
+        $data = $request->validated();
+        if (empty($data['status'])) {
+            unset($data['status']);
+        }
+        $meja->update($data);
         return redirect()->route('admin.meja.index')->with('success', 'Meja berhasil diperbarui.');
     }
 
@@ -47,5 +53,11 @@ class CafeTableController extends Controller
         }
         $meja->delete();
         return redirect()->route('admin.meja.index')->with('success', 'Meja berhasil dihapus.');
+    }
+
+    public function print(CafeTable $meja)
+    {
+        $qrUrl = url('/?qr_token=' . $meja->qr_token);
+        return view('admin.meja.print', compact('meja', 'qrUrl'));
     }
 }

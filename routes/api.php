@@ -44,7 +44,9 @@ Route::middleware(['auth:sanctum', 'role'])->group(function () {
 
     // Admin POS
     Route::get('/admin/pos/pesanan', [\App\Http\Controllers\Admin\POSController::class, 'daftarPesanan']);
+    Route::get('/admin/pos/pesanan/aktif', [\App\Http\Controllers\Admin\POSController::class, 'pesananAktif']);
     Route::get('/admin/pos/pesanan/{id}', [\App\Http\Controllers\Admin\POSController::class, 'detailPesanan']);
+    Route::patch('/admin/pos/pesanan/{id}/status', [\App\Http\Controllers\Admin\POSController::class, 'ubahStatusPesanan']);
     Route::post('/admin/pos/pembayaran', [\App\Http\Controllers\Admin\POSController::class, 'prosesPembayaran']);
 
     // Admin Stok
@@ -87,4 +89,15 @@ Route::get('/meja/{qr_token}', [CafeTableController::class, 'show']);
 // Public Pesanan (Customer)
 Route::post('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'buatPesanan']);
 Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class, 'daftarPesanan']);
+Route::get('/pesanan/riwayat', [\App\Http\Controllers\Customer\PesananController::class, 'riwayatPesanan']);
 Route::get('/pesanan/{nomor_pesanan}', [\App\Http\Controllers\Customer\PesananController::class, 'detailPesanan']);
+Route::post('/pesanan/{nomor_pesanan}/bayar', [\App\Http\Controllers\Customer\PesananController::class, 'bayarOnline']);
+
+// Public Store Profile (Untuk Sinkronisasi Struk & Identitas Kafe)
+Route::get('/profil-toko', [\App\Http\Controllers\Customer\PesananController::class, 'getProfilToko']);
+Route::post('/profil-toko', [\App\Http\Controllers\Customer\PesananController::class, 'saveProfilToko']);
+
+// Midtrans Payment Gateway (Sandbox/Production)
+Route::post('/pesanan/{nomor_pesanan}/snap-token', [\App\Http\Controllers\Api\MidtransController::class, 'createSnapToken']);
+Route::post('/pesanan/{nomor_pesanan}/midtrans-confirm', [\App\Http\Controllers\Api\MidtransController::class, 'confirmSuccess']);
+Route::match(['get', 'post'], '/midtrans/notification', [\App\Http\Controllers\Api\MidtransController::class, 'handleNotification']);

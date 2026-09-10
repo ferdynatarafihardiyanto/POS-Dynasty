@@ -37,13 +37,17 @@ class LaporanController extends Controller
             $chartTitle = 'Pendapatan Tahun Ini';
         }
 
-        $totalPendapatan = $queryPesanan->where('status', 'dibayar')->sum('total_harga');
-        $totalPesanan = clone $queryPesanan;
-        $totalPesanan = $totalPesanan->where('status', 'dibayar')->count();
+        $paidCondition = function ($q) {
+            $q->whereHas('pembayaran', function ($p) {
+                $p->where('status', 'berhasil');
+            })->orWhereIn('status', ['dibayar', 'diproses', 'disajikan', 'selesai']);
+        };
+
+        $totalPendapatan = (clone $queryPesanan)->where($paidCondition)->sum('total_harga');
+        $totalPesanan = (clone $queryPesanan)->where($paidCondition)->count();
         $totalPengeluaran = $queryPengeluaran->sum('nominal');
 
-        $pesanans = clone $queryPesanan;
-        $pesanans = $pesanans->where('status', 'dibayar')->with('detailPesanan')->get();
+        $pesanans = (clone $queryPesanan)->where($paidCondition)->with(['detailPesanan', 'pembayaran'])->get();
         
         $totalHpp = 0;
         foreach ($pesanans as $pesanan) {

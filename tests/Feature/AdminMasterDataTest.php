@@ -127,6 +127,58 @@ class AdminMasterDataTest extends TestCase
         $this->assertDatabaseMissing('produk', ['id' => $produk->id]);
     }
 
+    public function test_admin_can_upload_and_update_produk_image()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = $this->getAdmin();
+        $this->actingAs($admin);
+        $kategori = Kategori::create(['nama' => 'Minuman', 'aktif' => 1]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('kopi.jpg');
+
+        // CREATE with image
+        $response = $this->post('/admin/produk', [
+            'kategori_id' => $kategori->id,
+            'nama' => 'Kopi Latte',
+            'harga' => 25000,
+            'hpp' => 10000,
+            'stok' => 50,
+            'aktif' => 1,
+            'gambar' => $file
+        ]);
+        $response->assertRedirect(route('admin.produk.index'));
+
+        $produk = Produk::where('nama', 'Kopi Latte')->first();
+        $this->assertNotNull($produk);
+        $this->assertNotNull($produk->gambar);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($produk->gambar);
+
+        // UPDATE with new image
+        $newFile = \Illuminate\Http\UploadedFile::fake()->image('kopi_baru.png');
+        $oldImagePath = $produk->gambar;
+
+        $response = $this->put('/admin/produk/' . $produk->id, [
+            'kategori_id' => $kategori->id,
+            'nama' => 'Kopi Latte Creamy',
+            'harga' => 28000,
+            'hpp' => 12000,
+            'stok' => 45,
+            'aktif' => 1,
+            'gambar' => $newFile
+        ]);
+        $response->assertRedirect(route('admin.produk.index'));
+
+        $produk->refresh();
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($oldImagePath);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($produk->gambar);
+
+        // DELETE cleans up image
+        $imageToDelete = $produk->gambar;
+        $this->delete('/admin/produk/' . $produk->id);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($imageToDelete);
+    }
+
     public function test_produk_validation_and_deletion_restriction()
     {
         $admin = $this->getAdmin();
