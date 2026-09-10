@@ -104,9 +104,9 @@
                 </button>
 
                 <!-- Waktu (Hanya tampil di tablet & desktop agar header mobile rapi) -->
-                <div class="border rounded px-2.5 py-1 text-center bg-light d-none d-md-block">
-                    <div class="small text-muted" style="font-size: 0.65rem;">WAKTU</div>
-                    <div class="fw-bold small" x-text="currentTime">--:--:-- WIB</div>
+                <div class="border rounded px-3 py-1 text-center bg-light d-none d-md-block">
+                    <div class="small text-muted" style="font-size: 0.7rem;">WAKTU</div>
+                    <div class="fw-bold" x-text="currentTime">--:--:-- WIB</div>
                 </div>
 
                 <!-- Tombol Buka Keranjang di Tablet/Mobile (Header) -->
@@ -118,10 +118,10 @@
 
                 <!-- Avatar User -->
                 <div class="d-flex align-items-center gap-2 ps-1">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" class="rounded-circle" width="36" height="36" alt="Avatar">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=random" class="rounded-circle" width="40" height="40" alt="Avatar">
                     <div class="d-none d-md-block">
                         <div class="fw-bold fs-6 lh-1">{{ Auth::user()->name }}</div>
-                        <div class="text-danger small" style="font-size: 0.7rem;">{{ ucfirst(Auth::user()->role) }}</div>
+                        <div class="text-danger small">{{ ucfirst(Auth::user()->role) }}</div>
                     </div>
                 </div>
             </div>
