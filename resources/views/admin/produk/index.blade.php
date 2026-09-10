@@ -595,7 +595,16 @@
                         </div>
 
                         <!-- Bundle Items Edit (Muncul jika Paket Bundling) -->
-                        @php $editBundleItems = $p->bundleItems->pluck('jumlah', 'item_id')->toArray(); @endphp
+                        @php 
+                            $editBundleItems = [];
+                            try {
+                                if ($p->relationLoaded('bundleItems') && $p->bundleItems) {
+                                    $editBundleItems = $p->bundleItems->pluck('jumlah', 'item_id')->toArray();
+                                }
+                            } catch (\Throwable $e) {
+                                $editBundleItems = [];
+                            }
+                        @endphp
                         <div x-data="{tipe_produk: '{{ $p->tipe_produk ?? 'standar' }}'}" @tipe-changed-edit-{{ $p->id }}.window="tipe_produk = $event.detail" x-show="tipe_produk === 'bundling'" x-cloak>
                             <div class="card border-primary mb-3">
                                 <div class="card-header fw-bold" style="background-color: #8b211e; color: white;">
