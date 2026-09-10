@@ -33,6 +33,15 @@ function MainCatalog() {
         });
     }, [menuList, selectedCategory, searchQuery]);
 
+    const handleViewAllMenu = () => {
+        setSelectedCategory('all');
+        setSearchQuery('');
+        const menuSection = document.getElementById('catalog-menu-section');
+        if (menuSection) {
+            menuSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-amber-500 selection:text-white pb-24 flex flex-col w-full">
             {/* Toast Notification */}
@@ -51,7 +60,10 @@ function MainCatalog() {
 
                 {/* Promo Banner / Chef Recommendations (Hidden while searching to keep focus) */}
                 {!searchQuery && (
-                    <PromoBanner onSelectItem={(item) => setSelectedDetailItem(item)} />
+                    <PromoBanner
+                        onSelectItem={(item) => setSelectedDetailItem(item)}
+                        onViewAll={handleViewAllMenu}
+                    />
                 )}
 
                 {/* Category Tabs */}
@@ -61,14 +73,11 @@ function MainCatalog() {
                 />
 
                 {/* Section Header */}
-                <section className="px-4 sm:px-6 lg:px-8 pt-3 pb-2 flex items-center justify-between">
+                <section id="catalog-menu-section" className="px-4 sm:px-6 lg:px-8 pt-3 pb-2 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                         <h2 className="font-display font-black text-sm sm:text-base text-stone-900 tracking-tight">
-                            {searchQuery ? 'Hasil Pencarian Menu' : 'Daftar Menu Favorit'}
+                            {searchQuery ? 'Hasil Pencarian Menu' : (selectedCategory === 'all' ? 'Semua Menu' : 'Daftar Menu')}
                         </h2>
-                        {!searchQuery && (
-                            <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                        )}
                     </div>
                     <span className="text-[11px] font-semibold text-stone-400 bg-stone-200/70 px-2 py-0.5 rounded-full">
                         {filteredItems.length} Menu Tersedia
@@ -97,7 +106,7 @@ function MainCatalog() {
                             </button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                             {filteredItems.map((item) => (
                                 <MenuCard
                                     key={item.id}

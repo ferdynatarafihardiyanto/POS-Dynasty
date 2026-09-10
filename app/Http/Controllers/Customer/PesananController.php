@@ -87,7 +87,7 @@ class PesananController extends Controller
             return response()->json(['message' => 'Meja tidak ditemukan'], 404);
         }
 
-        $pesanans = Pesanan::where('meja_id', $meja->id)->get(['nomor_pesanan', 'status', 'status_pembayaran', 'total_harga']);
+        $pesanans = Pesanan::where('meja_id', $meja->id)->get(['nomor_pesanan', 'status', 'total_harga']);
 
         return response()->json([
             'message' => 'Daftar pesanan berhasil diambil',

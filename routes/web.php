@@ -5,8 +5,67 @@ use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\POSController;
 
-Route::get('/', function () {
-    return view('app');
+use App\Models\CafeTable;
+use App\Models\Kategori;
+use App\Models\Produk;
+
+$getCustomerViewData = function ($qrToken = null) {
+    try {
+        $table = null;
+        if ($qrToken) {
+            $table = CafeTable::where('qr_token', $qrToken)->first();
+        }
+        
+        if (!$table) {
+            $table = CafeTable::where('status', 'active')->first();
+        }
+
+        $categories = Kategori::where('aktif', true)->get(['id', 'nama', 'deskripsi']);
+        
+        $products = Produk::with('kategori')
+            ->where('aktif', true)
+            ->whereHas('kategori', function ($q) {
+                $q->where('aktif', true);
+            })
+            ->get();
+
+        $availableTables = CafeTable::where('status', 'active')->get(['id', 'table_number', 'name', 'qr_token']);
+
+        return [
+            'tableInfo' => $table ? [
+                'id' => $table->id,
+                'number' => (string) $table->table_number,
+                'name' => $table->name ?? ('Meja ' . $table->table_number),
+                'token' => $table->qr_token,
+                'status' => $table->status,
+            ] : null,
+            'categories' => $categories,
+            'products' => $products,
+            'availableTables' => $availableTables->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'number' => (string) $t->table_number,
+                    'name' => $t->name ?? ('Meja ' . $t->table_number),
+                    'token' => $t->qr_token,
+                    'capacity' => isset($t->kapasitas) && $t->kapasitas ? "{$t->kapasitas} Orang" : null,
+                ];
+            }),
+            'qrToken' => $qrToken,
+        ];
+    } catch (\Throwable $e) {
+        return [
+            'tableInfo' => null,
+            'categories' => collect(),
+            'products' => collect(),
+            'availableTables' => collect(),
+            'qrToken' => $qrToken,
+        ];
+    }
+};
+
+Route::get('/', function (\Illuminate\Http\Request $request) use ($getCustomerViewData) {
+    $qrToken = $request->query('qr_token') ?: $request->query('token');
+    return view('app', $getCustomerViewData($qrToken));
 });
 Route::get('/menu', function () {
     return view('app');
@@ -14,6 +73,11 @@ Route::get('/menu', function () {
 Route::get('/meja/{number?}', function () {
     return view('app');
 });
+
+Route::get('/menu/meja/{qr_token}', function ($qr_token) use ($getCustomerViewData) {
+    return view('app', $getCustomerViewData($qr_token));
+});
+
 
 Route::prefix('admin')->name('admin.')->group(function () {
     

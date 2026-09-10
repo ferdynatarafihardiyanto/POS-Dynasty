@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Star, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function MenuCard({ item, onSelect }) {
     const formatRupiah = (num) => {
@@ -13,14 +13,14 @@ export default function MenuCard({ item, onSelect }) {
     return (
         <div
             onClick={() => onSelect(item)}
-            className="bg-white rounded-2xl border border-stone-200/80 shadow-xs hover:shadow-md overflow-hidden cursor-pointer flex flex-col justify-between group transition-all duration-200 active:scale-[0.98]"
+            className="bg-white rounded-xl border border-stone-200 shadow-xs hover:border-stone-300 transition-colors duration-150 overflow-hidden cursor-pointer flex flex-col justify-between group"
         >
             {/* Image Container */}
             <div className="relative aspect-4/3 w-full overflow-hidden bg-stone-100">
                 <img
                     src={item.gambar}
                     alt={item.nama}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                     loading="lazy"
                     onError={(e) => {
                         e.target.onerror = null;
@@ -28,31 +28,31 @@ export default function MenuCard({ item, onSelect }) {
                     }}
                 />
 
-                {/* Badges Overlay (Kategori Asli POS) */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    {item.kategori_nama && (
-                        <span className="bg-stone-900/80 backdrop-blur-xs text-white font-bold text-[9px] px-2 py-0.5 rounded-full shadow-xs">
+                {/* Badge Kategori */}
+                {item.kategori_nama && (
+                    <div className="absolute top-2 left-2">
+                        <span className="bg-stone-900/60 text-white font-medium text-[9px] px-1.5 py-0.5 rounded">
                             {item.kategori_nama}
                         </span>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Information Body */}
             <div className="p-3 flex-1 flex flex-col justify-between">
                 <div>
-                    <h3 className="font-display font-bold text-xs text-stone-900 line-clamp-1 group-hover:text-[#881B1E] transition-colors">
+                    <h3 className="font-display font-semibold text-xs sm:text-sm text-stone-900 line-clamp-1 group-hover:text-[#82181A] transition-colors">
                         {item.nama}
                     </h3>
-                    <p className="text-[10px] text-stone-500 line-clamp-2 mt-1 leading-relaxed">
+                    <p className="text-[10px] sm:text-[11px] text-stone-500 line-clamp-2 mt-0.5 leading-relaxed">
                         {item.deskripsi_singkat || item.deskripsi}
                     </p>
                 </div>
 
                 {/* Price and Add button */}
-                <div className="mt-3 pt-2 border-t border-stone-100 flex items-center justify-between gap-1.5">
+                <div className="mt-2.5 pt-2 border-t border-stone-100 flex items-center justify-between gap-1.5">
                     <div>
-                        <span className="text-xs font-black text-[#881B1E] block">
+                        <span className="text-xs sm:text-sm font-bold text-[#82181A] block">
                             {formatRupiah(item.harga)}
                         </span>
                         {item.harga_coret && (
@@ -63,13 +63,14 @@ export default function MenuCard({ item, onSelect }) {
                     </div>
 
                     <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             onSelect(item);
                         }}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-[#881B1E] to-[#A32023] hover:from-[#751417] hover:to-[#881B1E] text-white font-bold text-[10px] shadow-xs active:scale-95 transition"
+                        className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#82181A] hover:bg-[#6e1214] text-white font-medium text-[11px] sm:text-xs transition active:scale-95 cursor-pointer"
                     >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5 stroke-[2]" />
                         <span>Tambah</span>
                     </button>
                 </div>

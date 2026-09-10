@@ -16,25 +16,25 @@ export default function FloatingCartBar() {
     };
 
     return (
-        <div className="fixed bottom-4 inset-x-0 z-40 px-4 max-w-xl sm:max-w-2xl mx-auto pointer-events-none animate-slide-up">
+        <div className="fixed bottom-4 inset-x-0 z-40 px-4 max-w-lg sm:max-w-xl mx-auto pointer-events-none">
             <div
                 onClick={() => setIsCartOpen(true)}
-                className="bg-gradient-to-r from-[#7A1517] via-[#881B1E] to-[#6E1214] text-white p-2.5 pl-3 rounded-2xl shadow-2xl border border-amber-500/30 flex items-center justify-between pointer-events-auto cursor-pointer hover:shadow-amber-950/40 hover:scale-[1.01] active:scale-[0.99] transition-all"
+                className="bg-[#82181A] text-white p-2.5 sm:p-3 rounded-xl shadow-lg border border-black/15 flex items-center justify-between pointer-events-auto cursor-pointer transition-transform duration-150 active:scale-[0.99]"
             >
-                {/* Left Side: Cart Icon & Total Label */}
-                <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center shadow-md">
-                        <ShoppingBag className="w-5 h-5 fill-stone-950" />
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] font-black flex items-center justify-center border-2 border-[#7A1517] animate-pulse">
+                {/* Left Side: Cart Icon, Item Count & Subtotal */}
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-black/20 border border-white/10 text-amber-300 shrink-0">
+                        <ShoppingBag className="w-4 h-4 stroke-[2]" />
+                        <span className="absolute -top-1 -right-1 min-w-[18px] px-1 py-0.2 rounded-full bg-amber-400 text-stone-950 text-[10px] font-bold text-center leading-tight">
                             {totalItemCount}
                         </span>
                     </div>
 
                     <div>
-                        <span className="text-[10px] font-bold tracking-wider text-amber-300 uppercase block leading-tight">
-                            Total Sementara
+                        <span className="text-[10px] text-amber-100/80 font-normal leading-none block">
+                            Total sementara
                         </span>
-                        <span className="font-display font-black text-sm text-white leading-tight">
+                        <span className="font-display font-bold text-sm sm:text-base text-white leading-tight">
                             {formatRupiah(subtotal)}
                         </span>
                     </div>
@@ -42,14 +42,15 @@ export default function FloatingCartBar() {
 
                 {/* Right Side: View Cart Button */}
                 <button
+                    type="button"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsCartOpen(true);
                     }}
-                    className="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-display font-extrabold text-xs shadow-md active:scale-95 transition"
+                    className="flex items-center gap-1 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-950 font-semibold text-xs sm:text-sm transition active:scale-95 cursor-pointer"
                 >
                     <span>Lihat Pesanan</span>
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.25]" />
                 </button>
             </div>
         </div>

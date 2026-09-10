@@ -59,8 +59,8 @@ export default function OrderStatusModal() {
         if (!item) return;
         const pId = item.menuItem?.backend_id || item.menuItem?.id || item.produk_id;
         const pName = (item.menuItem?.nama || item.nama_produk || '').toLowerCase();
-        const fullItem = (menuList || []).find(m => 
-            (pId && (m.id == pId || m.backend_id == pId)) || 
+        const fullItem = (menuList || []).find(m =>
+            (pId && (m.id == pId || m.backend_id == pId)) ||
             (pName && m.nama?.toLowerCase() === pName)
         );
 
@@ -104,49 +104,49 @@ export default function OrderStatusModal() {
     };
 
     const isPaid = (currentOrder?.status_pembayaran === 'dibayar') ||
-                   (currentOrder?.status === 'dibayar') ||
-                   (currentOrder?.status === 'disajikan') ||
-                   (currentOrder?.status === 'selesai');
+        (currentOrder?.status === 'dibayar') ||
+        (currentOrder?.status === 'disajikan') ||
+        (currentOrder?.status === 'selesai');
 
     const statusSteps = [
-        { 
-            key: 'menunggu_pembayaran', 
-            label: '1. Pembayaran HP (QRIS / TF)', 
-            desc: isPaid 
-                ? 'Pembayaran lunas terverifikasi ✅' 
-                : 'Silakan selesaikan pembayaran via QRIS atau Transfer Bank (TF) di HP', 
-            icon: ReceiptText 
+        {
+            key: 'menunggu_pembayaran',
+            label: '1. Pembayaran HP (QRIS / TF)',
+            desc: isPaid
+                ? 'Pembayaran lunas terverifikasi ✅'
+                : 'Silakan selesaikan pembayaran via QRIS atau Transfer Bank (TF) di HP',
+            icon: ReceiptText
         },
-        { 
-            key: 'diproses', 
-            label: '2. Sedang Dimasak di Dapur', 
-            desc: isPaid 
-                ? 'Koki sedang menyiapkan hidangan lezatmu' 
-                : 'Dapur akan mulai memasak setelah pembayaran diverifikasi', 
-            icon: ChefHat 
+        {
+            key: 'diproses',
+            label: '2. Sedang Dimasak di Dapur',
+            desc: isPaid
+                ? 'Koki sedang menyiapkan hidangan lezatmu'
+                : 'Dapur akan mulai memasak setelah pembayaran diverifikasi',
+            icon: ChefHat
         },
-        { 
-            key: 'disajikan', 
-            label: '3. Pesanan Sudah Diterima di Meja', 
+        {
+            key: 'disajikan',
+            label: '3. Pesanan Sudah Diterima di Meja',
             desc: (currentOrder?.status === 'disajikan' || currentOrder?.status === 'selesai')
                 ? 'Pelayan telah mengantarkan pesanan ke mejamu. Makanan sudah diterima! 🍽️'
-                : 'Pelayan sedang menyiapkan pengantaran makanan ke mejamu', 
-            icon: BellRing 
+                : 'Pelayan sedang menyiapkan pengantaran makanan ke mejamu',
+            icon: BellRing
         },
-        { 
-            key: 'selesai', 
-            label: '4. Selesai / Menikmati Makanan', 
+        {
+            key: 'selesai',
+            label: '4. Selesai / Menikmati Makanan',
             desc: currentOrder?.status === 'selesai'
                 ? 'Pesanan telah selesai dinikmati. Terima kasih telah berkunjung ke Kedai Dynasty! ✨'
-                : 'Selamat menikmati hidangan lezat Kedai Dynasty!', 
-            icon: Sparkles 
+                : 'Selamat menikmati hidangan lezat Kedai Dynasty!',
+            icon: Sparkles
         }
     ];
 
     const getCurrentStepIndex = () => {
         if (!currentOrder) return 0;
         const status = (currentOrder.status || 'menunggu_pembayaran').toLowerCase();
-        
+
         // Jika belum bayar, selalu di Step 0 (Pembayaran di Kasir)
         if (!isPaid && (status === 'menunggu_pembayaran' || status === 'menunggu_konfirmasi')) {
             return 0;
@@ -333,27 +333,25 @@ export default function OrderStatusModal() {
 
                                             return (
                                                 <div key={step.key} className="flex items-start gap-3 relative z-10">
-                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors shrink-0 ${
-                                                        isCompleted
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors shrink-0 ${isCompleted
                                                             ? (isAllFinished && step.key === 'selesai'
                                                                 ? 'bg-emerald-600 text-white font-black shadow-sm ring-4 ring-emerald-100'
                                                                 : 'bg-amber-400 text-stone-950 font-black shadow-sm ring-4 ring-amber-100')
                                                             : 'bg-stone-100 text-stone-400'
-                                                    }`}>
+                                                        }`}>
                                                         <StepIcon className="w-3.5 h-3.5" />
                                                     </div>
 
                                                     <div className="flex-1">
                                                         <div className="flex items-center justify-between">
-                                                            <span className={`font-display text-xs ${
-                                                                isCurrent
+                                                            <span className={`font-display text-xs ${isCurrent
                                                                     ? (isAllFinished && step.key === 'selesai'
                                                                         ? 'font-extrabold text-emerald-800'
                                                                         : 'font-extrabold text-[#881B1E]')
                                                                     : isCompleted
                                                                         ? 'font-bold text-stone-800'
                                                                         : 'font-medium text-stone-400'
-                                                            }`}>
+                                                                }`}>
                                                                 {step.label}
                                                             </span>
                                                             {isCurrent && (
