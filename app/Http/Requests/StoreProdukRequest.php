@@ -33,8 +33,11 @@ class StoreProdukRequest extends FormRequest
             'harga' => 'required|integer|min:0',
             'stok' => 'required|integer|min:0',
             'aktif' => 'nullable|boolean',
+            'tipe_produk' => 'nullable|string|in:standar,bundling',
             'modifier_groups' => 'nullable|array',
-            'modifier_groups.*' => 'integer|distinct|exists:modifier_groups,id'
+            'modifier_groups.*' => 'integer|distinct|exists:modifier_groups,id',
+            'bundle_items' => 'nullable|array',
+            'bundle_items.*' => 'integer|min:0'
         ];
     }
 }

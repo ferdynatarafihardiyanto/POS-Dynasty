@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $table = 'produk';
-    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'gambar', 'hpp', 'harga', 'stok', 'aktif'];
+    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'gambar', 'hpp', 'harga', 'stok', 'aktif', 'tipe_produk'];
 
     protected $casts = [
         'aktif' => 'boolean',
@@ -80,5 +80,15 @@ class Produk extends Model
     public function modifierGroups()
     {
         return $this->belongsToMany(ModifierGroup::class, 'produk_modifier_group', 'produk_id', 'modifier_group_id');
+    }
+
+    public function bundleItems()
+    {
+        return $this->hasMany(ProdukBundleItem::class, 'bundle_id', 'id');
+    }
+
+    public function isBundle()
+    {
+        return $this->tipe_produk === 'bundling';
     }
 }

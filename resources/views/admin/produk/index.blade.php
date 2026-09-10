@@ -151,9 +151,10 @@
 
         <!-- Action Buttons -->
         <div class="d-flex justify-content-end gap-2 mb-4">
-            <button class="btn btn-white bg-white border shadow-sm rounded-3 px-4 d-flex align-items-center gap-2 fw-bold text-dark">
-                <i class="bi bi-download"></i> Ekspor PDF
-            </button>
+            <a href="{{ route('admin.produk.export.pdf', request()->only(['kategori','search'])) }}"
+               class="btn btn-white bg-white border shadow-sm rounded-3 px-4 d-flex align-items-center gap-2 fw-bold text-dark">
+                <i class="bi bi-file-earmark-pdf text-danger"></i> Ekspor PDF
+            </a>
             <button class="btn text-white rounded-3 px-4 d-flex align-items-center gap-2 fw-bold shadow-sm" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#tambahBarangModal">
                 <i class="bi bi-plus-lg"></i> Tambah Barang
             </button>
@@ -390,6 +391,48 @@
                             @endif
                         </div>
 
+                        <!-- Tipe Produk -->
+                        <div class="mb-3" x-data="{tipe: 'standar'}">
+                            <label class="form-label fw-bold"><i class="bi bi-box-seam me-1"></i> Tipe Produk</label>
+                            <select name="tipe_produk" class="form-select" x-model="tipe" @change="$dispatch('tipe-changed-tambah', tipe)">
+                                <option value="standar">Standar (Produk biasa dengan stok & resep)</option>
+                                <option value="bundling">Paket Bundling (Gabungan dari beberapa produk standar)</option>
+                            </select>
+                            <div class="form-text text-muted">Pilih <strong>Paket Bundling</strong> jika produk ini adalah gabungan dari beberapa produk lain.</div>
+                        </div>
+
+                        <!-- Bundle Items (Muncul jika Paket Bundling) -->
+                        <div x-data="{tipe_produk: 'standar'}" @tipe-changed-tambah.window="tipe_produk = $event.detail" x-show="tipe_produk === 'bundling'" x-cloak>
+                            <div class="card border-primary mb-3">
+                                <div class="card-header fw-bold" style="background-color: #8b211e; color: white;">
+                                    <i class="bi bi-box-seam me-2"></i>Isi Paket Bundling
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small mb-3">Tentukan produk standar mana saja yang ada di dalam paket ini dan berapa jumlahnya per paket.</p>
+                                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th>Nama Produk</th>
+                                                    <th width="130">Jumlah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($allProduks as $p_bundle)
+                                                <tr>
+                                                    <td class="align-middle small">{{ $p_bundle->nama }}</td>
+                                                    <td>
+                                                        <input type="number" name="bundle_items[{{ $p_bundle->id }}]" class="form-control form-control-sm" value="0" min="0">
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-1 d-flex align-items-center gap-3">
                             <label class="form-label mb-0">Status aktif</label>
                             <div class="form-check form-switch m-0 p-0 d-flex align-items-center">
@@ -539,6 +582,49 @@
                             @else
                                 <div class="text-muted small text-center py-2 border border-dashed rounded bg-white">Belum ada Grup Varian yang dibuat di Pengaturan</div>
                             @endif
+                        </div>
+
+                        <!-- Tipe Produk (Edit) -->
+                        <div class="mb-3" x-data="{tipe: '{{ $p->tipe_produk ?? 'standar' }}'}">
+                            <label class="form-label fw-bold"><i class="bi bi-box-seam me-1"></i> Tipe Produk</label>
+                            <select name="tipe_produk" class="form-select" x-model="tipe" @change="$dispatch('tipe-changed-edit-{{ $p->id }}', tipe)">
+                                <option value="standar" {{ ($p->tipe_produk ?? 'standar') === 'standar' ? 'selected' : '' }}>Standar (Produk biasa dengan stok & resep)</option>
+                                <option value="bundling" {{ ($p->tipe_produk ?? '') === 'bundling' ? 'selected' : '' }}>Paket Bundling (Gabungan dari beberapa produk standar)</option>
+                            </select>
+                            <div class="form-text text-muted">Pilih <strong>Paket Bundling</strong> jika produk ini adalah gabungan dari beberapa produk lain.</div>
+                        </div>
+
+                        <!-- Bundle Items Edit (Muncul jika Paket Bundling) -->
+                        @php $editBundleItems = $p->bundleItems->pluck('jumlah', 'item_id')->toArray(); @endphp
+                        <div x-data="{tipe_produk: '{{ $p->tipe_produk ?? 'standar' }}'}" @tipe-changed-edit-{{ $p->id }}.window="tipe_produk = $event.detail" x-show="tipe_produk === 'bundling'" x-cloak>
+                            <div class="card border-primary mb-3">
+                                <div class="card-header fw-bold" style="background-color: #8b211e; color: white;">
+                                    <i class="bi bi-box-seam me-2"></i>Isi Paket Bundling
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small mb-3">Tentukan produk standar mana saja yang ada di dalam paket ini dan berapa jumlahnya per paket.</p>
+                                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th>Nama Produk</th>
+                                                    <th width="130">Jumlah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($allProduks as $p_bundle)
+                                                <tr>
+                                                    <td class="align-middle small">{{ $p_bundle->nama }}</td>
+                                                    <td>
+                                                        <input type="number" name="bundle_items[{{ $p_bundle->id }}]" class="form-control form-control-sm" value="{{ $editBundleItems[$p_bundle->id] ?? 0 }}" min="0">
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mb-1 d-flex align-items-center gap-3">

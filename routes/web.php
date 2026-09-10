@@ -31,7 +31,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Master Data CRUD
         Route::resource('kategori', \App\Http\Controllers\Web\Admin\KategoriController::class)->except(['show']);
+        Route::get('/produk/export/pdf', [\App\Http\Controllers\Web\Admin\ProdukController::class, 'exportPdf'])->name('produk.export.pdf');
         Route::resource('produk', \App\Http\Controllers\Web\Admin\ProdukController::class)->except(['show']);
+
         Route::get('/meja/{meja}/print', [\App\Http\Controllers\Web\Admin\CafeTableController::class, 'print'])->name('meja.print');
         Route::resource('meja', \App\Http\Controllers\Web\Admin\CafeTableController::class)->except(['show'])->parameters([
             'meja' => 'meja'
@@ -54,6 +56,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         Route::get('/stok', [\App\Http\Controllers\Web\Admin\StokController::class, 'index'])->name('stok.index');
         Route::post('/stok', [\App\Http\Controllers\Web\Admin\StokController::class, 'store'])->name('stok.store');
+        Route::get('/stok/export/excel', [\App\Http\Controllers\Web\Admin\StokController::class, 'exportExcel'])->name('stok.export.excel');
+        Route::get('/stok/export/pdf', [\App\Http\Controllers\Web\Admin\StokController::class, 'exportPdf'])->name('stok.export.pdf');
         Route::get('/stock-opname', [\App\Http\Controllers\Web\Admin\StockOpnameController::class, 'index'])->name('stock_opname.index');
         Route::post('/stock-opname', [\App\Http\Controllers\Web\Admin\StockOpnameController::class, 'store'])->name('stock_opname.store');
         

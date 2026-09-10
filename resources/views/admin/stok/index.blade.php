@@ -82,9 +82,38 @@
                     </a>
                 @endif
             </form>
-            <button class="btn text-white rounded-3 px-4 fw-bold shadow-sm d-flex align-items-center gap-2" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#catatStokModal">
-                <i class="bi bi-box-arrow-in-down"></i> Catat Mutasi Stok
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <!-- Export Buttons -->
+                <div class="dropdown">
+                    <button class="btn btn-light border shadow-sm fw-semibold d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 180px;">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2"
+                               href="{{ route('admin.stok.export.excel', request()->only(['tipe','tanggal','search'])) }}">
+                                <div>
+                                    <div class="fw-semibold" style="font-size:0.85rem;">Export Excel (CSV)</div>
+                                    <div class="text-muted" style="font-size:0.72rem;">File .csv, buka di Excel</div>
+                                </div>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2"
+                               href="{{ route('admin.stok.export.pdf', request()->only(['tipe','tanggal','search'])) }}">
+                                <div>
+                                    <div class="fw-semibold" style="font-size:0.85rem;">Export PDF</div>
+                                    <div class="text-muted" style="font-size:0.72rem;">Langsung download .pdf</div>
+                                </div>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <button class="btn text-white rounded-3 px-4 fw-bold shadow-sm d-flex align-items-center gap-2" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#catatStokModal">
+                    <i class="bi bi-box-arrow-in-down"></i> Catat Mutasi Stok
+                </button>
+            </div>
         </div>
 
         <div class="bg-white rounded-4 border shadow-sm overflow-hidden mb-3">

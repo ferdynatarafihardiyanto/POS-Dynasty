@@ -15,6 +15,13 @@
                 </select>
             </div>
             <div class="mb-3">
+                <label>Tipe Produk</label>
+                <select name="tipe_produk" class="form-control" x-data="{tipe: '{{ $produk->tipe_produk }}'}" x-model="tipe" @change="$dispatch('tipe-changed', tipe)">
+                    <option value="standar">Standar (Punya Stok & Resep)</option>
+                    <option value="bundling">Paket Bundling (Gabungan Produk Standar)</option>
+                </select>
+            </div>
+            <div class="mb-3">
                 <label>Nama Produk</label>
                 <input type="text" name="nama" value="{{ $produk->nama }}" required class="form-control">
             </div>
@@ -79,6 +86,49 @@
                 @error('modifier_groups.*')
                     <div class="text-danger small mt-1">{{ $message }}</div>
                 @enderror
+            </div>
+
+            <!-- Bagian Bundle Items -->
+            <div class="mb-4" x-data="{ tipe_produk: '{{ $produk->tipe_produk }}' }" @tipe-changed.window="tipe_produk = $event.detail" x-show="tipe_produk === 'bundling'" style="display: none;">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fs-6"><i class="bi bi-box-seam me-2"></i>Isi Paket Bundling</h5>
+                    </div>
+                    <div class="card-body bg-light">
+                        <p class="text-muted small mb-3">Pilih produk standar yang masuk ke dalam paket ini. Stok bahan baku akan otomatis terpotong dari produk-produk ini saat paket terjual.</p>
+                        <div class="table-responsive">
+                            <table class="table table-bordered bg-white">
+                                <thead>
+                                    <tr>
+                                        <th width="60%">Produk Standar</th>
+                                        <th width="40%">Jumlah dlm Paket</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        // Cache existing bundle items mapping
+                                        $existingItems = $produk->bundleItems->pluck('jumlah', 'item_id')->toArray();
+                                    @endphp
+                                    @foreach($allProduks as $p)
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if($p->gambar)
+                                                    <img src="{{ $p->gambar_url }}" class="rounded me-2" style="width:30px; height:30px; object-fit:cover;">
+                                                @endif
+                                                <span>{{ $p->nama }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="number" name="bundle_items[{{ $p->id }}]" class="form-control form-control-sm" value="{{ $existingItems[$p->id] ?? 0 }}" min="0">
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-success">Update</button>

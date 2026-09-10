@@ -79,7 +79,7 @@
                 </button>
                 <div>
                     <h4 class="mb-0 fw-bold fs-5 fs-md-4">Kasir</h4>
-                    <div class="text-danger fw-bold small" style="font-size: 0.72rem;">TOKO SUMBER REZEKI</div>
+                    <div class="text-danger fw-bold small" style="font-size: 0.72rem;">KEDAI DYNASTY</div>
                 </div>
             </div>
 

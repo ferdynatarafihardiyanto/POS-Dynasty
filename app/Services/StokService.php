@@ -9,6 +9,44 @@ use Exception;
 
 class StokService
 {
+    private function flattenItems($items)
+    {
+        $flattened = [];
+        $produkIds = array_column($items, 'produk_id');
+        $produks = Produk::with('bundleItems')->whereIn('id', $produkIds)->get()->keyBy('id');
+
+        foreach ($items as $item) {
+            $produk = $produks[$item['produk_id']] ?? null;
+            if (!$produk) continue;
+
+            if ($produk->tipe_produk === 'bundling') {
+                foreach ($produk->bundleItems as $bundleItem) {
+                    $flattened[] = [
+                        'produk_id' => $bundleItem->item_id,
+                        'jumlah' => $item['jumlah'] * $bundleItem->jumlah
+                    ];
+                }
+            } else {
+                $flattened[] = [
+                    'produk_id' => $item['produk_id'],
+                    'jumlah' => $item['jumlah']
+                ];
+            }
+        }
+        
+        // Merge identical products
+        $merged = [];
+        foreach ($flattened as $f) {
+            $pid = $f['produk_id'];
+            if (!isset($merged[$pid])) {
+                $merged[$pid] = ['produk_id' => $pid, 'jumlah' => 0];
+            }
+            $merged[$pid]['jumlah'] += $f['jumlah'];
+        }
+
+        return array_values($merged);
+    }
+
     /**
      * Memvalidasi ketersediaan stok untuk daftar produk yang dipesan.
      * Harus mengunci bahan baku / produk jika berada di dalam transaction.
@@ -19,6 +57,8 @@ class StokService
      */
     public function validasiStokPesanan(array $details, $lock = false)
     {
+        $details = $this->flattenItems($details);
+
         // Kumpulkan semua produk_id
         $produkIds = array_column($details, 'produk_id');
         $produks = Produk::with('resep.detail')->whereIn('id', $produkIds)->get()->keyBy('id');
@@ -99,25 +139,30 @@ class StokService
      */
     public function kurangiStokPesanan($pesanan)
     {
+        $rawDetails = $pesanan->detailPesanan->map(function ($d) {
+            return ['produk_id' => $d->produk_id, 'jumlah' => $d->jumlah];
+        })->toArray();
+        $details = $this->flattenItems($rawDetails);
+
         $kebutuhanBahan = [];
         $kebutuhanProduk = [];
-        $produks = Produk::with('resep.detail')->whereIn('id', $pesanan->detailPesanan->pluck('produk_id'))->get()->keyBy('id');
+        $produks = Produk::with('resep.detail')->whereIn('id', array_column($details, 'produk_id'))->get()->keyBy('id');
 
-        foreach ($pesanan->detailPesanan as $detail) {
-            $produk = $produks[$detail->produk_id];
+        foreach ($details as $detail) {
+            $produk = $produks[$detail['produk_id']];
             if ($produk->resep) {
                 foreach ($produk->resep->detail as $resepDetail) {
                     $bahanId = $resepDetail->bahan_baku_id;
                     if (!isset($kebutuhanBahan[$bahanId])) {
                         $kebutuhanBahan[$bahanId] = 0;
                     }
-                    $kebutuhanBahan[$bahanId] += $resepDetail->jumlah * $detail->jumlah;
+                    $kebutuhanBahan[$bahanId] += $resepDetail->jumlah * $detail['jumlah'];
                 }
             } else {
                 if (!isset($kebutuhanProduk[$produk->id])) {
                     $kebutuhanProduk[$produk->id] = 0;
                 }
-                $kebutuhanProduk[$produk->id] += $detail->jumlah;
+                $kebutuhanProduk[$produk->id] += $detail['jumlah'];
             }
         }
 
