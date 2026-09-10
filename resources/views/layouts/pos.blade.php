@@ -293,7 +293,10 @@
             </button>
 
             <div class="brand">
-                <img src="{{ asset('images/Logo.png') }}" alt="Logo" class="sidebar-logo" style="max-width: 180px; width: 100%; height: auto; max-height: 65px; object-fit: contain; display: block;">
+                <img src="{{ asset('images/Logo.png') }}" alt="Logo" class="sidebar-logo" style="max-width: 180px; width: 100%; height: auto; max-height: 65px; object-fit: contain; display: block;" onerror="this.onerror=null; this.style.display='none'; document.getElementById('sidebarTextLogo')?.classList.remove('d-none');">
+                <div id="sidebarTextLogo" class="d-none text-white fw-bold fs-5 tracking-wide">
+                    DYNASTY <span style="color: #f59e0b;">CAFE</span>
+                </div>
                 <button type="button" class="btn btn-sm text-white ms-auto d-lg-none rounded-circle d-flex align-items-center justify-content-center" id="closeSidebarBtn" title="Tutup Menu" style="width: 32px; height: 32px; background: rgba(255,255,255,0.15);">
                     <i class="bi bi-x-lg"></i>
                 </button>

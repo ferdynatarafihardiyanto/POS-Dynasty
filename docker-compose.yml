@@ -33,6 +33,7 @@ services:
       - ./app:/var/www/app
       - ./config:/var/www/config
       - ./public/build:/var/www/public/build
+      - ./public/images:/var/www/public/images
 
   db:
     image: mariadb:10.11
