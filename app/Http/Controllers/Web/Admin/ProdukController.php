@@ -88,18 +88,30 @@ class ProdukController extends Controller
             'search'   => $request->search,
         ];
 
-        $html = view('admin.produk.pdf', compact('produks', 'filters'))->render();
-
-        if (!class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
-            return redirect()->back()->with('error', 'Paket DomPDF belum terpasang di server. Silakan jalankan composer install di server.');
+        // Jika dipanggil dengan mode=print
+        if ($request->query('mode') === 'print') {
+            return view('admin.produk.pdf', compact('produks', 'filters') + ['isPdf' => false]);
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
-            ->setPaper('a4', 'landscape')
-            ->setOption('defaultFont', 'sans-serif');
+        // Coba download via DomPDF jika tersedia
+        if (class_exists('\Barryvdh\DomPDF\Facade\Pdf')) {
+            try {
+                $html = view('admin.produk.pdf', compact('produks', 'filters') + ['isPdf' => true])->render();
 
-        $filename = 'daftar-barang-' . now()->format('Ymd-His') . '.pdf';
-        return $pdf->download($filename);
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+                    ->setPaper('a4', 'landscape')
+                    ->setOption('isRemoteEnabled', true)
+                    ->setOption('defaultFont', 'sans-serif');
+
+                $filename = 'daftar-barang-' . now()->format('Ymd-His') . '.pdf';
+                return $pdf->download($filename);
+            } catch (\Throwable $e) {
+                \Log::warning('DomPDF generation failed for produk: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: Tampilkan halaman print-friendly di browser tanpa melempar error
+        return view('admin.produk.pdf', compact('produks', 'filters') + ['isPdf' => false, 'fallback' => true]);
     }
 
     public function create()
