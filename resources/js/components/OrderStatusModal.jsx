@@ -248,17 +248,6 @@ export default function OrderStatusModal() {
                                         Pesananmu telah dibuat! Silakan selesaikan pembayaran langsung lewat HP via <strong className="font-semibold text-stone-800">Midtrans Snap (QRIS / VA Bank)</strong> agar pesanan segera dimasak oleh dapur.
                                     </p>
 
-                                    {/* Tombol Utama Bayar dari HP */}
-                                    <button
-                                        type="button"
-                                        onClick={handleOpenPayModal}
-                                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs shadow-sm hover:shadow active:scale-[0.99] transition flex items-center justify-center gap-2 group cursor-pointer"
-                                    >
-                                        <Zap className="w-4 h-4 text-amber-300 fill-amber-300 group-hover:scale-105 transition-transform" />
-                                        <span>Bayar via Midtrans Snap (QRIS / VA)</span>
-                                        <ArrowRight className="w-4 h-4 text-emerald-100 group-hover:translate-x-0.5 transition-transform" />
-                                    </button>
-
                                     <div className="text-[11px] text-stone-500 flex items-center gap-1.5 pt-2 border-t border-stone-100">
                                         <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                         <span>Pelacakan langsung proses dapur akan otomatis aktif setelah pembayaran.</span>
@@ -529,14 +518,24 @@ export default function OrderStatusModal() {
                             </button>
                         </div>
                     ) : (
-                        <button
-                            type="button"
-                            onClick={() => setIsOrderStatusOpen(false)}
-                            className="w-full py-3.5 px-4 rounded-2xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-extrabold text-xs shadow-md active:scale-95 transition flex items-center justify-center gap-1.5"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>Pesan Menu Tambahan</span>
-                        </button>
+                        <div className="flex items-center gap-2 w-full">
+                            <button
+                                type="button"
+                                onClick={handleOpenPayModal}
+                                className="flex-[7] py-3.5 px-4 rounded-xl bg-emerald-600 text-white font-display font-bold text-xs active:scale-[0.99] transition flex items-center justify-center cursor-pointer"
+                            >
+                                <span>Bayar</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setIsOrderStatusOpen(false)}
+                                className="flex-[3] py-3.5 px-3 rounded-xl bg-[#881B1E] text-white font-display font-bold text-xs active:scale-95 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>Tambah</span>
+                            </button>
+                        </div>
                     )}
                 </div>
 

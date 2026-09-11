@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { X, CheckCircle2, ShieldCheck, ArrowRight, Loader2, Sparkles, User, Zap, QrCode, Building2 } from 'lucide-react';
+import { X, CheckCircle2, Loader2, User, QrCode, Building2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -150,8 +150,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                 {/* Header */}
                 <div className="sticky top-0 z-10 bg-white px-4 py-3.5 border-b border-stone-200 flex items-center justify-between">
                     <div>
-                        <h3 className="font-display font-bold text-stone-900 text-sm flex items-center gap-1.5">
-                            <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
+                        <h3 className="font-display font-bold text-stone-900 text-sm">
                             Pembayaran Midtrans Snap
                         </h3>
                         <p className="text-[11px] text-stone-500 font-medium mt-0.5">
@@ -192,8 +191,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                 <User className="w-3.5 h-3.5 text-[#881B1E]" />
                                 <span>Nama Pemesan</span>
                             </span>
-                            <span className="text-[10px] text-stone-600 bg-stone-100 font-semibold px-2 py-0.5 rounded-md border border-stone-200 flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span className="text-[10px] text-[#065F46] bg-[#ECFDF5] font-semibold px-2 py-0.5 rounded-md border border-[#A7F3D0] flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-[#059669]" />
                                 Dicatat di Struk
                             </span>
                         </div>
@@ -209,13 +208,12 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     </div>
 
                     {/* Midtrans Channel Highlight Card */}
-                    <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-2xs space-y-3">
-                        <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                            <span className="text-xs font-bold uppercase text-stone-900 tracking-wide flex items-center gap-1.5">
-                                <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                                <span>Metode Resmi Midtrans</span>
+                    <div className="bg-[#FFFBEB] p-3.5 rounded-xl border-2 border-[#FBBF24] shadow-2xs space-y-3">
+                        <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+                            <span className="text-xs font-bold uppercase text-stone-900 tracking-wide">
+                                Metode Resmi Midtrans
                             </span>
-                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                            <span className="bg-[#ECFDF5] text-[#047857] border border-[#6EE7B7] text-[10px] font-bold px-2 py-0.5 rounded-md">
                                 Verifikasi Otomatis
                             </span>
                         </div>
@@ -225,8 +223,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </p>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-md bg-stone-200/70 text-stone-700 flex items-center justify-center shrink-0">
+                            <div className="p-2.5 rounded-lg bg-white border border-stone-200 flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-md bg-[#FEF2F2] text-[#B91C1C] flex items-center justify-center shrink-0">
                                     <QrCode className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
@@ -235,8 +233,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                 </div>
                             </div>
 
-                            <div className="p-2.5 rounded-lg bg-stone-50 border border-stone-200 flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-md bg-stone-200/70 text-stone-700 flex items-center justify-center shrink-0">
+                            <div className="p-2.5 rounded-lg bg-white border border-stone-200 flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-md bg-[#EFF6FF] text-[#1D4ED8] flex items-center justify-center shrink-0">
                                     <Building2 className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="min-w-0">
@@ -246,13 +244,13 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                             </div>
                         </div>
 
-                        <div className="space-y-1.5 pt-1 text-[11px] text-stone-500 border-t border-stone-100">
+                        <div className="space-y-1.5 pt-1 text-[11px] text-stone-500 border-t border-amber-200/80">
                             <div className="flex items-center gap-1.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
                                 <span>Status pesanan otomatis lunas tanpa perlu konfirmasi manual</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
                                 <span>Pesanan langsung diteruskan ke koki dapur untuk dimasak</span>
                             </div>
                         </div>
@@ -266,7 +264,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         type="button"
                         onClick={handleMidtransPayment}
                         disabled={isSubmitting}
-                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide shadow-sm hover:shadow active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
                             <>
@@ -274,11 +272,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                 <span>Menghubungi Midtrans...</span>
                             </>
                         ) : (
-                            <>
-                                <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
-                                <span>BAYAR VIA MIDTRANS SNAP</span>
-                                <ArrowRight className="w-4 h-4 text-emerald-100" />
-                            </>
+                            <span>BAYAR VIA MIDTRANS SNAP</span>
                         )}
                     </button>
 
