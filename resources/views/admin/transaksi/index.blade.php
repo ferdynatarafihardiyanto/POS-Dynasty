@@ -292,7 +292,7 @@
                                 </td>
                                 <td class="no-print">
                                     <button class="btn-action" @click="openDetail(trx)" title="Detail"><i class="bi bi-eye"></i></button>
-                                    <button class="btn-action" @click="window.open('/admin/transaksi/' + trx.id + '/print', '_blank')" title="Cetak Struk"><i class="bi bi-printer"></i></button>
+                                    <button class="btn-action" @click="openReceiptModal(trx)" title="Lihat & Cetak Struk Thermal"><i class="bi bi-printer"></i></button>
                                 </td>
                             </tr>
                         </template>
@@ -417,16 +417,196 @@
                     <button type="button" class="btn bg-white rounded-3 fw-bold py-2 px-4 border" data-bs-dismiss="modal" style="width: 140px;">
                         Tutup
                     </button>
-                    <button type="button" class="btn text-white rounded-3 fw-bold py-2 flex-grow-1" style="background-color: #8b211e;" @click="window.open('/admin/transaksi/' + selectedTrx.id + '/print', '_blank')">
-                        <i class="bi bi-printer me-2"></i> Cetak ulang
+                    <button type="button" class="btn text-white rounded-3 fw-bold py-2 flex-grow-1" style="background-color: #8b211e;" @click="openReceiptModal(selectedTrx)">
+                        <i class="bi bi-receipt me-2"></i> Pratinjau & Cetak Struk
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thermal Receipt Modal (Hitam Putih Sesuai Scan Kertas Kasir & Customer) -->
+    <div class="modal fade" id="thermalReceiptModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden position-relative bg-dark">
+                
+                <!-- Header Modal -->
+                <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom border-secondary bg-dark text-white">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-printer text-warning"></i>
+                        <span class="font-monospace fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Struk Pembayaran (Hitam Putih)</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <!-- Receipt Container Area -->
+                <div class="p-3 py-4 bg-black d-flex flex-column align-items-center overflow-auto" style="max-height: 78vh;">
+                    
+                    <template x-if="receiptTrx">
+                        <div id="thermalReceiptModalCapture" class="w-100 d-flex flex-column align-items-center bg-transparent" style="max-width: 320px;">
+                            <!-- Top Paper Tear Sawtooth Edge (Gerigi Kertas Thermal) -->
+                            <div class="w-100" style="margin-bottom: -1px; overflow: hidden; line-height: 0;">
+                                <svg viewBox="0 0 240 10" preserveAspectRatio="none" style="width: 100%; height: 10px; fill: #ffffff;">
+                                    <path d="M0,10 L5,0 L10,10 L15,0 L20,10 L25,0 L30,10 L35,0 L40,10 L45,0 L50,10 L55,0 L60,10 L65,0 L70,10 L75,0 L80,10 L85,0 L90,10 L95,0 L100,10 L105,0 L110,10 L115,0 L120,10 L125,0 L130,10 L135,0 L140,10 L145,0 L150,10 L155,0 L160,10 L165,0 L170,10 L175,0 L180,10 L185,0 L190,10 L195,0 L200,10 L205,0 L210,10 L215,0 L220,10 L225,0 L230,10 L235,0 L240,10 Z"></path>
+                                </svg>
+                            </div>
+
+                            <!-- Printable Paper Sheet (Authentic Thermal 58mm Monokrom) -->
+                            <div id="thermalReceiptPaperArea" class="bg-white text-dark shadow-sm w-100" style="padding: 18px 22px; box-sizing: border-box; font-family: 'Courier New', Courier, Consolas, Monaco, monospace; font-size: 11px; line-height: 1.35; color: #000000 !important;">
+                                
+                                <!-- Logo Toko Hitam Putih (Jika Ada) -->
+                                <template x-if="storeLogo && storeProfile.cetakLogoStruk !== false">
+                                    <div class="text-center pb-2">
+                                        <img :src="storeLogo" alt="Logo Toko" class="mx-auto" style="max-height: 55px; max-width: 75px; object-fit: contain; filter: grayscale(100%) contrast(180%) brightness(85%); -webkit-filter: grayscale(100%) contrast(180%) brightness(85%); mix-blend-mode: multiply;">
+                                    </div>
+                                </template>
+
+                                <!-- Header Toko -->
+                                <div class="text-center pb-2">
+                                    <div class="fw-bold text-uppercase" style="font-size: 14px; letter-spacing: 0.5px;" x-text="storeProfile.namaToko || 'Dynasty Cafe'"></div>
+                                    <template x-if="storeProfile.slogan">
+                                        <div class="fw-bold text-uppercase mt-1" style="font-size: 10px;" x-text="storeProfile.slogan"></div>
+                                    </template>
+                                    <div class="mt-1" style="font-size: 10px; line-height: 1.3;" x-text="storeProfile.alamat || 'Jl. Jambangan Kebon Agung No. 12 B, Surabaya'"></div>
+                                    <template x-if="storeProfile.telepon">
+                                        <div style="font-size: 9.5px;" x-text="'Telp/WA: ' + storeProfile.telepon"></div>
+                                    </template>
+                                </div>
+
+                                <!-- Dashed Line -->
+                                <div style="border-top: 1px dashed #000000; margin: 6px 0;"></div>
+
+                                <!-- Metadata Transaksi -->
+                                <div style="font-size: 11px;">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Pembeli</span>
+                                        <span class="fw-bold" x-text="receiptTrx.nama_pelanggan || (receiptTrx.meja ? 'Meja ' + (receiptTrx.meja.table_number || receiptTrx.meja.id) : 'Pelanggan')"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Pembayaran</span>
+                                        <span x-text="getPaymentMethod(receiptTrx)"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Tanggal</span>
+                                        <span x-text="formatDate(receiptTrx.created_at) + ' ' + formatTime(receiptTrx.created_at)"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>No Struk</span>
+                                        <span class="fw-bold" x-text="receiptTrx.nomor_pesanan"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Kasir</span>
+                                        <span x-text="getKasirName(receiptTrx)"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Dashed Line -->
+                                <div style="border-top: 1px dashed #000000; margin: 6px 0;"></div>
+
+                                <!-- Items Pesanan -->
+                                <div class="py-1">
+                                    <template x-for="item in (receiptTrx.detail_pesanan || [])" :key="item.id">
+                                        <div class="mb-2">
+                                            <div class="fw-bold text-dark" x-text="item.nama_produk"></div>
+                                            <div class="d-flex justify-content-between">
+                                                <span x-text="formatNumber(item.harga) + ' x ' + item.jumlah"></span>
+                                                <span class="fw-bold" x-text="formatNumber(item.subtotal)"></span>
+                                            </div>
+                                            <template x-if="item.modifiers_snapshot">
+                                                <div style="font-size: 9.5px; color: #333; padding-left: 6px;">
+                                                    <template x-for="mod in JSON.parse(item.modifiers_snapshot)" :key="mod.option_id">
+                                                        <div x-text="'+ ' + mod.option_nama"></div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="item.catatan">
+                                                <div style="font-size: 9.5px; color: #444; font-style: italic; padding-left: 6px;" x-text="'* ' + item.catatan"></div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Dashed Line -->
+                                <div style="border-top: 1px dashed #000000; margin: 6px 0;"></div>
+
+                                <!-- Total -->
+                                <div style="font-size: 11px;">
+                                    <div class="d-flex justify-content-between fw-bold" style="font-size: 11.5px;">
+                                        <span x-text="'TOTAL ' + getTotalItems(receiptTrx) + ' QTY'"></span>
+                                        <span x-text="formatNumber(receiptTrx.total_harga)"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span x-text="'Bayar (' + getPaymentMethod(receiptTrx) + ')'"></span>
+                                        <span x-text="formatNumber(getCashReceived(receiptTrx))"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Kembali</span>
+                                        <span x-text="formatNumber(getChange(receiptTrx))"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Dashed Line -->
+                                <div style="border-top: 1px dashed #000000; margin: 6px 0;"></div>
+
+                                <!-- WiFi Section Dinamis -->
+                                <div style="font-size: 10px; line-height: 1.35; padding-top: 2px;">
+                                    <template x-if="storeProfile.wifiList && storeProfile.wifiList.length > 0">
+                                        <div>
+                                            <template x-for="w in storeProfile.wifiList" :key="w.ssid">
+                                                <div>
+                                                    <span x-text="'Wifi : ' + w.ssid"></span><br>
+                                                    <span x-text="'Pass : ' + w.password"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="!storeProfile.wifiList || storeProfile.wifiList.length === 0">
+                                        <div>
+                                            <div>Wifi : Dynasty Cafe Free (Lt. 1)</div>
+                                            <div>Pass : kedaidynasty123</div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Pesan Footer -->
+                                <div class="text-center pt-2.5" style="font-size: 10px; white-space: pre-line; line-height: 1.3;" x-text="storeProfile.pesanFooterStruk || 'Terima kasih atas kunjungan Anda!\nSilakan datang kembali.'"></div>
+
+                                <!-- Footer Link / Sosmed -->
+                                <div class="text-center pt-2 pb-1 fw-bold" style="font-size: 11px;" x-text="storeProfile.sosmed || '@dynastycafe.id'"></div>
+
+                            </div>
+
+                            <!-- Bottom Paper Tear Sawtooth Edge (Gerigi Kertas Thermal) -->
+                            <div class="w-100" style="margin-top: -1px; overflow: hidden; line-height: 0; transform: rotate(180deg);">
+                                <svg viewBox="0 0 240 10" preserveAspectRatio="none" style="width: 100%; height: 10px; fill: #ffffff;">
+                                    <path d="M0,10 L5,0 L10,10 L15,0 L20,10 L25,0 L30,10 L35,0 L40,10 L45,0 L50,10 L55,0 L60,10 L65,0 L70,10 L75,0 L80,10 L85,0 L90,10 L95,0 L100,10 L105,0 L110,10 L115,0 L120,10 L125,0 L130,10 L135,0 L140,10 L145,0 L150,10 L155,0 L160,10 L165,0 L170,10 L175,0 L180,10 L185,0 L190,10 L195,0 L200,10 L205,0 L210,10 L215,0 L220,10 L225,0 L230,10 L235,0 L240,10 Z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+
+                <!-- Footer Modal Controls -->
+                <div class="p-3 bg-dark border-top border-secondary d-flex gap-2">
+                    <button type="button" class="btn btn-warning text-dark fw-bold flex-grow-1 py-2 font-monospace d-flex align-items-center justify-content-center gap-1.5 shadow-sm" style="font-size: 0.8rem;" @click="downloadReceiptPng()">
+                        <i class="bi bi-download"></i> Unduh Struk (PNG)
+                    </button>
+                    <button type="button" class="btn btn-light fw-bold py-2 px-3 font-monospace d-flex align-items-center justify-content-center gap-1.5 shadow-sm" style="font-size: 0.8rem;" @click="printReceiptDirectly()">
+                        <i class="bi bi-printer-fill"></i> Cetak Struk
+                    </button>
+                    <button type="button" class="btn btn-secondary fw-semibold px-3 py-2" data-bs-dismiss="modal" style="font-size: 0.8rem;">
+                        Tutup
+                    </button>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('transaksiSystem', () => ({
@@ -438,9 +618,28 @@ document.addEventListener('alpine:init', () => {
         selectedTrx: null,
         detailModalInstance: null,
         
+        // Receipt Modal State
+        receiptTrx: null,
+        receiptModalInstance: null,
+        storeProfile: {
+            namaToko: 'Dynasty Cafe',
+            slogan: 'Authentic Coffee & Eatery',
+            telepon: '0812-3456-7890',
+            sosmed: '@dynastycafe.id',
+            alamat: 'Jl. Jambangan Kebon Agung No. 12 B, Surabaya',
+            pesanFooterStruk: "Terima kasih atas kunjungan Anda!\nSilakan datang kembali.",
+            cetakLogoStruk: true,
+            wifiList: [
+                { ssid: 'Dynasty Cafe Free (Lt. 1)', password: 'kedaidynasty123' },
+                { ssid: 'Dynasty Cafe VIP (Lt. 2)', password: 'dynastyvip88' }
+            ]
+        },
+        storeLogo: null,
+        
         init() {
             this.updateTime();
             setInterval(() => this.updateTime(), 1000);
+            this.loadStoreProfile();
             
             setTimeout(() => {
                 const modalEl = document.getElementById('detailModal');
@@ -450,9 +649,41 @@ document.addEventListener('alpine:init', () => {
                         this.selectedTrx = null;
                     });
                 }
+
+                const receiptEl = document.getElementById('thermalReceiptModal');
+                if (receiptEl && typeof bootstrap !== 'undefined') {
+                    this.receiptModalInstance = new bootstrap.Modal(receiptEl);
+                }
             }, 100);
         },
         
+        loadStoreProfile() {
+            try {
+                const saved = localStorage.getItem('dynasty_store_profile');
+                if (saved) {
+                    this.storeProfile = Object.assign({}, this.storeProfile, JSON.parse(saved));
+                }
+                const savedLogo = localStorage.getItem('dynasty_logo_data');
+                if (savedLogo) {
+                    this.storeLogo = savedLogo;
+                }
+            } catch(e) {}
+
+            fetch('/api/profil-toko')
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success && res.data) {
+                        this.storeProfile = Object.assign({}, this.storeProfile, res.data);
+                        if (res.data.logo_url) {
+                            this.storeLogo = res.data.logo_url;
+                        } else if (res.data.logo_data) {
+                            this.storeLogo = res.data.logo_data;
+                        }
+                    }
+                })
+                .catch(() => {});
+        },
+
         updateTime() {
             const now = new Date();
             this.currentTime = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
@@ -536,6 +767,10 @@ document.addEventListener('alpine:init', () => {
         formatRupiah(number) {
             return 'Rp ' + Math.round(number).toLocaleString('id-ID');
         },
+
+        formatNumber(num) {
+            return (Math.round(num) || 0).toLocaleString('en-US');
+        },
         
         formatDate(dateString) {
             const d = new Date(dateString);
@@ -548,6 +783,7 @@ document.addEventListener('alpine:init', () => {
         },
         
         getKasirName(trx) {
+            if (!trx) return 'Kasir POS';
             if (trx.nama_pelanggan && !trx.nama_pelanggan.startsWith('Pelanggan Meja')) {
                 return trx.nama_pelanggan;
             }
@@ -563,11 +799,12 @@ document.addEventListener('alpine:init', () => {
         },
         
         getTotalItems(trx) {
-            if (!trx.detail_pesanan) return 0;
+            if (!trx || !trx.detail_pesanan) return 0;
             return trx.detail_pesanan.reduce((sum, item) => sum + item.jumlah, 0);
         },
         
         getPaymentMethod(trx) {
+            if (!trx) return 'Tunai';
             if (trx.pembayaran && trx.pembayaran.metode_pembayaran) {
                 const m = trx.pembayaran.metode_pembayaran.toLowerCase();
                 if (m === 'qris') return 'QRIS';
@@ -592,14 +829,120 @@ document.addEventListener('alpine:init', () => {
             this.selectedTrx = trx;
             this.detailModalInstance.show();
         },
+
+        openReceiptModal(trx) {
+            this.receiptTrx = trx;
+            if (this.detailModalInstance) {
+                this.detailModalInstance.hide();
+            }
+            if (!this.receiptModalInstance) {
+                const el = document.getElementById('thermalReceiptModal');
+                if (el && typeof bootstrap !== 'undefined') {
+                    this.receiptModalInstance = new bootstrap.Modal(el);
+                }
+            }
+            if (this.receiptModalInstance) {
+                this.receiptModalInstance.show();
+            }
+        },
+
+        downloadReceiptPng() {
+            const target = document.getElementById('thermalReceiptModalCapture');
+            if (!target) return;
+            
+            const trxNum = (this.receiptTrx?.nomor_pesanan || 'struk').replace(/[^a-zA-Z0-9-_]/g, '');
+            const fileName = `Struk-${trxNum}.png`;
+
+            if (typeof html2canvas !== 'undefined') {
+                html2canvas(target, {
+                    scale: 2.5,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                }).then(canvas => {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }).catch(err => {
+                    console.error('Error capture:', err);
+                    alert('Gagal mendownload struk PNG: ' + err.message);
+                });
+            } else {
+                alert('Library html2canvas belum siap.');
+            }
+        },
+
+        printReceiptDirectly() {
+            const printArea = document.getElementById('thermalReceiptPaperArea');
+            if (!printArea) return;
+            
+            let iframe = document.getElementById('adminThermalPrintIframe');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'adminThermalPrintIframe';
+                iframe.style.position = 'fixed';
+                iframe.style.right = '0';
+                iframe.style.bottom = '0';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                document.body.appendChild(iframe);
+            }
+            
+            const content = `<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Struk Thermal - ${this.receiptTrx?.nomor_pesanan || 'Dynasty'}</title>
+                <style>
+                    body {
+                        font-family: 'Courier New', Courier, Consolas, Monaco, monospace;
+                        width: 58mm;
+                        margin: 0 auto;
+                        padding: 2mm 3mm;
+                        font-size: 11px;
+                        line-height: 1.25;
+                        color: #000;
+                        background: #fff;
+                    }
+                    img {
+                        filter: grayscale(100%) contrast(180%) brightness(85%) !important;
+                        -webkit-filter: grayscale(100%) contrast(180%) brightness(85%) !important;
+                        mix-blend-mode: multiply;
+                    }
+                    @media print {
+                        body { width: 58mm; margin: 0; padding: 2mm; }
+                        @page { size: 58mm auto; margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${printArea.innerHTML}
+            </body>
+            </html>`;
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(content);
+            doc.close();
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch(e) {}
+            }, 300);
+        },
         
-        // Perhitungan Breakdown dari Total (Mock)
         getCashReceived(trx) {
+            if (!trx) return 0;
             if (this.getPaymentMethod(trx) !== 'Tunai') {
                 return trx.total_harga; 
             }
             
-            // Extract from catatan if we saved it like: "Nama (Via TUNAI - Rp 50000)"
             if (trx.catatan) {
                 const match = trx.catatan.match(/- Rp (\d+)\)/);
                 if (match && match[1]) {
@@ -607,11 +950,11 @@ document.addEventListener('alpine:init', () => {
                 }
             }
             
-            // If not found in catatan (old transactions), assume Uang Pas
             return trx.total_harga;
         },
         
         getChange(trx) {
+            if (!trx) return 0;
             return this.getCashReceived(trx) - trx.total_harga;
         }
     }));

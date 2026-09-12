@@ -145,12 +145,12 @@
                                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
                                         <i class="bi bi-info-circle text-danger"></i> Informasi Dasar & Pengaturan Struk
                                     </h5>
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill" style="font-size: 0.72rem;">
-                                            <i class="bi bi-receipt-cutoff me-1"></i> Data Struk Kasir & Pelanggan
+                                            <i class="bi bi-receipt-cutoff me-1"></i> Data Struk
                                         </span>
-                                        <button type="button" class="btn btn-sm text-white rounded-3 px-3 py-2 fw-semibold d-flex align-items-center gap-2 shadow-sm" style="background-color: #1f2937; font-size: 0.78rem;" onclick="openReceiptPreviewModal()">
-                                            <i class="bi bi-eye"></i> Pratinjau Struk Thermal (Hitam Putih)
+                                        <button type="button" class="btn btn-sm btn-dark rounded-3 px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5 shadow-sm text-nowrap" style="font-size: 0.75rem;" onclick="openReceiptPreviewModal()" title="Lihat Pratinjau Struk Thermal">
+                                            <i class="bi bi-eye-fill"></i> Pratinjau Struk
                                         </button>
                                     </div>
                                 </div>

@@ -16,11 +16,36 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
+        html {
+            background-color: #922c24; /* Prevents white flash between page reloads */
+        }
         body {
             background-color: #f8f9fa;
             font-family: 'DM Sans', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow-x: hidden;
             height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .pos-main {
+            animation: posPageFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes posPageFadeIn {
+            0% { opacity: 0.9; transform: translateY(2px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        #globalTopProgressBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #ffffff);
+            width: 0%;
+            z-index: 999999;
+            transition: width 0.25s ease, opacity 0.25s ease;
+            pointer-events: none;
+            opacity: 0;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
         }
         h1, h2, h3, h4, h5, h6, .fw-bold, .fw-semibold {
             font-family: 'Outfit', sans-serif;
@@ -348,6 +373,7 @@
     @stack('styles')
 </head>
 <body x-data="posLayout()">
+    <div id="globalTopProgressBar"></div>
     <div class="pos-wrapper">
         <!-- Sidebar -->
         <div class="pos-sidebar position-relative" :class="{ 'collapsed': sidebarCollapsed }">
@@ -527,6 +553,44 @@
                 }
             }));
         });
+
+        // Global Seamless Instant Navigation & Progress Bar
+        (function() {
+            const bar = document.getElementById('globalTopProgressBar');
+            if (bar) {
+                bar.style.opacity = '1';
+                bar.style.width = '100%';
+                setTimeout(() => {
+                    bar.style.opacity = '0';
+                    setTimeout(() => { bar.style.width = '0%'; }, 250);
+                }, 160);
+            }
+
+            document.addEventListener('click', function(e) {
+                const a = e.target.closest('.pos-sidebar a:not([data-bs-toggle])');
+                if (!a) return;
+                const href = a.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript') || a.target === '_blank') return;
+                if (a.closest('form')) return;
+                if (href === window.location.href) return;
+
+                if (bar) {
+                    bar.style.transition = 'width 0.3s ease, opacity 0.2s ease';
+                    bar.style.opacity = '1';
+                    bar.style.width = '35%';
+                    setTimeout(() => { if (bar) bar.style.width = '82%'; }, 120);
+                }
+
+                // Immediate visual active indicator
+                const currentActive = document.querySelector('.pos-sidebar .nav-link.active');
+                if (currentActive && currentActive !== a) {
+                    currentActive.classList.remove('active');
+                }
+                if (a.classList.contains('nav-link')) {
+                    a.classList.add('active');
+                }
+            });
+        })();
     </script>
     @include('partials.global_order_notifier')
     @stack('scripts')

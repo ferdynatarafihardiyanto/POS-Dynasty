@@ -16,7 +16,7 @@ class AuthController extends Controller
     public function processLogin(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required'],
         ]);
 
@@ -26,7 +26,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'email' => 'Email/Username atau password salah.',
         ])->onlyInput('email');
     }
 

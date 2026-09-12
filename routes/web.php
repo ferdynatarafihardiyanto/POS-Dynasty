@@ -105,7 +105,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('satuan', \App\Http\Controllers\Web\Admin\SatuanController::class)->except(['show']);
         
         Route::get('/profil', function() { return view('admin.profil.index'); })->name('profil.index');
-        Route::get('/karyawan', function() { return view('admin.karyawan.index'); })->name('karyawan.index');
+        Route::resource('karyawan', \App\Http\Controllers\Web\Admin\KaryawanController::class)->except(['show']);
         
         Route::resource('bahan-baku', \App\Http\Controllers\Web\Admin\BahanBakuController::class)->parameters(['bahan-baku' => 'bahanBaku']);
         Route::get('/resep', [\App\Http\Controllers\Web\Admin\ResepController::class, 'index'])->name('resep.index');

@@ -133,7 +133,9 @@
                                     <td class="text-muted">{{ $m->name ?? '-' }}</td>
                                     <td class="text-muted font-monospace small bg-light rounded px-2">{{ $m->qr_token }}</td>
                                     <td class="text-end">
-                                        <a href="{{ route('admin.meja.print', $m->id) }}" target="_blank" class="btn-action btn-action-print text-primary" title="Cetak QR Meja (PDF)"><i class="bi bi-qr-code fs-5"></i></a>
+                                        <button type="button" class="btn-action btn-action-print text-primary" title="Lihat & Unduh QR Meja" onclick="showQRModal('{{ $m->table_number }}', '{{ $m->qr_token }}', '{{ addslashes($m->name ?? '') }}')">
+                                            <i class="bi bi-qr-code fs-5"></i>
+                                        </button>
                                         <button type="button" class="btn-action btn-action-edit" title="Edit" data-bs-toggle="modal" data-bs-target="#editMejaModal{{ $m->id }}"><i class="bi bi-pencil"></i></button>
                                         <form action="{{ route('admin.meja.destroy', $m->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus meja ini?')">
                                             @csrf @method('DELETE')
@@ -233,32 +235,48 @@
     @endforeach
     <!-- Modal Preview QR Meja -->
     <div class="modal fade" id="qrPreviewModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow-lg text-center p-4">
-                <div class="modal-header border-0 pb-0 justify-content-end">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-header border-0 pb-0 px-4 pt-4 d-flex justify-content-between align-items-center">
+                    <span class="badge bg-danger-subtle text-danger px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.78rem;">
+                        <i class="bi bi-qr-code-scan me-1"></i> QR Code Meja Pelanggan
+                    </span>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body pt-0">
-                    <span class="badge bg-light text-danger px-3 py-2 rounded-pill fw-bold mb-2">QR Code Meja Pelanggan</span>
-                    <h3 class="fw-bold text-dark mb-1" id="modalTableTitle">Meja --</h3>
-                    <p class="text-muted small mb-3">Scan QR ini dengan kamera HP untuk langsung membuka menu dan memesan</p>
-                    
-                    <div class="p-3 bg-white rounded-4 d-inline-block border mb-3 shadow-sm" style="max-width: 250px;">
-                        <img id="modalQrImage" src="" alt="QR Code" class="img-fluid rounded-3" style="width: 200px; height: 200px; object-fit: contain;">
+                
+                <div class="modal-body text-center px-4 pt-3 pb-2">
+                    <div class="p-3 bg-light rounded-4 border mb-3 text-center position-relative">
+                        <div class="text-uppercase fw-bold text-danger tracking-wider mb-1" style="font-size: 0.75rem; letter-spacing: 1.5px;">☕ DYNASTY CAFE</div>
+                        <h3 class="fw-bolder text-dark mb-0" id="modalTableTitle">Meja --</h3>
+                        <p class="text-muted small mb-3" id="modalTableSubtitle">Scan QR untuk melihat menu & memesan</p>
+                        
+                        <div class="p-3 bg-white rounded-3 d-inline-block border shadow-sm mb-2">
+                            <img id="modalQrImage" src="" alt="QR Code Meja" class="img-fluid" style="width: 210px; height: 210px; object-fit: contain;">
+                        </div>
+                        
+                        <div class="text-muted small fw-medium mt-1">Arahkan kamera smartphone ke QR Code ini</div>
                     </div>
                     
-                    <div class="input-group mb-2">
-                        <input type="text" class="form-control font-monospace small bg-light" id="modalQrUrl" readonly>
-                        <button class="btn btn-outline-secondary" type="button" onclick="copyQrUrl()"><i class="bi bi-clipboard"></i> Salin</button>
-                        <a id="modalQrOpenLink" href="#" target="_blank" class="btn btn-dark"><i class="bi bi-box-arrow-up-right"></i> Buka</a>
+                    <div class="input-group mb-2 shadow-sm">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-link-45deg"></i></span>
+                        <input type="text" class="form-control font-monospace small bg-white border-start-0 text-truncate" id="modalQrUrl" readonly style="font-size: 0.75rem;">
+                        <button class="btn btn-outline-secondary btn-sm px-3 fw-semibold" type="button" onclick="copyQrUrl()">
+                            <i class="bi bi-clipboard"></i> Salin
+                        </button>
                     </div>
-                    <div class="text-muted" style="font-size: 0.75rem;">Link otomatis menyesuaikan domain server saat ini</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Link otomatis disesuaikan dengan domain atau IP perangkat saat ini</div>
                 </div>
-                <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
-                    <button type="button" class="btn btn-light rounded-3 px-4 fw-bold" data-bs-dismiss="modal">Tutup</button>
-                    <button type="button" class="btn text-white rounded-3 px-4 fw-bold shadow-sm" style="background-color: #8b211e;" onclick="printQrFromModal()">
-                        <i class="bi bi-printer me-1"></i> Cetak / Print QR
-                    </button>
+                
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 d-flex flex-column gap-2">
+                    <div class="d-flex w-100 gap-2">
+                        <button type="button" class="btn btn-dark w-50 rounded-3 py-2 fw-bold d-flex align-items-center justify-content-center gap-1.5 shadow-sm" onclick="downloadQrModalImage()">
+                            <i class="bi bi-download"></i> Unduh PNG
+                        </button>
+                        <button type="button" class="btn text-white w-50 rounded-3 py-2 fw-bold d-flex align-items-center justify-content-center gap-1.5 shadow-sm" style="background-color: #8b211e;" onclick="printQrFromModal()">
+                            <i class="bi bi-printer"></i> Cetak QR
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-light w-100 rounded-3 py-2 text-muted fw-semibold" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
@@ -268,8 +286,11 @@
 @push('scripts')
 <script>
     function updateHeaderTime() {
-        const now = new Date();
-        document.getElementById('currentTimeHeader').innerText = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        const el = document.getElementById('currentTimeHeader');
+        if (el) {
+            const now = new Date();
+            el.innerText = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        }
     }
     updateHeaderTime();
     setInterval(updateHeaderTime, 1000);
@@ -277,15 +298,15 @@
     let currentPrintTable = '';
     let currentPrintUrl = '';
 
-    function showQRModal(tableNumber, qrToken) {
+    function showQRModal(tableNumber, qrToken, tableName) {
         currentPrintTable = tableNumber;
         currentPrintUrl = window.location.origin + '/?qr_token=' + qrToken;
         
         document.getElementById('modalTableTitle').innerText = 'Meja ' + tableNumber;
+        document.getElementById('modalTableSubtitle').innerText = tableName ? (tableName + ' • Scan untuk memesan') : 'Scan QR untuk melihat menu & memesan';
         document.getElementById('modalQrUrl').value = currentPrintUrl;
-        document.getElementById('modalQrOpenLink').href = currentPrintUrl;
         
-        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(currentPrintUrl)}`;
+        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(currentPrintUrl)}`;
         document.getElementById('modalQrImage').src = qrApi;
         
         const modal = new bootstrap.Modal(document.getElementById('qrPreviewModal'));
@@ -297,39 +318,71 @@
         copyText.select();
         copyText.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(copyText.value).then(() => {
-            alert('Link QR Meja berhasil disalin!');
+            alert('Link pemesanan Meja ' + currentPrintTable + ' berhasil disalin!');
         }).catch(() => {
             document.execCommand('copy');
-            alert('Link QR Meja berhasil disalin!');
+            alert('Link pemesanan Meja ' + currentPrintTable + ' berhasil disalin!');
         });
     }
 
+    function downloadQrModalImage() {
+        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(currentPrintUrl)}`;
+        const fileName = `QR-Meja-${currentPrintTable || 'Dynasty'}.png`;
+
+        fetch(qrApi)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(() => {
+                // Fallback direct open/download
+                const a = document.createElement('a');
+                a.href = qrApi;
+                a.download = fileName;
+                a.target = '_blank';
+                a.click();
+            });
+    }
+
     function printQrFromModal() {
-        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(currentPrintUrl)}`;
-        const printWindow = window.open('', '_blank', 'width=500,height=650');
+        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(currentPrintUrl)}`;
+        const printWindow = window.open('', '_blank', 'width=520,height=680');
         if (!printWindow) {
-            alert('Pop-up terblokir oleh browser. Harap izinkan pop-up untuk mencetak, atau gunakan tombol "Buka" untuk melihat langsung.');
+            alert('Pop-up terblokir oleh browser. Harap izinkan pop-up untuk mencetak.');
             return;
         }
         printWindow.document.write(`
+            <!DOCTYPE html>
             <html>
             <head>
-                <title>Cetak QR Meja ${currentPrintTable} - Dynasty Cafe</title>
+                <meta charset="utf-8">
+                <title>QR Code Meja ${currentPrintTable} - Dynasty Cafe</title>
                 <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; background: #fff; }
-                    .qr-card { border: 3px dashed #8b211e; padding: 30px; border-radius: 24px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); max-width: 340px; }
-                    h2 { margin: 0; font-size: 22px; color: #8b211e; letter-spacing: 2px; }
-                    h1 { margin: 8px 0 16px 0; font-size: 34px; color: #1c1917; font-weight: 800; }
-                    img { border-radius: 12px; margin: 10px 0; }
-                    .note { margin-top: 15px; font-size: 15px; font-weight: 600; color: #444; }
-                    .url { font-size: 10px; color: #888; word-break: break-all; margin-top: 8px; font-family: monospace; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 98vh; margin: 0; text-align: center; background: #fff; }
+                    .qr-card { border: 3px dashed #8b211e; padding: 32px 28px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); max-width: 320px; }
+                    h2 { margin: 0; font-size: 18px; color: #8b211e; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
+                    h1 { margin: 8px 0 14px 0; font-size: 32px; color: #1c1917; font-weight: 800; }
+                    img { border-radius: 12px; margin: 6px 0; }
+                    .note { margin-top: 14px; font-size: 14px; font-weight: 600; color: #374151; }
+                    .url { font-size: 10px; color: #9ca3af; word-break: break-all; margin-top: 8px; font-family: monospace; }
+                    @media print {
+                        body { background: transparent; }
+                        .qr-card { box-shadow: none; }
+                    }
                 </style>
             </head>
             <body>
                 <div class="qr-card">
                     <h2>☕ DYNASTY CAFE</h2>
                     <h1>Meja ${currentPrintTable}</h1>
-                    <img src="${qrApi}" width="240" height="240" alt="QR Code" onload="window.print();" />
+                    <img src="${qrApi}" width="220" height="220" alt="QR Code" onload="window.print();" />
                     <div class="note">Scan untuk melihat menu & memesan</div>
                     <div class="url">${currentPrintUrl}</div>
                 </div>

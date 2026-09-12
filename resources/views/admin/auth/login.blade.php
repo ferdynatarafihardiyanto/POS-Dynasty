@@ -27,8 +27,8 @@
         <form method="POST">
             @csrf
             <div class="mb-3">
-                <label class="form-label fw-semibold">Email Account</label>
-                <input type="email" name="email" class="form-control form-control-lg bg-light" value="{{ old('email') }}" required autofocus placeholder="admin@cafe.test">
+                <label class="form-label fw-semibold">Email / Username</label>
+                <input type="text" name="email" class="form-control form-control-lg bg-light" value="{{ old('email') }}" required autofocus placeholder="admin@cafe.test atau username">
             </div>
             <div class="mb-4">
                 <label class="form-label fw-semibold">Password</label>
