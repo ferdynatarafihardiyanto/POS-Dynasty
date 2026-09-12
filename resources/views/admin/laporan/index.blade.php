@@ -91,8 +91,96 @@
     <!-- Main Content -->
     <div class="p-4 overflow-auto flex-grow-1" style="background-color: #fcfcfc;" x-data="{ currentTab: 'ringkasan' }">
         
-        <!-- Action Buttons -->
-        <div class="d-flex justify-content-between mb-4">
+        <!-- Minimalist Paper Report Layout (Hanya Muncul Saat Print / Cetak Kertas) -->
+        <div class="print-only mb-4">
+            <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
+                </div>
+                <div class="text-end" style="font-size: 8.5pt;">
+                    <div><strong>Waktu Cetak:</strong> {{ now('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB</div>
+                    <div><strong>Petugas:</strong> {{ Auth::user()->name }} ({{ ucfirst(Auth::user()->role) }})</div>
+                </div>
+            </div>
+            <div class="text-center my-3">
+                <h5 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px; text-decoration: underline;">LAPORAN PENJUALAN</h5>
+                <div class="small">Periode: 
+                    @if($periode == 'today') Hari Ini ({{ now('Asia/Jakarta')->translatedFormat('d F Y') }})
+                    @elseif($periode == 'week') Minggu Ini
+                    @elseif($periode == 'month') Bulan Ini ({{ now('Asia/Jakarta')->translatedFormat('F Y') }})
+                    @elseif($periode == 'year') Tahun Ini ({{ now('Asia/Jakarta')->translatedFormat('Y') }})
+                    @else Semua Waktu
+                    @endif
+                </div>
+            </div>
+
+            <!-- Tabel Ringkasan Finansial Formal -->
+            <table class="table table-bordered mb-4 mt-3">
+                <thead>
+                    <tr>
+                        <th class="text-center">Total Transaksi</th>
+                        <th class="text-center">Total Pendapatan</th>
+                        <th class="text-center">Total Pengeluaran</th>
+                        <th class="text-center">Laba Bersih</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="text-center fw-bold" style="font-size: 11pt;">
+                        <td>{{ number_format($totalPesanan, 0, ',', '.') }} Transaksi</td>
+                        <td>Rp {{ number_format($totalPendapatan, 0, ',', '.') }}</td>
+                        <td>Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</td>
+                        <td>Rp {{ number_format($totalLaba, 0, ',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Rincian Metode Pembayaran -->
+            <h6 class="fw-bold mt-4 mb-2 text-uppercase" style="font-size: 9pt;">Rincian Metode Pembayaran Masuk:</h6>
+            <table class="table table-bordered mb-4">
+                <thead>
+                    <tr>
+                        <th>Metode Pembayaran</th>
+                        <th class="text-center">Jumlah Transaksi</th>
+                        <th class="text-center">Persentase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tunai (Cash)</td>
+                        <td class="text-center">{{ $paymentMethodsCount['cash'] }} Transaksi</td>
+                        <td class="text-center">{{ $paymentMethodsPercents['cash'] }}%</td>
+                    </tr>
+                    <tr>
+                        <td>QRIS</td>
+                        <td class="text-center">{{ $paymentMethodsCount['qris'] }} Transaksi</td>
+                        <td class="text-center">{{ $paymentMethodsPercents['qris'] }}%</td>
+                    </tr>
+                    <tr>
+                        <td>Transfer / Debit</td>
+                        <td class="text-center">{{ $paymentMethodsCount['transfer'] }} Transaksi</td>
+                        <td class="text-center">{{ $paymentMethodsPercents['transfer'] }}%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Lembar Tanda Tangan Formal -->
+            <div class="row mt-5 pt-4">
+                <div class="col-6 text-center">
+                    <div class="small">Mengetahui / Penanggung Jawab,</div>
+                    <div style="height: 65px;"></div>
+                    <div class="fw-bold">( _______________________ )</div>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="small">Petugas / Kasir,</div>
+                    <div style="height: 65px;"></div>
+                    <div class="fw-bold">( {{ Auth::user()->name }} )</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons (Web Only) -->
+        <div class="d-flex justify-content-between mb-4 no-print">
             <div class="dropdown">
                 <button class="btn btn-white border bg-white rounded-3 shadow-sm px-4 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-calendar3"></i> 
@@ -116,14 +204,14 @@
             </button>
         </div>
 
-        <!-- Tabs -->
-        <div class="d-flex gap-3 mb-4">
+        <!-- Tabs (Web Only) -->
+        <div class="d-flex gap-3 mb-4 no-print">
             <button class="tab-btn" :class="{ 'active': currentTab === 'ringkasan' }" @click="currentTab = 'ringkasan'">Ringkasan</button>
             <button class="tab-btn" :class="{ 'active': currentTab === 'grafik' }" @click="currentTab = 'grafik'">Grafik Tren</button>
             <button class="tab-btn" :class="{ 'active': currentTab === 'produk' }" @click="currentTab = 'produk'">Produk Terlaris</button>
         </div>
 
-        <div x-show="currentTab === 'ringkasan' || currentTab === 'grafik'">
+        <div class="no-print" x-show="currentTab === 'ringkasan' || currentTab === 'grafik'">
             <!-- Stats Cards (Hanya muncul di Ringkasan) -->
             <div class="row g-4 mb-4" x-show="currentTab === 'ringkasan'">
                 <div class="col-md-3">
@@ -225,7 +313,7 @@
             </div>
         </div>
 
-        <div x-show="currentTab === 'produk'" style="display: none;">
+        <div class="no-print" x-show="currentTab === 'produk'" style="display: none;">
             <div class="card border-0 shadow-sm rounded-3">
                 <div class="card-body p-5 text-center">
                     <i class="bi bi-cone-striped text-warning mb-3" style="font-size: 3rem;"></i>

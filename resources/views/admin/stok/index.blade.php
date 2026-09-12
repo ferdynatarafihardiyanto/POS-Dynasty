@@ -14,7 +14,7 @@
 
 @section('content')
 <div class="pos-main d-flex flex-column h-100">
-    <div class="d-flex align-items-center justify-content-between p-4 bg-white border-bottom">
+    <div class="pos-web-header d-flex align-items-center justify-content-between p-4 bg-white border-bottom">
         <div>
             <h4 class="mb-0 fw-bold text-dark">Mutasi Stok</h4>
             <div class="text-muted small">Riwayat pergerakan stok (masuk & keluar)</div>
@@ -35,8 +35,29 @@
     </div>
 
     <div class="p-4 flex-grow-1 overflow-auto" style="background-color: #fcfcfc;">
+        <!-- Minimalist Paper Report Layout (Hanya Muncul Saat Print / Cetak Kertas) -->
+        <div class="print-only mb-4">
+            <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
+                </div>
+                <div class="text-end" style="font-size: 8.5pt;">
+                    <div><strong>Waktu Cetak:</strong> {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB</div>
+                    <div><strong>Petugas:</strong> {{ Auth::user()->name }} ({{ ucfirst(Auth::user()->role) }})</div>
+                </div>
+            </div>
+            <div class="text-center my-3">
+                <h5 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px; text-decoration: underline;">LAPORAN MUTASI & PERUBAHAN STOK</h5>
+                <div class="small">
+                    Tipe Mutasi: <strong>{{ request('tipe') ? ucfirst(request('tipe')) : 'Semua Tipe' }}</strong> &nbsp;|&nbsp; 
+                    Tanggal: <strong>{{ request('tanggal') ? \Carbon\Carbon::parse(request('tanggal'))->translatedFormat('d F Y') : 'Semua Riwayat' }}</strong>
+                </div>
+            </div>
+        </div>
+
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 shadow-sm no-print" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -50,7 +71,7 @@
         @endif
 
         @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm no-print" role="alert">
                 <div class="fw-bold mb-1"><i class="bi bi-exclamation-circle-fill me-1"></i> Terjadi kesalahan input:</div>
                 <ul class="mb-0 ps-3">
                     @foreach($errors->all() as $err)
@@ -61,7 +82,7 @@
             </div>
         @endif
 
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 no-print">
             <form method="GET" action="{{ route('admin.stok.index') }}" class="d-flex flex-wrap gap-2 align-items-center">
                 <select class="form-select border shadow-sm" name="tipe" onchange="this.form.submit()" style="min-width: 180px;">
                     <option value="">Semua Tipe Mutasi</option>
@@ -83,33 +104,9 @@
                 @endif
             </form>
             <div class="d-flex align-items-center gap-2">
-                <!-- Export Buttons -->
-                <div class="dropdown">
-                    <button class="btn btn-light border shadow-sm fw-semibold d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-download"></i> Export
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 180px;">
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-2 py-2"
-                               href="{{ route('admin.stok.export.excel', request()->only(['tipe','tanggal','search'])) }}">
-                                <div>
-                                    <div class="fw-semibold" style="font-size:0.85rem;">Export Excel (CSV)</div>
-                                    <div class="text-muted" style="font-size:0.72rem;">File .csv, buka di Excel</div>
-                                </div>
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-2 py-2"
-                               href="{{ route('admin.stok.export.pdf', request()->only(['tipe','tanggal','search'])) }}">
-                                <div>
-                                    <div class="fw-semibold" style="font-size:0.85rem;">Export PDF</div>
-                                    <div class="text-muted" style="font-size:0.72rem;">Langsung download .pdf</div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                <button type="button" class="btn text-white rounded-3 px-4 d-flex align-items-center gap-2 fw-bold shadow-sm" style="background-color: #8b211e;" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Cetak Laporan
+                </button>
                 <button class="btn text-white rounded-3 px-4 fw-bold shadow-sm d-flex align-items-center gap-2" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#catatStokModal">
                     <i class="bi bi-box-arrow-in-down"></i> Catat Mutasi Stok
                 </button>
@@ -184,8 +181,24 @@
             </div>
         </div>
 
+        <!-- Lembar Tanda Tangan Formal (Hanya Saat Print) -->
+        <div class="print-only mt-4" style="page-break-inside: avoid;">
+            <div class="row mt-5 pt-3">
+                <div class="col-6 text-center">
+                    <div class="small">Mengetahui / Penanggung Jawab Gudang,</div>
+                    <div style="height: 65px;"></div>
+                    <div class="fw-bold">( _______________________ )</div>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="small">Malang, {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}<br>Petugas Stok / Kasir,</div>
+                    <div style="height: 50px;"></div>
+                    <div class="fw-bold">( {{ Auth::user()->name }} )</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex justify-content-between align-items-center mt-3 no-print">
             <div class="text-muted small">
                 Menampilkan total {{ $riwayats->total() }} riwayat mutasi
             </div>

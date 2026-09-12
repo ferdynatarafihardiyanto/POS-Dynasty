@@ -11,6 +11,7 @@ class TransaksiController extends Controller
     public function index(Request $request)
     {
         $periode = $request->get('periode', 'all');
+        $metode = $request->get('metode', 'all');
 
         $paidCondition = function ($q) {
             $q->whereHas('pembayaran', function ($p) {
@@ -33,6 +34,33 @@ class TransaksiController extends Controller
             $query->whereYear('created_at', $now->year);
         }
 
+        if ($metode == 'cash') {
+            $query->where(function ($q) {
+                $q->whereHas('pembayaran', function ($p) {
+                    $p->where('metode_pembayaran', 'cash');
+                })->orWhere(function ($q2) {
+                    $q2->doesntHave('pembayaran')
+                       ->where(function ($q3) {
+                           $q3->where('catatan', 'like', '%TUNAI%')
+                              ->orWhere('catatan', 'not like', '%QRIS%');
+                       });
+                });
+            });
+        } elseif ($metode == 'qris') {
+            $query->where(function ($q) {
+                $q->whereHas('pembayaran', function ($p) {
+                    $p->where('metode_pembayaran', 'qris');
+                })->orWhere('catatan', 'like', '%QRIS%');
+            });
+        } elseif ($metode == 'transfer') {
+            $query->where(function ($q) {
+                $q->whereHas('pembayaran', function ($p) {
+                    $p->whereIn('metode_pembayaran', ['transfer', 'debit']);
+                })->orWhere('catatan', 'like', '%DEBIT%')
+                  ->orWhere('catatan', 'like', '%TRANSFER%');
+            });
+        }
+
         $transaksis = $query->latest()->get();
         
         $totalTransaksi = $transaksis->count();
@@ -47,7 +75,7 @@ class TransaksiController extends Controller
             }
         }
         
-        return view('admin.transaksi.index', compact('transaksis', 'totalTransaksi', 'totalPenjualan', 'labaKotor', 'periode'));
+        return view('admin.transaksi.index', compact('transaksis', 'totalTransaksi', 'totalPenjualan', 'labaKotor', 'periode', 'metode'));
     }
 
     public function print($id)

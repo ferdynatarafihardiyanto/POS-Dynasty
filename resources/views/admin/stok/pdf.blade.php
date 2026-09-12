@@ -136,7 +136,7 @@
 
 @if(empty($isPdf))
 <div class="print-btn-area no-print">
-    <button class="btn btn-print" onclick="window.print()">🖨️ Print / Simpan PDF</button>
+    <button class="btn btn-print" onclick="window.print()">Print / Simpan PDF</button>
     <a href="{{ route('admin.stok.index', array_filter(['tipe' => $filters['tipe'], 'tanggal' => $filters['tanggal'], 'search' => $filters['search']])) }}" class="btn btn-back">← Kembali</a>
     @if(!empty($fallback))
         <span style="font-size: 11px; color: #92400e; background: #fef3c7; border: 1px solid #fde68a; padding: 5px 12px; border-radius: 6px; margin-left: auto;">
@@ -147,7 +147,7 @@
 @endif
 
 <div class="page-header">
-    <div class="brand">☕ Dynasty</div>
+    <div class="brand">Dynasty</div>
     <div class="report-title">Laporan Mutasi Stok</div>
     <div class="meta">Dicetak: {{ now()->setTimezone('Asia/Jakarta')->format('d F Y, H:i') }} WIB &nbsp;|&nbsp; Total Data: {{ $riwayats->count() }} entri</div>
 </div>

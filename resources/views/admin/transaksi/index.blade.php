@@ -76,13 +76,15 @@
 @section('content')
 <script>
     window.transaksiData = {
-        transaksis: @json($transaksis)
+        transaksis: @json($transaksis),
+        initialMetode: '{{ $metode ?? 'all' }}',
+        periode: '{{ $periode ?? 'all' }}'
     };
 </script>
 
 <div class="pos-main" x-data="transaksiSystem()">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
+    <div class="pos-web-header d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center" id="openSidebarBtn" title="Buka Navigasi" style="width: 38px; height: 38px;">
                 <i class="bi bi-list fs-5"></i>
@@ -110,8 +112,46 @@
     <!-- Main Content -->
     <div class="p-4 overflow-auto flex-grow-1" style="background-color: #fcfcfc;">
         
-        <!-- Stats Cards -->
-        <div class="row g-4 mb-4">
+        <!-- Minimalist Paper Report Layout (Hanya Muncul Saat Print / Cetak Kertas) -->
+        <div class="print-only mb-4">
+            <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
+                </div>
+                <div class="text-end" style="font-size: 8.5pt;">
+                    <div><strong>Waktu Cetak:</strong> {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB</div>
+                    <div><strong>Petugas:</strong> {{ Auth::user()->name }} ({{ ucfirst(Auth::user()->role) }})</div>
+                </div>
+            </div>
+            <div class="text-center my-3">
+                <h5 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px; text-decoration: underline;">LAPORAN RIWAYAT TRANSAKSI</h5>
+                <div class="small">
+                    Periode: <span x-text="currentPeriodLabel"></span> &nbsp;|&nbsp; Filter Pembayaran: <strong x-text="currentMethodLabel"></strong>
+                </div>
+            </div>
+
+            <!-- Tabel Ringkasan Finansial Formal -->
+            <table class="table table-bordered mb-4 mt-3">
+                <thead>
+                    <tr>
+                        <th class="text-center">Total Transaksi</th>
+                        <th class="text-center">Total Penjualan (Omset)</th>
+                        <th class="text-center">Total Laba Kotor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="text-center fw-bold" style="font-size: 11pt;">
+                        <td x-text="currentTotalTransaksi + ' Transaksi'"></td>
+                        <td x-text="currentTotalPenjualan"></td>
+                        <td x-text="currentLabaKotor"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Stats Cards (Web View Only) -->
+        <div class="row g-4 mb-4 no-print">
             <div class="col-md-4">
                 <div class="stat-card">
                     <div class="stat-icon icon-red">
@@ -119,7 +159,7 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Total Transaksi</div>
-                        <div class="fs-4 fw-bold" style="color: #8b211e;">{{ number_format($totalTransaksi, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold" style="color: #8b211e;" x-text="currentTotalTransaksi">{{ number_format($totalTransaksi, 0, ',', '.') }}</div>
                     </div>
                 </div>
             </div>
@@ -130,7 +170,7 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Total Penjualan</div>
-                        <div class="fs-4 fw-bold" style="color: #c2410c;">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold" style="color: #c2410c;" x-text="currentTotalPenjualan">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</div>
                     </div>
                 </div>
             </div>
@@ -141,37 +181,77 @@
                     </div>
                     <div>
                         <div class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Laba Kotor</div>
-                        <div class="fs-4 fw-bold" style="color: #15803d;">Rp {{ number_format($labaKotor, 0, ',', '.') }}</div>
+                        <div class="fs-4 fw-bold" style="color: #15803d;" x-text="currentLabaKotor">Rp {{ number_format($labaKotor, 0, ',', '.') }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters & Search -->
-        <div class="d-flex justify-content-between mb-4">
-            <div class="dropdown">
-                <button class="btn btn-white border bg-white rounded-3 shadow-sm px-4 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-calendar3 text-danger"></i> 
-                    <span class="fw-bold text-dark">
-                        @if(!isset($periode) || $periode == 'all') Semua Waktu
-                        @elseif($periode == 'today') Hari Ini
-                        @elseif($periode == 'week') Minggu Ini
-                        @elseif($periode == 'month') Bulan Ini
-                        @elseif($periode == 'year') Tahun Ini
-                        @endif
-                    </span>
-                </button>
-                <ul class="dropdown-menu shadow-sm border-0 mt-2 rounded-3">
-                    <li><a class="dropdown-item py-2 {{ (!isset($periode) || $periode == 'all') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index') }}">Semua Waktu</a></li>
-                    <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'today') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'today']) }}">Hari Ini</a></li>
-                    <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'week') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'week']) }}">Minggu Ini</a></li>
-                    <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'month') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'month']) }}">Bulan Ini</a></li>
-                    <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'year') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'year']) }}">Tahun Ini</a></li>
-                </ul>
+        <!-- Filters & Search (Web View Only) -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 no-print">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Dropdown Filter Periode -->
+                <div class="dropdown">
+                    <button class="btn btn-white border bg-white rounded-3 shadow-sm px-3 py-2 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-calendar3 text-danger"></i> 
+                        <span class="fw-bold text-dark small" x-text="currentPeriodLabel">
+                            @if(!isset($periode) || $periode == 'all') Semua Waktu
+                            @elseif($periode == 'today') Hari Ini
+                            @elseif($periode == 'week') Minggu Ini
+                            @elseif($periode == 'month') Bulan Ini
+                            @elseif($periode == 'year') Tahun Ini
+                            @endif
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm border-0 mt-2 rounded-3">
+                        <li><a class="dropdown-item py-2 {{ (!isset($periode) || $periode == 'all') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['metode' => $metode ?? 'all']) }}">Semua Waktu</a></li>
+                        <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'today') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'today', 'metode' => $metode ?? 'all']) }}">Hari Ini</a></li>
+                        <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'week') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'week', 'metode' => $metode ?? 'all']) }}">Minggu Ini</a></li>
+                        <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'month') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'month', 'metode' => $metode ?? 'all']) }}">Bulan Ini</a></li>
+                        <li><a class="dropdown-item py-2 {{ (isset($periode) && $periode == 'year') ? 'active bg-danger text-white' : '' }}" href="{{ route('admin.transaksi.index', ['periode' => 'year', 'metode' => $metode ?? 'all']) }}">Tahun Ini</a></li>
+                    </ul>
+                </div>
+
+                <!-- Dropdown Filter Metode Pembayaran (Task 3: QRIS / Cash / Transfer) -->
+                <div class="dropdown">
+                    <button class="btn btn-white border bg-white rounded-3 shadow-sm px-3 py-2 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-wallet2 text-danger"></i>
+                        <span class="fw-bold text-dark small" x-text="currentMethodLabel">Semua Metode</span>
+                    </button>
+                    <ul class="dropdown-menu shadow-sm border-0 mt-2 rounded-3">
+                        <li>
+                            <button type="button" class="dropdown-item py-2" :class="selectedPaymentMethod === 'all' ? 'active bg-danger text-white' : ''" @click="setPaymentMethod('all')">
+                                <i class="bi bi-collection me-2"></i> Semua Metode
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2" :class="selectedPaymentMethod === 'cash' ? 'active bg-danger text-white' : ''" @click="setPaymentMethod('cash')">
+                                <i class="bi bi-cash me-2"></i> Tunai (Cash)
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2" :class="selectedPaymentMethod === 'qris' ? 'active bg-danger text-white' : ''" @click="setPaymentMethod('qris')">
+                                <i class="bi bi-qr-code me-2"></i> QRIS
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2" :class="selectedPaymentMethod === 'transfer' ? 'active bg-danger text-white' : ''" @click="setPaymentMethod('transfer')">
+                                <i class="bi bi-credit-card-2-front me-2"></i> Debit / Transfer
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="position-relative w-50">
-                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                <input type="text" class="form-control rounded-3 ps-5 shadow-sm border" placeholder="Cari nama atau kode barang..." x-model="searchQuery">
+
+            <!-- Search & Cetak Laporan Button -->
+            <div class="d-flex align-items-center gap-2 flex-grow-1 justify-content-end" style="max-width: 500px;">
+                <div class="position-relative flex-grow-1">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" class="form-control rounded-3 ps-5 shadow-sm border py-2" placeholder="Cari no. pesanan / pemesan..." x-model="searchQuery">
+                </div>
+                <button type="button" class="btn text-white rounded-3 px-3 py-2 d-flex align-items-center gap-2 fw-bold shadow-sm text-nowrap" style="background-color: #8b211e;" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Cetak Laporan
+                </button>
             </div>
         </div>
 
@@ -188,7 +268,7 @@
                             <th>Total Pembayaran</th>
                             <th>Metode Bayar</th>
                             <th>Status</th>
-                            <th>Aksi</th>
+                            <th class="no-print">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -210,9 +290,9 @@
                                 <td>
                                     <span class="badge-status status-lunas">Lunas</span>
                                 </td>
-                                <td>
-                                    <button class="btn-action" @click="openDetail(trx)"><i class="bi bi-eye"></i></button>
-                                    <button class="btn-action" @click="window.open('/admin/transaksi/' + trx.id + '/print', '_blank')"><i class="bi bi-printer"></i></button>
+                                <td class="no-print">
+                                    <button class="btn-action" @click="openDetail(trx)" title="Detail"><i class="bi bi-eye"></i></button>
+                                    <button class="btn-action" @click="window.open('/admin/transaksi/' + trx.id + '/print', '_blank')" title="Cetak Struk"><i class="bi bi-printer"></i></button>
                                 </td>
                             </tr>
                         </template>
@@ -224,7 +304,23 @@
             </div>
         </div>
         
-        <div class="text-muted small mt-3" x-text="`Menampilkan ${filteredTransaksis.length > 0 ? 1 : 0} - ${filteredTransaksis.length} dari ${filteredTransaksis.length} data`"></div>
+        <div class="text-muted small mt-3 no-print" x-text="`Menampilkan ${filteredTransaksis.length > 0 ? 1 : 0} - ${filteredTransaksis.length} dari ${filteredTransaksis.length} data`"></div>
+
+        <!-- Lembar Tanda Tangan Formal (Hanya Saat Print) -->
+        <div class="print-only mt-4" style="page-break-inside: avoid;">
+            <div class="row mt-5 pt-3">
+                <div class="col-6 text-center">
+                    <div class="small">Mengetahui / Penanggung Jawab,</div>
+                    <div style="height: 65px;"></div>
+                    <div class="fw-bold">( _______________________ )</div>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="small">Malang, {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}<br>Petugas / Kasir,</div>
+                    <div style="height: 50px;"></div>
+                    <div class="fw-bold">( {{ Auth::user()->name }} )</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Detail Modal -->
@@ -335,6 +431,8 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('transaksiSystem', () => ({
         transaksis: window.transaksiData.transaksis,
+        selectedPaymentMethod: window.transaksiData.initialMetode || 'all',
+        currentPeriod: window.transaksiData.periode || 'all',
         searchQuery: '',
         currentTime: '',
         selectedTrx: null,
@@ -359,14 +457,80 @@ document.addEventListener('alpine:init', () => {
             const now = new Date();
             this.currentTime = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
         },
+
+        setPaymentMethod(method) {
+            this.selectedPaymentMethod = method;
+        },
+        
+        get currentMethodLabel() {
+            if (this.selectedPaymentMethod === 'cash') return 'Tunai (Cash)';
+            if (this.selectedPaymentMethod === 'qris') return 'QRIS';
+            if (this.selectedPaymentMethod === 'transfer') return 'Debit / Transfer';
+            return 'Semua Metode';
+        },
+
+        get currentPeriodLabel() {
+            if (this.currentPeriod === 'today') return 'Hari Ini';
+            if (this.currentPeriod === 'week') return 'Minggu Ini';
+            if (this.currentPeriod === 'month') return 'Bulan Ini';
+            if (this.currentPeriod === 'year') return 'Tahun Ini';
+            return 'Semua Waktu';
+        },
         
         get filteredTransaksis() {
-            if (!this.searchQuery) return this.transaksis;
-            const q = this.searchQuery.toLowerCase();
-            return this.transaksis.filter(t => {
-                return t.nomor_pesanan.toLowerCase().includes(q) || 
-                       (t.catatan && t.catatan.toLowerCase().includes(q));
+            let list = this.transaksis;
+
+            // Filter Metode Pembayaran
+            if (this.selectedPaymentMethod !== 'all') {
+                list = list.filter(t => {
+                    const method = this.getPaymentMethod(t).toLowerCase();
+                    if (this.selectedPaymentMethod === 'cash') {
+                        return method.includes('tunai') || method.includes('cash');
+                    } else if (this.selectedPaymentMethod === 'qris') {
+                        return method.includes('qris');
+                    } else if (this.selectedPaymentMethod === 'transfer') {
+                        return method.includes('debit') || method.includes('transfer') || method.includes('va');
+                    }
+                    return true;
+                });
+            }
+
+            // Filter Search Query
+            if (this.searchQuery) {
+                const q = this.searchQuery.toLowerCase();
+                list = list.filter(t => {
+                    const noTrx = (t.nomor_pesanan || '').toLowerCase();
+                    const catatan = (t.catatan || '').toLowerCase();
+                    const kasir = this.getKasirName(t).toLowerCase();
+                    return noTrx.includes(q) || catatan.includes(q) || kasir.includes(q);
+                });
+            }
+
+            return list;
+        },
+
+        get currentTotalTransaksi() {
+            return this.filteredTransaksis.length;
+        },
+
+        get currentTotalPenjualan() {
+            const sum = this.filteredTransaksis.reduce((acc, t) => acc + (parseFloat(t.total_harga) || 0), 0);
+            return 'Rp ' + Math.round(sum).toLocaleString('id-ID');
+        },
+
+        get currentLabaKotor() {
+            let totalLaba = 0;
+            this.filteredTransaksis.forEach(t => {
+                if (t.detail_pesanan) {
+                    t.detail_pesanan.forEach(d => {
+                        const hpp = parseFloat(d.hpp) || 0;
+                        const subtotal = parseFloat(d.subtotal) || 0;
+                        const qty = parseFloat(d.jumlah) || 1;
+                        totalLaba += (subtotal - (hpp * qty));
+                    });
+                }
             });
+            return 'Rp ' + Math.round(totalLaba).toLocaleString('id-ID');
         },
         
         formatRupiah(number) {

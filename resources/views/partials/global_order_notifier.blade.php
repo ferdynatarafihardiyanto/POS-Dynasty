@@ -20,7 +20,7 @@
                     <i class="bi bi-bell-fill fs-5"></i>
                 </div>
                 <div class="text-truncate">
-                    <div class="fw-bold fs-6" id="globalToastTitle">💳 Pesanan Meja Lunas!</div>
+                    <div class="fw-bold fs-6 d-flex align-items-center gap-1.5" id="globalToastTitle"><i class="bi bi-credit-card"></i> <span>Pesanan Meja Lunas!</span></div>
                     <div class="small opacity-90 text-truncate" id="globalToastBody">Memuat rincian menu...</div>
                 </div>
             </div>
@@ -182,7 +182,7 @@
                 }).join(', ');
             }
 
-            if (titleEl) titleEl.textContent = `💳 Meja ${order.meja_nomor} (${order.nama_pelanggan}) Lunas!`;
+            if (titleEl) titleEl.innerHTML = `<i class="bi bi-credit-card me-1"></i> Meja ${order.meja_nomor} (${order.nama_pelanggan || 'Pelanggan'}) Lunas!`;
             if (bodyEl) bodyEl.textContent = itemsText || 'Pesanan siap dimasak di dapur';
 
             toastEl.classList.remove('d-none');

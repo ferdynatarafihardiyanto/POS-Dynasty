@@ -57,7 +57,7 @@
 <div class="d-flex flex-grow-1 overflow-hidden position-relative" x-data="posSystem()">
     
     <!-- Toast Notification -->
-    <div class="position-absolute top-0 end-0 p-3" style="z-index: 1050; padding-right: 380px !important;">
+    <div class="position-absolute top-0 end-0 p-3" :style="cart.length > 0 ? 'z-index: 1050; padding-right: 380px !important;' : 'z-index: 1050; padding-right: 20px !important;'">
         <div class="toast align-items-center bg-white border-0 shadow" :class="showToast ? 'show' : 'hide'" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 50px; transition: opacity 0.3s; opacity: showToast ? 1 : 0;">
             <div class="d-flex">
                 <div class="toast-body fw-bold d-flex align-items-center gap-2 px-4 py-2" :style="toastType === 'warning' ? 'color: #dc2626;' : 'color: #8b211e;'">
@@ -156,11 +156,11 @@
             <div class="row g-3">
                 <template x-for="product in filteredProducts" :key="product.id">
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative"
+                        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden position-relative d-flex flex-column"
                              :class="product.stok <= 0 ? 'bg-light border' : ''"
                              :style="product.stok <= 0 ? 'cursor: not-allowed;' : 'cursor: pointer;'"
                              @click="handleProductClick(product)">
-                            <div class="position-relative bg-light overflow-hidden" style="height: 150px;">
+                            <div class="position-relative bg-light overflow-hidden flex-shrink-0" style="aspect-ratio: 4/3; width: 100%;">
                                 <img :src="getProductImage(product)" 
                                      class="w-100 h-100 object-fit-cover" 
                                      :style="product.stok <= 0 ? 'filter: grayscale(85%) brightness(0.85); opacity: 0.75; transition: all 0.3s;' : 'transition: all 0.3s;'"
@@ -176,7 +176,7 @@
                                     </div>
                                 </template>
                             </div>
-                            <div class="card-body p-3 d-flex flex-column" :class="product.stok <= 0 ? 'opacity-75' : ''">
+                            <div class="card-body p-3 d-flex flex-column justify-content-between flex-grow-1" :class="product.stok <= 0 ? 'opacity-75' : ''">
                                 <h6 class="fw-bold mb-1 text-truncate" :class="product.stok <= 0 ? 'text-muted' : ''" x-text="product.nama"></h6>
                                 <div class="small text-muted mb-2 text-uppercase" x-text="'BRG-' + product.id.toString().padStart(3, '0')"></div>
                                 
@@ -235,7 +235,7 @@
     </div>
 
     <!-- Right Cart Sidebar -->
-    <div class="pos-cart shadow">
+    <div class="pos-cart shadow" x-show="cart.length > 0" x-cloak>
         <div class="p-3.5 p-md-4 border-bottom d-flex justify-content-between align-items-center bg-white">
             <div class="d-flex align-items-center gap-2">
                 <button type="button" class="btn btn-sm btn-light border rounded-circle d-lg-none d-flex align-items-center justify-content-center shadow-xs" @click="closeCartDrawer()" title="Tutup Keranjang" style="width: 32px; height: 32px;">
@@ -246,22 +246,11 @@
             <span class="badge rounded-pill px-2.5 py-1" style="background-color: #fde8e8; color: #8b211e;" x-text="totalCartItems + ' Item'" x-show="totalCartItems > 0"></span>
         </div>
         
-        <!-- Pelanggan & Meja Info Bar -->
+        <!-- Pelanggan Info Bar -->
         <div class="p-3 border-bottom bg-white">
-            <div class="row g-2">
-                <div class="col-7">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control bg-light border-start-0 shadow-none" placeholder="Pelanggan (Opsional)" x-model="customerName" style="font-size: 0.8rem;">
-                    </div>
-                </div>
-                <div class="col-5">
-                    <select class="form-select form-select-sm bg-light shadow-none fw-semibold" x-model="selectedTableId" style="font-size: 0.8rem;">
-                        <template x-for="tbl in tables" :key="tbl.id">
-                            <option :value="tbl.id" x-text="tbl.name || ('Meja ' + tbl.table_number)"></option>
-                        </template>
-                    </select>
-                </div>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control bg-light border-start-0 shadow-none" placeholder="Pelanggan (Opsional)" x-model="customerName" style="font-size: 0.8rem;">
             </div>
         </div>
 
@@ -325,7 +314,7 @@
             </template>
         </div>
 
-        <div class="p-4 bg-white border-top">
+        <div class="p-4 bg-white border-top" x-show="cart.length > 0">
             <div class="d-flex justify-content-between mb-2">
                 <div class="text-muted small">Sub total</div>
                 <div class="fw-bold small" x-text="formatRupiah(subtotal)"></div>
@@ -640,10 +629,10 @@
                                     <div class="mb-3">
                                         <label class="form-label small fw-bold mb-1">Modul Cetak Printer:</label>
                                         <select class="form-select form-select-sm" x-model="printerConfig.moduleType" @change="savePrinterConfig()">
-                                            <option value="iframe_direct">🖨️ Direct Browser / Silent (Tetap di Web)</option>
-                                            <option value="esc_pos">⚡ ESC/POS USB Driver (Wadah Raw POS)</option>
-                                            <option value="rawbt">📱 Bluetooth / Android RawBT Module</option>
-                                            <option value="custom_api">🌐 Local API / QZ Tray Print Daemon</option>
+                                            <option value="iframe_direct">Direct Browser / Silent (Tetap di Web)</option>
+                                            <option value="esc_pos">ESC/POS USB Driver (Wadah Raw POS)</option>
+                                            <option value="rawbt">Bluetooth / Android RawBT Module</option>
+                                            <option value="custom_api">Local API / QZ Tray Print Daemon</option>
                                         </select>
                                         <div class="text-muted" style="font-size: 0.7rem; margin-top: 2px;">Pilih metode komunikasi dengan printer kasir</div>
                                     </div>
@@ -703,10 +692,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Modul Komunikasi Printer:</label>
                         <select class="form-select shadow-none" x-model="printerConfig.moduleType" @change="savePrinterConfig()">
-                            <option value="iframe_direct">🖨️ Direct Browser / Silent (Tetap di Web)</option>
-                            <option value="esc_pos">⚡ ESC/POS USB Driver (Wadah Raw POS)</option>
-                            <option value="rawbt">📱 Bluetooth / Android RawBT Module</option>
-                            <option value="custom_api">🌐 Local API / QZ Tray Print Daemon</option>
+                            <option value="iframe_direct">Direct Browser / Silent (Tetap di Web)</option>
+                            <option value="esc_pos">ESC/POS USB Driver (Wadah Raw POS)</option>
+                            <option value="rawbt">Bluetooth / Android RawBT Module</option>
+                            <option value="custom_api">Local API / QZ Tray Print Daemon</option>
                         </select>
                         <div class="form-text" style="font-size: 0.75rem;">Gunakan 'Direct Browser' untuk mencetak langsung tanpa keluar dari web.</div>
                     </div>
@@ -836,18 +825,18 @@
                                     <div>
                                         <!-- Status Badge -->
                                         <template x-if="order.status === 'menunggu_pembayaran' || order.status === 'menunggu_konfirmasi'">
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-2.5 py-1 rounded-pill fw-bold small">
-                                                ⏳ Menunggu Pembayaran (Belum Bayar)
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning px-2.5 py-1 rounded-pill fw-bold small d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-hourglass-split"></i> <span>Menunggu Pembayaran (Belum Bayar)</span>
                                             </span>
                                         </template>
                                         <template x-if="order.status === 'diproses'">
-                                            <span class="badge bg-info-subtle text-info-emphasis border border-info px-2.5 py-1 rounded-pill fw-bold small">
-                                                👨‍🍳 Sedang Dimasak <span x-text="order.metode_pembayaran ? '(Lunas ' + order.metode_pembayaran.toUpperCase() + ')' : '(Lunas)'"></span>
+                                            <span class="badge bg-info-subtle text-info-emphasis border border-info px-2.5 py-1 rounded-pill fw-bold small d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-fire"></i> <span>Sedang Dimasak <span x-text="order.metode_pembayaran ? '(Lunas ' + order.metode_pembayaran.toUpperCase() + ')' : '(Lunas)'"></span></span>
                                             </span>
                                         </template>
                                         <template x-if="order.status === 'disajikan'">
-                                            <span class="badge bg-success-subtle text-success-emphasis border border-success px-2.5 py-1 rounded-pill fw-bold small">
-                                                🍽️ Sudah Dikirim ke Meja <span x-text="order.metode_pembayaran ? '(' + order.metode_pembayaran.toUpperCase() + ')' : ''"></span>
+                                            <span class="badge bg-success-subtle text-success-emphasis border border-success px-2.5 py-1 rounded-pill fw-bold small d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-check2-circle"></i> <span>Sudah Dikirim ke Meja <span x-text="order.metode_pembayaran ? '(' + order.metode_pembayaran.toUpperCase() + ')' : ''"></span></span>
                                             </span>
                                         </template>
                                     </div>
@@ -904,35 +893,39 @@
                                             </button>
                                             <!-- Tombol Terima Pembayaran jika Belum Bayar -->
                                             <template x-if="order.status === 'menunggu_pembayaran' || order.status === 'menunggu_konfirmasi'">
-                                                <button type="button" class="btn btn-sm text-white rounded-3 fw-bold px-3 py-1.5 shadow-sm"
+                                                <button type="button" class="btn btn-sm text-white rounded-3 fw-bold px-3 py-1.5 shadow-sm d-flex align-items-center gap-1.5"
                                                     style="background-color: #8b211e;"
                                                     @click="openPayTableOrderModal(order)">
-                                                    💳 Terima Pembayaran di Kasir
+                                                    <i class="bi bi-credit-card-fill"></i>
+                                                    <span>Terima Pembayaran di Kasir</span>
                                                 </button>
                                             </template>
 
                                             <!-- Tombol Mulai Masak (Opsional jika ingin masak duluan) -->
                                             <template x-if="order.status === 'menunggu_pembayaran' || order.status === 'menunggu_konfirmasi'">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 fw-bold px-2 py-1.5"
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 fw-bold px-2.5 py-1.5 d-flex align-items-center gap-1.5"
                                                     title="Mulai masak tanpa menunggu pembayaran di awal"
                                                     @click="updateOrderStatus(order.id, 'diproses')">
-                                                    👨‍🍳 Mulai Masak
+                                                    <i class="bi bi-fire"></i>
+                                                    <span>Mulai Masak</span>
                                                 </button>
                                             </template>
 
                                             <!-- Tombol Sudah Dikirim jika Sedang Dimasak -->
                                             <template x-if="order.status === 'diproses'">
-                                                <button type="button" class="btn btn-sm btn-success text-white rounded-3 fw-bold px-3 py-1.5 shadow-sm"
+                                                <button type="button" class="btn btn-sm btn-success text-white rounded-3 fw-bold px-3 py-1.5 shadow-sm d-flex align-items-center gap-1.5"
                                                     @click="updateOrderStatus(order.id, 'disajikan')">
-                                                    🍽️ Sudah Dikirim ke Meja
+                                                    <i class="bi bi-check2-circle"></i>
+                                                    <span>Sudah Dikirim ke Meja</span>
                                                 </button>
                                             </template>
 
                                             <!-- Tombol Selesaikan Pesanan jika Sudah Dikirim -->
                                             <template x-if="order.status === 'disajikan'">
-                                                <button type="button" class="btn btn-sm btn-outline-dark rounded-3 fw-bold px-3 py-1.5 shadow-sm"
+                                                <button type="button" class="btn btn-sm btn-outline-dark rounded-3 fw-bold px-3 py-1.5 shadow-sm d-flex align-items-center gap-1.5"
                                                     @click="updateOrderStatus(order.id, 'selesai')">
-                                                    ✅ Selesaikan Pesanan
+                                                    <i class="bi bi-check-all"></i>
+                                                    <span>Selesaikan Pesanan</span>
                                                 </button>
                                             </template>
                                         </div>
@@ -1007,8 +1000,8 @@
     <!-- Floating Audio Alert saat Pembayaran Masuk (Bantu Buka Izin Audio Browser) -->
     <div x-show="pendingOrderToAnnounce" x-cloak class="position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg" style="z-index: 1085;">
         <button type="button" @click="openTableOrdersModal()" class="btn btn-success rounded-pill px-4 py-2.5 fw-bold d-flex align-items-center gap-2 border border-2 border-white shadow-lg">
-            <i class="bi bi-check-circle-fill fs-5 text-white"></i>
-            <span>💳 Pembayaran Meja Masuk! Klik untuk Dengar Suara & Buka</span>
+            <i class="bi bi-bell-fill fs-5 text-white"></i>
+            <span>Pembayaran Meja Masuk! Klik untuk Dengar Suara & Buka</span>
         </button>
     </div>
 </div>
@@ -1793,7 +1786,7 @@ document.addEventListener('alpine:init', () => {
                     }
                 }, 400);
             }
-            this.triggerToast('🔔 Suara notifikasi dan bel aktif!', 'success');
+            this.triggerToast('Suara notifikasi dan bel aktif!', 'success');
         },
 
         async fetchActiveTableOrders() {
@@ -1823,7 +1816,7 @@ document.addEventListener('alpine:init', () => {
 
                         this.pendingOrderToAnnounce = targetOrder;
                         this.announceOrder(targetOrder);
-                        this.triggerToast(`💳 Pembayaran Masuk! Meja ${targetOrder.meja_nomor} (${targetOrder.nama_pelanggan}) Lunas QRIS/Online!`, 'success', 5000);
+                        this.triggerToast(`Pembayaran Masuk! Meja ${targetOrder.meja_nomor} (${targetOrder.nama_pelanggan}) Lunas QRIS/Online!`, 'success', 5000);
                     }
 
                     this.lastTableOrderCount = newOrders.length;

@@ -15,6 +15,7 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <style>
+        [x-cloak] { display: none !important; }
         body {
             background-color: #f8f9fa;
             font-family: 'DM Sans', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -250,37 +251,104 @@
             }
         }
 
-        /* Print Styles */
+        /* Print Styles - Minimalist Paper Document (Tidak Mengcopy Desain Web POS) */
+        .print-only {
+            display: none !important;
+        }
+
         @media print {
-            .pos-sidebar, .pos-cart, header, .btn, button, .modal, .dropdown, form {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 12mm 15mm 12mm;
+            }
+            .no-print, 
+            .pos-sidebar, 
+            .pos-cart, 
+            header, 
+            .pos-web-header,
+            .pos-main > div:first-child,
+            .pos-cart-backdrop,
+            .pos-sidebar-backdrop,
+            .btn, 
+            button, 
+            .modal, 
+            .dropdown, 
+            form, 
+            .alert,
+            .tab-btn,
+            .stat-icon,
+            .chart-container,
+            canvas,
+            input,
+            select,
+            .pagination,
+            .btn-action,
+            .global-table-order-badge,
+            #globalOrderToast {
                 display: none !important;
             }
-            .pos-wrapper {
-                height: auto;
-                overflow: visible;
-                display: block;
+            .print-only {
+                display: block !important;
             }
-            .pos-main {
-                height: auto;
-                overflow: visible;
-                display: block;
+            .pos-wrapper, .pos-main, body {
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                font-size: 10pt !important;
             }
-            body {
-                height: auto;
-                background-color: white;
+            .border, .border-bottom, .border-top, .border-start, .border-end {
+                border-color: #333333 !important;
             }
-            .border-bottom {
-                border-bottom: none !important;
-            }
-            .shadow-sm {
+            .shadow-sm, .shadow, .shadow-lg, .shadow-xs {
                 box-shadow: none !important;
+            }
+            .card {
+                border: 1px solid #333333 !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 10px !important;
+                page-break-inside: auto !important;
+            }
+            tr {
+                page-break-inside: avoid !important;
+                page-break-after: auto !important;
+            }
+            th, td {
+                border: 1px solid #333333 !important;
+                padding: 6px 10px !important;
+                font-size: 9pt !important;
+                color: #000000 !important;
+            }
+            th {
+                background-color: #f3f4f6 !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .badge, .badge-method, .badge-status, .badge-kategori {
+                background: transparent !important;
+                color: #000000 !important;
+                border: none !important;
+                padding: 0 !important;
+                font-weight: 600 !important;
             }
         }
     </style>
     @stack('styles')
 </head>
 <body x-data="posLayout()">
-    <div class="pos-wrapper" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+    <div class="pos-wrapper">
         <!-- Sidebar -->
         <div class="pos-sidebar position-relative" :class="{ 'collapsed': sidebarCollapsed }">
             <!-- Desktop Toggle Button -->
@@ -442,8 +510,6 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('posLayout', () => ({
                 sidebarCollapsed: false,
-                touchStartX: 0,
-                touchEndX: 0,
                 init() {
                     // 1. Cek state dari localStorage agar tidak reset saat pindah halaman
                     const savedState = localStorage.getItem('posSidebarCollapsed');
@@ -458,27 +524,6 @@
                     this.$watch('sidebarCollapsed', value => {
                         localStorage.setItem('posSidebarCollapsed', value);
                     });
-                },
-                handleTouchStart(e) {
-                    this.touchStartX = e.changedTouches[0].screenX;
-                },
-                handleTouchEnd(e) {
-                    this.touchEndX = e.changedTouches[0].screenX;
-                    this.handleSwipe();
-                },
-                handleSwipe() {
-                    // Only process swipe if screen width is >= 768px (not offcanvas mobile mode)
-                    if (window.innerWidth < 768) return;
-                    
-                    let swipeDistance = this.touchEndX - this.touchStartX;
-                    // Geser Kiri (Collapse)
-                    if (swipeDistance < -50) {
-                        this.sidebarCollapsed = true;
-                    } 
-                    // Geser Kanan (Expand)
-                    else if (swipeDistance > 50) {
-                        this.sidebarCollapsed = false;
-                    }
                 }
             }));
         });

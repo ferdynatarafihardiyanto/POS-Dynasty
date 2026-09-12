@@ -93,7 +93,7 @@
 @section('content')
 <div class="pos-main">
     <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
+    <div class="pos-web-header d-flex align-items-center justify-content-between p-3 p-md-4 bg-white border-bottom flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2">
             <button type="button" class="btn btn-light border rounded-3 p-2 d-lg-none shadow-xs d-flex align-items-center justify-content-center" id="openSidebarBtn" title="Buka Navigasi" style="width: 38px; height: 38px;">
                 <i class="bi bi-list fs-5"></i>
@@ -121,8 +121,42 @@
     <!-- Main Content -->
     <div class="p-4 overflow-auto flex-grow-1" style="background-color: #fcfcfc;">
         
+        <!-- Minimalist Paper Report Layout (Hanya Muncul Saat Print / Cetak Kertas) -->
+        <div class="print-only mb-4">
+            <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
+                <div>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
+                </div>
+                <div class="text-end" style="font-size: 8.5pt;">
+                    <div><strong>Waktu Cetak:</strong> {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y, H:i') }} WIB</div>
+                    <div><strong>Petugas:</strong> {{ Auth::user()->name }} ({{ ucfirst(Auth::user()->role) }})</div>
+                </div>
+            </div>
+            <div class="text-center my-3">
+                <h5 class="fw-bold text-uppercase mb-1" style="letter-spacing: 1px; text-decoration: underline;">LAPORAN PENGELUARAN OPERASIONAL</h5>
+                <div class="small">Periode: Semua Riwayat Pengeluaran Tercatat</div>
+            </div>
+
+            <!-- Tabel Ringkasan Formal -->
+            <table class="table table-bordered mb-4 mt-3">
+                <thead>
+                    <tr>
+                        <th class="text-center">Total Pengeluaran Tercatat</th>
+                        <th class="text-center">Total Akumulasi Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="text-center fw-bold" style="font-size: 11pt;">
+                        <td>{{ count($pengeluarans) }} Pengeluaran</td>
+                        <td>Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
         @if(session('success'))
-            <div class="alert alert-success d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0" role="alert" style="background-color: #dcfce7; color: #16a34a; max-width: 400px; margin-left: auto;">
+            <div class="alert alert-success d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0 no-print" role="alert" style="background-color: #dcfce7; color: #16a34a; max-width: 400px; margin-left: auto;">
                 <i class="bi bi-check-circle-fill me-2"></i>
                 <div class="fw-bold small">
                     {{ session('success') }}
@@ -131,7 +165,7 @@
         @endif
 
         @if(session('error'))
-            <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0" role="alert" style="max-width: 400px; margin-left: auto;">
+            <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 py-2 px-3 shadow-sm border-0 no-print" role="alert" style="max-width: 400px; margin-left: auto;">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <div class="fw-bold small">
                     {{ session('error') }}
@@ -140,17 +174,17 @@
         @endif
 
         <!-- Action Buttons -->
-        <div class="d-flex justify-content-end gap-2 mb-4">
-            <button class="btn btn-white bg-white border shadow-sm rounded-3 px-4 d-flex align-items-center gap-2 fw-bold text-dark" onclick="window.print()">
-                <i class="bi bi-printer"></i> Cetak Pengeluaran
+        <div class="d-flex justify-content-end gap-2 mb-4 no-print">
+            <button class="btn text-white rounded-3 px-4 d-flex align-items-center gap-2 fw-bold shadow-sm" style="background-color: #8b211e;" onclick="window.print()">
+                <i class="bi bi-printer"></i> Cetak Laporan
             </button>
-            <button class="btn text-white rounded-3 px-4 d-flex align-items-center gap-2 fw-bold shadow-sm" style="background-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#tambahPengeluaranModal">
+            <button class="btn btn-outline-danger bg-white rounded-3 px-4 d-flex align-items-center gap-2 fw-bold shadow-sm" style="color: #8b211e; border-color: #8b211e;" data-bs-toggle="modal" data-bs-target="#tambahPengeluaranModal">
                 <i class="bi bi-plus-lg"></i> Tambah Pengeluaran
             </button>
         </div>
 
         <!-- Total Card -->
-        <div class="total-card shadow-sm">
+        <div class="total-card shadow-sm no-print">
             <div>
                 <div class="text-muted small fw-bold text-uppercase mb-1" style="letter-spacing: 0.5px; color: #8b211e !important;">Total Pengeluaran</div>
                 <div class="fw-bold" style="font-size: 2.2rem; color: #8b211e;">Rp {{ number_format($totalPengeluaran, 0, ',', '.') }}</div>
@@ -163,7 +197,7 @@
         </div>
 
         <!-- Filters & Search -->
-        <div class="d-flex justify-content-between mb-4 gap-3">
+        <div class="d-flex justify-content-between mb-4 gap-3 no-print">
             <div class="d-flex gap-2">
                 <select class="form-select rounded-3 shadow-sm border bg-white text-dark py-2" style="width: 180px;">
                     <option value="">Semua kategori</option>
@@ -194,7 +228,7 @@
                             <th>Deskripsi</th>
                             <th>Nominal</th>
                             <th>Pengguna</th>
-                            <th>Aksi</th>
+                            <th class="no-print">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -213,7 +247,7 @@
                             <td class="text-dark">{{ $p->deskripsi }}</td>
                             <td class="fw-bold" style="color: #8b211e;">Rp {{ number_format($p->nominal, 0, ',', '.') }}</td>
                             <td class="text-muted">{{ $p->pengguna }}</td>
-                            <td>
+                            <td class="no-print">
                                 <button class="btn-action btn-action-edit" title="Edit"><i class="bi bi-pencil"></i></button>
                                 <button class="btn-action btn-action-delete" title="Hapus"><i class="bi bi-trash"></i></button>
                             </td>
@@ -223,8 +257,24 @@
                 </table>
             </div>
         </div>
+
+        <!-- Lembar Tanda Tangan Formal (Hanya Saat Print) -->
+        <div class="print-only mt-4" style="page-break-inside: avoid;">
+            <div class="row mt-5 pt-3">
+                <div class="col-6 text-center">
+                    <div class="small">Mengetahui / Penanggung Jawab,</div>
+                    <div style="height: 65px;"></div>
+                    <div class="fw-bold">( _______________________ )</div>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="small">Malang, {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}<br>Petugas Administrasi / Kasir,</div>
+                    <div style="height: 50px;"></div>
+                    <div class="fw-bold">( {{ Auth::user()->name }} )</div>
+                </div>
+            </div>
+        </div>
         
-        <div class="text-muted small mt-3">
+        <div class="text-muted small mt-3 no-print">
             Menampilkan 1 - {{ count($pengeluarans) }} dari {{ count($pengeluarans) }} data
         </div>
     </div>
