@@ -60,7 +60,9 @@ class ProdukController extends Controller
         }
         $allProduks = $allProduksQuery->get();
 
-        return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups', 'satuans', 'allProduks'));
+        $stokMenipisCount = Produk::where('aktif', true)->where('stok', '<', 20)->count();
+
+        return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups', 'satuans', 'allProduks', 'stokMenipisCount'));
     }
 
     public function exportPdf(Request $request)

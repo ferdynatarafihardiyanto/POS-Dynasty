@@ -182,10 +182,12 @@
         </div>
 
         <!-- Warning Alert -->
+        @if(isset($stokMenipisCount) && $stokMenipisCount > 0)
         <div class="alert mb-4 rounded-3 d-flex align-items-center no-print" style="background-color: #fffbeb; border: 1px solid #fde68a; color: #b45309;">
             <i class="bi bi-box-seam me-3 fs-5"></i>
-            <span class="fw-bold small">1 barang memiliki stok di bawah minimum</span>
+            <span class="fw-bold small">{{ $stokMenipisCount }} barang memiliki stok di bawah minimum</span>
         </div>
+        @endif
 
         <!-- Filters & Search -->
         <form action="{{ route('admin.produk.index') }}" method="GET" class="d-flex justify-content-between mb-4 gap-3 no-print">
