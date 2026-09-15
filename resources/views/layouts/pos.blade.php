@@ -350,7 +350,9 @@
             }
         }
     </style>
-    @stack('styles')
+    <div id="pos-page-styles" style="display: none;">
+        @stack('styles')
+    </div>
 </head>
 <body x-data="posLayout()">
     <div class="pos-wrapper">
@@ -442,14 +444,21 @@
             </div>
         </div>
 
-        @yield('content')
+        <!-- Main Content Viewport (SPA Container) -->
+        <div id="pos-page-viewport" class="d-flex flex-grow-1 overflow-hidden position-relative" style="min-width: 0;">
+            @yield('content')
+        </div>
         
     </div>
 
     <!-- Backdrop untuk Sidebar Mobile/Tablet -->
     <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
 
+    <!-- Top Loading Progress Bar (YouTube/GitHub SPA Style) -->
+    <div id="pos-spa-progress-bar" style="position: fixed; top: 0; left: 0; height: 3px; width: 0%; background: linear-gradient(90deg, #f59e0b, #ef4444); z-index: 99999; opacity: 0; pointer-events: none; transition: width 0.25s ease, opacity 0.2s ease; box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/pos-spa-router.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.querySelector('.pos-sidebar');
@@ -467,7 +476,7 @@
             }
 
             // Otomatis pastikan ada tombol hamburger di header jika belum ada (untuk semua halaman admin di tablet & mobile)
-            function ensureSidebarToggleBtn() {
+            window.ensureSidebarToggleBtn = function() {
                 if (document.getElementById('openSidebarBtn') || document.querySelector('.btn-open-sidebar')) return;
 
                 // Cari baris header pertama di dalam .pos-main
@@ -492,9 +501,9 @@
                         return;
                     }
                 }
-            }
+            };
 
-            ensureSidebarToggleBtn();
+            window.ensureSidebarToggleBtn();
 
             // Delegated click handler untuk tombol buka sidebar (bisa dipasang di header halaman manapun)
             document.addEventListener('click', function(e) {
@@ -534,6 +543,9 @@
         });
     </script>
     @include('partials.global_order_notifier')
-    @stack('scripts')
+    <!-- Container Page Scripts (diekstrak dinamis oleh SPA Router) -->
+    <div id="pos-page-scripts" class="d-none">
+        @stack('scripts')
+    </div>
 </body>
 </html>
