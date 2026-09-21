@@ -664,10 +664,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <div class="p-2.5 rounded-3 mb-3 border bg-light">
+                        <div class="d-flex align-items-center justify-content-between mb-1.5">
+                            <span class="small fw-bold text-dark"><i class="bi bi-magic me-1 text-danger"></i> Preset Cepat Hardware:</span>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-white border rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 shadow-xs" style="font-size: 0.72rem;" @click="applyPrinterPreset('eppos_bluetooth')">
+                                <i class="bi bi-bluetooth text-primary"></i> <strong>EPPOS EP58M</strong> (Tablet BT)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-white border rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 shadow-xs" style="font-size: 0.72rem;" @click="applyPrinterPreset('eppos_usb')">
+                                <i class="bi bi-usb-plug text-secondary"></i> <strong>EPPOS EP58M</strong> (PC/USB)
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Nama Printer (Hardware/Driver):</label>
-                        <input type="text" class="form-control shadow-none" x-model="printerConfig.printerName" @input="savePrinterConfig()" placeholder="cth: POS-58, EPSON TM-T82, Panda POS">
-                        <div class="form-text" style="font-size: 0.75rem;">Nama printer fisik yang terpasang di komputer kasir.</div>
+                        <input type="text" class="form-control shadow-none" x-model="printerConfig.printerName" @input="savePrinterConfig()" placeholder="cth: EPPOS EP58M PLUS, POS-58">
+                        <div class="form-text" style="font-size: 0.75rem;">Nama printer fisik yang terpasang di komputer/tablet kasir.</div>
                     </div>
 
                     <div class="mb-3">
@@ -1625,6 +1639,24 @@ document.addEventListener('alpine:init', () => {
         savePrinterConfig() {
             if (window.ReceiptPrinter) {
                 window.ReceiptPrinter.saveConfig(this.printerConfig);
+            }
+        },
+
+        applyPrinterPreset(type) {
+            if (type === 'eppos_bluetooth') {
+                this.printerConfig.printerName = 'EPPOS EP58M PLUS';
+                this.printerConfig.moduleType = 'rawbt';
+                this.printerConfig.paperWidth = '58mm';
+                this.printerConfig.autoPrint = true;
+                this.savePrinterConfig();
+                this.triggerToast('Preset EPPOS Bluetooth (Tablet) berhasil diterapkan!', 'success');
+            } else if (type === 'eppos_usb') {
+                this.printerConfig.printerName = 'EPPOS EP58M PLUS';
+                this.printerConfig.moduleType = 'iframe_direct';
+                this.printerConfig.paperWidth = '58mm';
+                this.printerConfig.autoPrint = true;
+                this.savePrinterConfig();
+                this.triggerToast('Preset EPPOS USB (PC/Laptop) berhasil diterapkan!', 'success');
             }
         },
 

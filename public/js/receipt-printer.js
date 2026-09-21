@@ -156,7 +156,22 @@ window.ReceiptPrinter = {
     printViaRawBT(receiptData, config) {
         const plainText = this.generatePlainTextReceipt(receiptData, config);
         const rawBtUri = "rawbt:base64," + btoa(unescape(encodeURIComponent(plainText)));
-        window.location.href = rawBtUri;
+        
+        // Gunakan klik link sementara agar halaman POS di tablet tidak reload / berpindah tab
+        try {
+            const link = document.createElement('a');
+            link.href = rawBtUri;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                if (document.body.contains(link)) {
+                    document.body.removeChild(link);
+                }
+            }, 600);
+        } catch (e) {
+            window.location.href = rawBtUri;
+        }
     },
 
     /**
