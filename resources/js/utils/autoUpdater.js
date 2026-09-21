@@ -1,4 +1,4 @@
-const DEFAULT_POLL_INTERVAL_MS = 45000;
+const DEFAULT_POLL_INTERVAL_MS = 12000; // 12 detik
 
 function normalizeAssetFilename(urlOrPath) {
     if (!urlOrPath || typeof urlOrPath !== 'string') return null;
@@ -270,14 +270,14 @@ export function initAutoUpdater() {
         }
     }
 
-    // Jalankan pengecekan awal setelah halaman selesai dimuat (delay 3 detik)
+    // Jalankan pengecekan awal setelah halaman selesai dimuat (delay 1.5 detik)
     setTimeout(() => {
         checkVersion();
-    }, 3000);
+    }, 1500);
 
-    // Pasang interval polling berkala dengan random jitter (40-50 detik)
-    const jitter = Math.floor(Math.random() * 10000) - 5000;
-    const intervalTime = Math.max(30000, DEFAULT_POLL_INTERVAL_MS + jitter);
+    // Pasang interval polling berkala dengan random jitter (10-14 detik)
+    const jitter = Math.floor(Math.random() * 4000) - 2000;
+    const intervalTime = Math.max(8000, DEFAULT_POLL_INTERVAL_MS + jitter);
 
     const intervalId = setInterval(() => {
         checkVersion();

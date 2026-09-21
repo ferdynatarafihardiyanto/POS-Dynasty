@@ -367,7 +367,7 @@ export const CartProvider = ({ children }) => {
     // Only updates React state (menuList/categories) when data actually changed.
     // NEVER calls window.location.reload(). NEVER touches cart/payment/order state.
     useEffect(() => {
-        const MENU_POLL_INTERVAL_MS = 20000; // 20 seconds
+        const MENU_POLL_INTERVAL_MS = 4000; // 4 detik (Cepat, responsif & realtime)
 
         let pollIntervalId = null;
         let isMounted = true;
