@@ -112,32 +112,45 @@
             }
         }
 
-        /* Logo Emblem Container */
+        /* Logo Emblem Container (Menggunakan warna khas Dynasty Maroon agar logo putih terlihat sangat jelas & mewah) */
         .brand-emblem-wrap {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 10px 18px;
-            border-radius: 20px;
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 8px 16px -4px rgba(146, 44, 36, 0.06);
+            padding: 14px 28px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #922c24 0%, #6e1c16 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 10px 25px -4px rgba(146, 44, 36, 0.4),
+                0 2px 6px rgba(0, 0, 0, 0.08),
+                inset 0 1px 1px rgba(255, 255, 255, 0.3);
             margin-bottom: 1.25rem;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .brand-emblem-wrap:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 14px 28px -4px rgba(146, 44, 36, 0.5),
+                0 4px 10px rgba(0, 0, 0, 0.12),
+                inset 0 1px 1px rgba(255, 255, 255, 0.35);
         }
 
         .brand-logo-img {
-            max-height: 52px;
+            max-height: 58px;
             width: auto;
-            max-width: 170px;
+            max-width: 200px;
             object-fit: contain;
             display: block;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
         }
 
         .brand-logo-fallback {
             display: flex;
             align-items: center;
             gap: 8px;
-            color: var(--brand-primary);
+            color: #ffffff;
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: 1.25rem;
