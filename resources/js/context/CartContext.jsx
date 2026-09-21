@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { AVAILABLE_TABLES, ALL_MENU_ITEMS, CATEGORIES as DEFAULT_CATEGORIES } from '../data/mockData';
 
@@ -109,6 +109,25 @@ const saveDeviceOrderNumber = (orderNumber, token) => {
 
 const CartContext = createContext();
 
+// ─── Fingerprint helpers for menu data auto-sync ───
+// Builds a lightweight string fingerprint from raw API response data.
+// Used to detect changes without deep-comparing entire arrays.
+function buildMenuFingerprint(apiData) {
+    try {
+        return apiData.map(p => `${p.id}:${p.nama}:${p.harga}:${p.kategori_id}:${p.stok}:${p.deskripsi || ''}:${p.gambar || ''}:${p.gambar_url || ''}:${p.updated_at || ''}`).sort().join('|');
+    } catch {
+        return '';
+    }
+}
+
+function buildCategoryFingerprint(apiData) {
+    try {
+        return apiData.map(c => `${c.id}:${c.nama}`).sort().join('|');
+    } catch {
+        return '';
+    }
+}
+
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         try {
@@ -191,6 +210,10 @@ export const CartProvider = ({ children }) => {
     const [backendCategories, setBackendCategories] = useState([]);
     const [isLoadingMenu, setIsLoadingMenu] = useState(true);
 
+    // Refs for menu data auto-sync fingerprint comparison (no re-renders)
+    const menuFingerprintRef = useRef(null);
+    const categoryFingerprintRef = useRef(null);
+
     // Derived promo items for featured carousel
     const promoItems = useMemo(() => {
         if (!menuList || menuList.length === 0) return [];
@@ -230,7 +253,7 @@ export const CartProvider = ({ children }) => {
             try {
                 setIsLoadingMenu(true);
                 const res = await axios.get(`${API_URL}/menu`);
-                if (res.data && res.data.data && res.data.data.length > 0) {
+                if (res.data && Array.isArray(res.data.data)) {
                     const dbItems = res.data.data.map(p => {
                         const catName = p.kategori?.nama || 'Menu';
                         return {
@@ -248,6 +271,7 @@ export const CartProvider = ({ children }) => {
                         };
                     });
                     setMenuList(dbItems);
+                    menuFingerprintRef.current = buildMenuFingerprint(res.data.data);
                 }
             } catch (err) {
                 console.log('Error fetching backend menu, using local data fallback:', err);
@@ -259,7 +283,7 @@ export const CartProvider = ({ children }) => {
         const fetchCategories = async () => {
             try {
                 const res = await axios.get(`${API_URL}/menu/kategori`);
-                if (res.data && res.data.data && res.data.data.length > 0) {
+                if (res.data && Array.isArray(res.data.data)) {
                     setBackendCategories(res.data.data);
                     const dbCats = res.data.data.map(c => ({
                         id: c.id,
@@ -270,6 +294,7 @@ export const CartProvider = ({ children }) => {
                         { id: 'all', nama: 'Semua Menu', icon: '🍽️' },
                         ...dbCats
                     ]);
+                    categoryFingerprintRef.current = buildCategoryFingerprint(res.data.data);
                 }
             } catch (err) {
                 console.log('Error fetching categories:', err);
@@ -334,6 +359,94 @@ export const CartProvider = ({ children }) => {
         fetchBackendMenu();
         fetchCategories();
         fetchTables();
+    }, []);
+
+    // ─── AUTO-SYNC: Periodic menu data polling from server ───
+    // Silently re-fetches /api/menu and /api/menu/kategori every ~20 seconds.
+    // Compares a lightweight fingerprint of the response with the previous one.
+    // Only updates React state (menuList/categories) when data actually changed.
+    // NEVER calls window.location.reload(). NEVER touches cart/payment/order state.
+    useEffect(() => {
+        const MENU_POLL_INTERVAL_MS = 20000; // 20 seconds
+
+        let pollIntervalId = null;
+        let isMounted = true;
+
+        const pollMenuData = async () => {
+            if (!isMounted) return;
+            if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+            // Silently re-fetch menu data
+            try {
+                const res = await axios.get(`${API_URL}/menu`, { timeout: 8000 });
+                if (res.data && Array.isArray(res.data.data)) {
+                    const newFingerprint = buildMenuFingerprint(res.data.data);
+                    if (newFingerprint !== menuFingerprintRef.current) {
+                        // Data changed — update state silently
+                        const dbItems = res.data.data.map(p => {
+                            const catName = p.kategori?.nama || 'Menu';
+                            return {
+                                id: p.id,
+                                backend_id: p.id,
+                                nama: p.nama,
+                                kategori_id: p.kategori_id,
+                                kategori_nama: catName,
+                                harga: parseFloat(p.harga),
+                                stok: p.stok,
+                                gambar: p.gambar_url || getFoodImage(p.nama, catName, p.gambar, p.gambar_url),
+                                deskripsi_singkat: p.deskripsi || '',
+                                deskripsi: p.deskripsi || '',
+                                modifier_groups: p.modifier_groups || []
+                            };
+                        });
+                        setMenuList(dbItems);
+                        menuFingerprintRef.current = newFingerprint;
+                    }
+                }
+            } catch {
+                // Silently ignore — network glitch or server unavailable
+            }
+
+            // Silently re-fetch categories
+            try {
+                const res = await axios.get(`${API_URL}/menu/kategori`, { timeout: 8000 });
+                if (res.data && Array.isArray(res.data.data)) {
+                    const newCatFingerprint = buildCategoryFingerprint(res.data.data);
+                    if (newCatFingerprint !== categoryFingerprintRef.current) {
+                        setBackendCategories(res.data.data);
+                        const dbCats = res.data.data.map(c => ({
+                            id: c.id,
+                            nama: c.nama,
+                            icon: getCategoryIcon(c.nama)
+                        }));
+                        setCategories([
+                            { id: 'all', nama: 'Semua Menu', icon: '🍽️' },
+                            ...dbCats
+                        ]);
+                        categoryFingerprintRef.current = newCatFingerprint;
+                    }
+                }
+            } catch {
+                // Silently ignore
+            }
+        };
+
+        // Start polling
+        pollIntervalId = setInterval(pollMenuData, MENU_POLL_INTERVAL_MS);
+
+        // Also check when tab becomes visible again
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                pollMenuData();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            isMounted = false;
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const showToast = (message, type = 'success') => {
