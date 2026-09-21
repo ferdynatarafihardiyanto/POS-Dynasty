@@ -31,6 +31,7 @@ $DOCKER_CMD exec -T app php artisan migrate --force
 # 6. Bersihkan cache aplikasi agar perubahan langsung aktif
 echo "🧹 [5/6] Membersihkan cache aplikasi..."
 $DOCKER_CMD exec -T app php artisan optimize:clear
+$DOCKER_CMD exec -T app php artisan storage:link || true
 
 # 7. Pastikan permission folder storage & cache aman
 $DOCKER_CMD exec -T app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache || true

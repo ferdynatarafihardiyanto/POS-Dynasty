@@ -21,17 +21,26 @@ class Produk extends Model
     public function getGambarUrlAttribute()
     {
         if ($this->gambar) {
+            $url = null;
             if (str_starts_with($this->gambar, 'http')) {
-                return $this->gambar;
+                $url = $this->gambar;
+            } elseif (str_starts_with($this->gambar, 'images/')) {
+                $url = asset($this->gambar);
+            } else {
+                $basename = basename($this->gambar);
+                if (file_exists(public_path('images/produk/' . $basename))) {
+                    $url = asset('images/produk/' . $basename);
+                } else {
+                    $url = asset('storage/' . $this->gambar);
+                }
             }
-            if (str_starts_with($this->gambar, 'images/')) {
-                return asset($this->gambar);
+
+            // Tambahkan timestamp updated_at agar browser langsung memuat gambar baru tanpa tertahan cache lama
+            if ($url && $this->updated_at) {
+                $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . $this->updated_at->timestamp;
             }
-            $basename = basename($this->gambar);
-            if (file_exists(public_path('images/produk/' . $basename))) {
-                return asset('images/produk/' . $basename);
-            }
-            return asset('storage/' . $this->gambar);
+
+            return $url;
         }
 
         return self::getDefaultImageForName($this->nama, $this->kategori->nama ?? '');

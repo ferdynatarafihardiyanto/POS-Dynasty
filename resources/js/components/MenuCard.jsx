@@ -21,7 +21,7 @@ export default function MenuCard({ item, onSelect }) {
                     src={item.gambar}
                     alt={item.nama}
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = '/images/produk/americano.jpg';
