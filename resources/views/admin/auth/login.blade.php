@@ -172,21 +172,6 @@
             margin-bottom: 0;
         }
 
-        .badge-system {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background-color: #fef2f2;
-            color: var(--brand-primary);
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            border: 1px solid rgba(146, 44, 36, 0.15);
-            margin-top: 0.5rem;
-        }
-
         /* Form Inputs */
         .form-label-custom {
             font-size: 0.82rem;
@@ -304,15 +289,6 @@
             font-size: 0.75rem;
             color: #94a3b8;
         }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
-        }
     </style>
 </head>
 <body>
@@ -342,9 +318,6 @@
 
                 <h1 class="brand-title">Dynasty Cafe</h1>
                 <p class="brand-subtitle">Portal Akses Point of Sale & Backoffice</p>
-                <div class="badge-system">
-                    <span class="status-dot"></span> POS ENGINE v2.4 AKTIF
-                </div>
             </div>
 
             <!-- Error Notification Alert -->
