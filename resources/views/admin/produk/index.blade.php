@@ -249,8 +249,8 @@
                             <td class="text-muted">Pcs</td> <!-- Mock data per design -->
                             <td class="text-muted">Rp {{ number_format($p->hpp, 0, ',', '.') }}</td>
                             <td class="fw-bold text-dark">Rp {{ number_format($p->harga, 0, ',', '.') }}</td>
-                            <td class="fw-bold {{ $p->stok < 20 ? 'text-danger' : 'text-dark' }}">{{ $p->stok }}</td>
-                            <td class="text-muted">20</td> <!-- Mock Min Stok -->
+                            <td class="fw-bold {{ $p->stok < ($p->min_stok ?? 20) ? 'text-danger' : 'text-dark' }}">{{ $p->stok }}</td>
+                            <td class="text-muted fw-semibold">{{ $p->min_stok ?? 20 }}</td>
                             <td>
                                 @if($p->aktif)
                                     <span class="badge-status-aktif">Aktif</span>
@@ -412,7 +412,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Minimum stok <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="min_stok" placeholder="0">
+                                <input type="number" class="form-control" name="min_stok" value="{{ old('min_stok', 20) }}" placeholder="20" min="0">
                             </div>
                         </div>
 
@@ -613,7 +613,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Minimum stok <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="min_stok" value="20">
+                                <input type="number" class="form-control" name="min_stok" value="{{ $p->min_stok ?? 20 }}" min="0">
                             </div>
                         </div>
 

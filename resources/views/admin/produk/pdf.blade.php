@@ -187,7 +187,7 @@
                 </td>
                 <td class="text-muted">Rp {{ number_format($p->hpp, 0, ',', '.') }}</td>
                 <td class="fw-bold">Rp {{ number_format($p->harga, 0, ',', '.') }}</td>
-                <td class="fw-bold {{ $p->stok < 20 ? '' : '' }}" style="{{ $p->stok < 20 ? 'color:#dc2626;' : '' }}">
+                <td class="fw-bold" style="{{ $p->stok < ($p->min_stok ?? 20) ? 'color:#dc2626;' : '' }}">
                     {{ $p->stok }}
                 </td>
                 <td>

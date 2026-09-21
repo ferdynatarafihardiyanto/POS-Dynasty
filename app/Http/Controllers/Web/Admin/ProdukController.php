@@ -60,7 +60,12 @@ class ProdukController extends Controller
         }
         $allProduks = $allProduksQuery->get();
 
-        $stokMenipisCount = Produk::where('aktif', true)->where('stok', '<', 20)->count();
+        $stokMenipisQuery = Produk::where('aktif', true);
+        if (\Illuminate\Support\Facades\Schema::hasColumn('produk', 'min_stok')) {
+            $stokMenipisCount = $stokMenipisQuery->whereColumn('stok', '<=', 'min_stok')->count();
+        } else {
+            $stokMenipisCount = $stokMenipisQuery->where('stok', '<', 20)->count();
+        }
 
         return view('admin.produk.index', compact('produks', 'kategoris', 'modifierGroups', 'satuans', 'allProduks', 'stokMenipisCount'));
     }
@@ -132,6 +137,9 @@ class ProdukController extends Controller
                 $data['gambar'] = $request->file('gambar')->store('produk', 'public');
             }
             $data['tipe_produk'] = $request->tipe_produk ?? 'standar';
+            if ($request->filled('min_stok')) {
+                $data['min_stok'] = (int) $request->min_stok;
+            }
             $produk = Produk::create($data);
             $produk->modifierGroups()->sync($request->modifier_groups ?? []);
 
@@ -173,6 +181,9 @@ class ProdukController extends Controller
                 $data['gambar'] = $request->file('gambar')->store('produk', 'public');
             }
             $data['tipe_produk'] = $request->tipe_produk ?? 'standar';
+            if ($request->filled('min_stok')) {
+                $data['min_stok'] = (int) $request->min_stok;
+            }
             $produk->update($data);
             
             // Preserve existing inactive modifier groups to prevent silent data loss

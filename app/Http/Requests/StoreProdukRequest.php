@@ -32,6 +32,7 @@ class StoreProdukRequest extends FormRequest
             'hpp' => 'required|integer|min:0',
             'harga' => 'required|integer|min:0',
             'stok' => 'required|integer|min:0',
+            'min_stok' => 'nullable|integer|min:0',
             'aktif' => 'nullable|boolean',
             'tipe_produk' => 'nullable|string|in:standar,bundling',
             'modifier_groups' => 'nullable|array',

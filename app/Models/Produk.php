@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Produk extends Model
 {
     protected $table = 'produk';
-    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'gambar', 'hpp', 'harga', 'stok', 'aktif', 'tipe_produk'];
+    protected $fillable = ['kategori_id', 'nama', 'deskripsi', 'gambar', 'hpp', 'harga', 'stok', 'min_stok', 'aktif', 'tipe_produk'];
 
     protected $casts = [
         'aktif' => 'boolean',
         'harga' => 'integer',
         'stok' => 'integer',
+        'min_stok' => 'integer',
     ];
 
     protected $appends = ['gambar_url'];
