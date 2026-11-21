@@ -10,7 +10,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      APP_NAME: "POS Dynasty Cafe"
+      APP_NAME: "POS Dinasty Cafe"
       APP_ENV: production
       APP_DEBUG: "false"
       APP_URL: "http://localhost:8080"

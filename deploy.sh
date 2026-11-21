@@ -2,7 +2,7 @@
 set -e
 
 echo "=================================================="
-echo "🚀 [POS DYNASTY] Memulai Pembaruan Sistem..."
+echo "🚀 [POS DINASTY] Memulai Pembaruan Sistem..."
 echo "=================================================="
 
 # 1. Periksa apakah menggunakan docker-compose atau docker compose
@@ -42,5 +42,5 @@ echo "🔄 [6/6] Merestart service app..."
 $DOCKER_CMD restart app
 
 echo "=================================================="
-echo "✅ [POS DYNASTY] Selesai! Aplikasi berhasil diupdate."
+echo "✅ [POS DINASTY] Selesai! Aplikasi berhasil diupdate."
 echo "=================================================="
