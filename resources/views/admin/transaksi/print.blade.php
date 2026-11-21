@@ -55,7 +55,11 @@
             ]
         ];
         if (file_exists($profilePath)) {
-            $loaded = json_decode(file_get_contents($profilePath), true);
+            $rawContent = file_get_contents($profilePath);
+            $rawContent = str_replace('Dynasty', 'Dinasty', $rawContent);
+            $rawContent = str_replace('DYNASTY', 'DINASTY', $rawContent);
+            $rawContent = str_replace('dynasty', 'dinasty', $rawContent);
+            $loaded = json_decode($rawContent, true);
             if ($loaded && is_array($loaded)) {
                 $storeProfile = array_merge($storeProfile, $loaded);
             }
