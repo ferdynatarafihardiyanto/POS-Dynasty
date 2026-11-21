@@ -13,7 +13,7 @@ export default function TableScannerModal() {
     const handleSelectTable = (table) => {
         setTableInfo(table);
         try {
-            localStorage.setItem('dynasty_table', JSON.stringify(table));
+            localStorage.setItem('dinasty_table', JSON.stringify(table));
         } catch (e) {}
         setIsTableModalOpen(false);
         showToast(`Tersambung ke ${table.name || 'Meja ' + table.number}! 📍`, 'success');
@@ -34,7 +34,7 @@ export default function TableScannerModal() {
                                 Informasi Meja Dine-In
                             </h3>
                             <p className="text-[11px] text-amber-200">
-                                Kedai Dynasty • {tableInfo?.name || `Meja ${tableInfo?.number || '01'}`}
+                                Kedai Dinasty • {tableInfo?.name || `Meja ${tableInfo?.number || '01'}`}
                             </p>
                         </div>
                     </div>

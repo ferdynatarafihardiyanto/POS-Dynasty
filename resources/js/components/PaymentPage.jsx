@@ -107,7 +107,7 @@ export default function PaymentPage({ isOpen, onClose, buyerName, orderNotes }) 
                     <div className="bg-gradient-to-r from-[#661012] via-[#82181A] to-[#661012] text-white px-4 py-3.5 flex items-center justify-between shadow-md">
                         <div className="flex items-center gap-2">
                             <span className="font-display font-extrabold text-sm text-white">
-                                Kedai Dynasty
+                                Kedai Dinasty
                             </span>
                             <span className="text-[11px] text-amber-200">
                                 • Dine-In Meja {successOrderData.tableNumber || tableInfo?.number || '01'}
@@ -132,7 +132,7 @@ export default function PaymentPage({ isOpen, onClose, buyerName, orderNotes }) 
                                 Pembayaran Berhasil!
                             </h3>
                             <p className="text-xs text-stone-500 mt-1 max-w-xs mx-auto">
-                                Pesanan Anda telah diterima dan langsung masuk ke antrean dapur Kedai Dynasty.
+                                Pesanan Anda telah diterima dan langsung masuk ke antrean dapur Kedai Dinasty.
                             </p>
                         </div>
 
@@ -238,7 +238,7 @@ export default function PaymentPage({ isOpen, onClose, buyerName, orderNotes }) 
                                 Pembayaran Pesanan
                             </h2>
                             <p className="text-[11px] font-medium text-amber-200">
-                                Kedai Dynasty • {tableInfo?.name || `Meja ${tableInfo?.number || '01'}`}
+                                Kedai Dinasty • {tableInfo?.name || `Meja ${tableInfo?.number || '01'}`}
                             </p>
                         </div>
                     </div>
@@ -260,7 +260,7 @@ export default function PaymentPage({ isOpen, onClose, buyerName, orderNotes }) 
                                     Nama Pembeli
                                 </span>
                                 <span className="font-display font-extrabold text-sm text-stone-900">
-                                    {buyerName?.trim() || 'Customer Kedai Dynasty'}
+                                    {buyerName?.trim() || 'Customer Kedai Dinasty'}
                                 </span>
                             </div>
                             <div className="text-right">
@@ -426,7 +426,7 @@ export default function PaymentPage({ isOpen, onClose, buyerName, orderNotes }) 
                             {/* QR National Standard Mockup */}
                             <div className="w-52 mx-auto p-3.5 bg-white rounded-2xl border-2 border-dashed border-amber-400 flex flex-col items-center justify-center shadow-inner relative space-y-2">
                                 <div className="text-[10px] font-black text-stone-900 tracking-widest uppercase">
-                                    KEDAI DYNASTY
+                                    KEDAI DINASTY
                                 </div>
                                 <div className="p-2 bg-stone-900 rounded-xl">
                                     <QrCode className="w-28 h-28 text-white" />

@@ -136,7 +136,7 @@
         <div class="print-only mb-4">
             <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
                 <div>
-                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DINASTY</h3>
                     <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
                 </div>
                 <div class="text-end" style="font-size: 8.5pt;">
@@ -219,11 +219,11 @@
                         <tr>
                             <th>Kode barang</th>
                             <th>Nama barang</th>
-                            <th>Kategori</th>
+                            <th>Kategori & Tipe</th>
                             <th>Satuan</th>
-                            <th>Harga beli</th>
+                            <th>Harga beli (HPP)</th>
                             <th>Harga jual</th>
-                            <th>Stok</th>
+                            <th>Stok Tersedia</th>
                             <th>Min. stok</th>
                             <th>Status</th>
                             <th class="no-print">Aksi</th>
@@ -245,11 +245,44 @@
                                     <span>{{ $p->nama }}</span>
                                 </div>
                             </td>
-                            <td class="text-muted">{{ $p->kategori->nama ?? '-' }}</td>
-                            <td class="text-muted">Pcs</td> <!-- Mock data per design -->
-                            <td class="text-muted">Rp {{ number_format($p->hpp, 0, ',', '.') }}</td>
+                            <td>
+                                <div class="text-dark fw-semibold small">{{ $p->kategori->nama ?? '-' }}</div>
+                                <div class="mt-1">
+                                    @if($p->isBundle())
+                                        <span class="badge rounded-pill" style="background-color: #f3e8ff; color: #6b21a8; font-size: 0.68rem;">
+                                            <i class="bi bi-boxes"></i> Bundling
+                                        </span>
+                                    @elseif($p->isResep())
+                                        <span class="badge rounded-pill" style="background-color: #dbeafe; color: #1e40af; font-size: 0.68rem;">
+                                            <i class="bi bi-bezier2"></i> Resep (Olahan)
+                                        </span>
+                                    @else
+                                        <span class="badge rounded-pill bg-light text-secondary border" style="font-size: 0.68rem;">
+                                            <i class="bi bi-box"></i> Item Satuan
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="text-muted">{{ $p->isResep() ? 'Porsi' : 'Pcs' }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">Rp {{ number_format($p->hpp, 0, ',', '.') }}</div>
+                                @if($p->isResep())
+                                    <div class="small text-muted" style="font-size: 0.68rem;"><i class="bi bi-calculator text-primary"></i> Otomatis Resep</div>
+                                @elseif($p->isBundle())
+                                    <div class="small text-muted" style="font-size: 0.68rem;"><i class="bi bi-calculator text-purple"></i> Otomatis Paket</div>
+                                @else
+                                    <div class="small text-muted" style="font-size: 0.68rem;">Manual</div>
+                                @endif
+                            </td>
                             <td class="fw-bold text-dark">Rp {{ number_format($p->harga, 0, ',', '.') }}</td>
-                            <td class="fw-bold {{ $p->stok < ($p->min_stok ?? 20) ? 'text-danger' : 'text-dark' }}">{{ $p->stok }}</td>
+                            <td>
+                                <div class="fw-bold {{ $p->stok < ($p->min_stok ?? 20) ? 'text-danger' : 'text-dark' }}">
+                                    {{ $p->stok }} <span class="fw-normal small text-muted">{{ $p->isResep() ? 'Porsi' : 'Pcs' }}</span>
+                                </div>
+                                @if($p->isResep())
+                                    <div class="small text-muted" style="font-size: 0.68rem;">Ikut Bahan Baku</div>
+                                @endif
+                            </td>
                             <td class="text-muted fw-semibold">{{ $p->min_stok ?? 20 }}</td>
                             <td>
                                 @if($p->aktif)
@@ -439,13 +472,16 @@
                         </div>
 
                         <!-- Tipe Produk -->
-                        <div class="mb-3" x-data="{tipe: 'standar'}">
-                            <label class="form-label fw-bold"><i class="bi bi-box-seam me-1"></i> Tipe Produk</label>
+                        <div class="mb-3" x-data="{tipe: 'satuan'}">
+                            <label class="form-label fw-bold"><i class="bi bi-box-seam me-1"></i> Tipe Produk <span class="text-danger">*</span></label>
                             <select name="tipe_produk" class="form-select" x-model="tipe" @change="$dispatch('tipe-changed-tambah', tipe)">
-                                <option value="standar">Standar (Produk biasa dengan stok & resep)</option>
-                                <option value="bundling">Paket Bundling (Gabungan dari beberapa produk standar)</option>
+                                <option value="satuan">Item Satuan (Barang jadi / kemasan tanpa resep, stok & HPP manual)</option>
+                                <option value="resep">Item Resep / Olahan (Minuman / racikan, stok & HPP otomatis dari bahan baku)</option>
+                                <option value="bundling">Paket Bundling (Gabungan dari beberapa produk)</option>
                             </select>
-                            <div class="form-text text-muted">Pilih <strong>Paket Bundling</strong> jika produk ini adalah gabungan dari beberapa produk lain.</div>
+                            <div class="alert alert-info py-2 px-3 small rounded-3 mt-2 mb-0" x-show="tipe === 'resep'">
+                                <i class="bi bi-info-circle-fill me-1"></i> <strong>Item Resep / Olahan:</strong> HPP dan Stok produk ini akan dihitung secara otomatis berdasarkan takaran bahan baku di menu <strong>Resep Produk (BOM)</strong>. Anda dapat mengisi stok awal dan HPP dengan 0.
+                            </div>
                         </div>
 
                         <!-- Bundle Items (Muncul jika Paket Bundling) -->
@@ -640,13 +676,19 @@
                         </div>
 
                         <!-- Tipe Produk (Edit) -->
-                        <div class="mb-3" x-data="{tipe: '{{ $p->tipe_produk ?? 'standar' }}'}">
+                        @php
+                            $currentTipe = $p->isBundle() ? 'bundling' : ($p->isResep() ? 'resep' : 'satuan');
+                        @endphp
+                        <div class="mb-3" x-data="{tipe: '{{ $currentTipe }}'}">
                             <label class="form-label fw-bold"><i class="bi bi-box-seam me-1"></i> Tipe Produk</label>
                             <select name="tipe_produk" class="form-select" x-model="tipe" @change="$dispatch('tipe-changed-edit-{{ $p->id }}', tipe)">
-                                <option value="standar" {{ ($p->tipe_produk ?? 'standar') === 'standar' ? 'selected' : '' }}>Standar (Produk biasa dengan stok & resep)</option>
-                                <option value="bundling" {{ ($p->tipe_produk ?? '') === 'bundling' ? 'selected' : '' }}>Paket Bundling (Gabungan dari beberapa produk standar)</option>
+                                <option value="satuan" {{ $currentTipe === 'satuan' ? 'selected' : '' }}>Item Satuan (Barang jadi / kemasan tanpa resep, stok & HPP manual)</option>
+                                <option value="resep" {{ $currentTipe === 'resep' ? 'selected' : '' }}>Item Resep / Olahan (Minuman / racikan, stok & HPP otomatis dari bahan baku)</option>
+                                <option value="bundling" {{ $currentTipe === 'bundling' ? 'selected' : '' }}>Paket Bundling (Gabungan dari beberapa produk)</option>
                             </select>
-                            <div class="form-text text-muted">Pilih <strong>Paket Bundling</strong> jika produk ini adalah gabungan dari beberapa produk lain.</div>
+                            <div class="alert alert-info py-2 px-3 small rounded-3 mt-2 mb-0" x-show="tipe === 'resep'">
+                                <i class="bi bi-info-circle-fill me-1"></i> <strong>Item Resep / Olahan:</strong> HPP dan Stok produk ini disinkronkan secara otomatis dari takaran bahan baku di menu <strong>Resep Produk (BOM)</strong>.
+                            </div>
                         </div>
 
                         <!-- Bundle Items Edit (Muncul jika Paket Bundling) -->

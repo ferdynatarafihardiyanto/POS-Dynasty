@@ -246,7 +246,7 @@
                 
                 <div class="modal-body text-center px-4 pt-3 pb-2">
                     <div class="p-3 bg-light rounded-4 border mb-3 text-center position-relative">
-                        <div class="text-uppercase fw-bold text-danger tracking-wider mb-1" style="font-size: 0.75rem; letter-spacing: 1.5px;">☕ DYNASTY CAFE</div>
+                        <div class="text-uppercase fw-bold text-danger tracking-wider mb-1" style="font-size: 0.75rem; letter-spacing: 1.5px;">☕ DINASTY CAFE</div>
                         <h3 class="fw-bolder text-dark mb-0" id="modalTableTitle">Meja --</h3>
                         <p class="text-muted small mb-3" id="modalTableSubtitle">Scan QR untuk melihat menu & memesan</p>
                         
@@ -327,7 +327,7 @@
 
     function downloadQrModalImage() {
         const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(currentPrintUrl)}`;
-        const fileName = `QR-Meja-${currentPrintTable || 'Dynasty'}.png`;
+        const fileName = `QR-Meja-${currentPrintTable || 'Dinasty'}.png`;
 
         fetch(qrApi)
             .then(res => res.blob())
@@ -363,7 +363,7 @@
             <html>
             <head>
                 <meta charset="utf-8">
-                <title>QR Code Meja ${currentPrintTable} - Dynasty Cafe</title>
+                <title>QR Code Meja ${currentPrintTable} - Dinasty Cafe</title>
                 <style>
                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 98vh; margin: 0; text-align: center; background: #fff; }
                     .qr-card { border: 3px dashed #8b211e; padding: 32px 28px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); max-width: 320px; }
@@ -380,7 +380,7 @@
             </head>
             <body>
                 <div class="qr-card">
-                    <h2>☕ DYNASTY CAFE</h2>
+                    <h2>☕ DINASTY CAFE</h2>
                     <h1>Meja ${currentPrintTable}</h1>
                     <img src="${qrApi}" width="220" height="220" alt="QR Code" onload="window.print();" />
                     <div class="note">Scan untuk melihat menu & memesan</div>

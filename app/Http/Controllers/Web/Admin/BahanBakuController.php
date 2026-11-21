@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BahanBaku;
 use App\Models\Satuan;
+use App\Services\StokService;
 use Illuminate\Http\Request;
 
 class BahanBakuController extends Controller
@@ -16,7 +17,7 @@ class BahanBakuController extends Controller
         return view('admin.bahan_baku.index', compact('bahanBakus', 'satuans'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, StokService $stokService)
     {
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
@@ -26,11 +27,11 @@ class BahanBakuController extends Controller
             'stok_minimum' => 'required|numeric|min:0',
         ]);
 
-        BahanBaku::create($validated);
+        $bahan = BahanBaku::create($validated);
         return redirect()->back()->with('success', 'Bahan baku berhasil ditambahkan');
     }
 
-    public function update(Request $request, BahanBaku $bahanBaku)
+    public function update(Request $request, BahanBaku $bahanBaku, StokService $stokService)
     {
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
@@ -41,7 +42,11 @@ class BahanBakuController extends Controller
         ]);
 
         $bahanBaku->update($validated);
-        return redirect()->back()->with('success', 'Bahan baku berhasil diperbarui');
+
+        // Sinkronkan ulang HPP dan Stok untuk seluruh produk olahan yang menggunakan bahan baku ini
+        $stokService->syncProdukDariBahanBaku($bahanBaku->id);
+
+        return redirect()->back()->with('success', 'Bahan baku berhasil diperbarui dan stok/HPP menu terkait otomatis disinkronkan');
     }
 
     public function destroy(BahanBaku $bahanBaku)

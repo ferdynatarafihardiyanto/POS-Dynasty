@@ -7,27 +7,32 @@ use App\Models\Produk;
 use App\Models\Kategori;
 use App\Http\Requests\StoreProdukRequest;
 use App\Http\Requests\UpdateProdukRequest;
+use App\Services\StokService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
 use Illuminate\Support\Facades\Schema;
 
 class ProdukController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, StokService $stokService)
     {
+        // Pastikan HPP dan Stok produk olahan (resep) selalu sinkron dengan stok bahan baku terbaru
         try {
-            $hasTipeProduk = Schema::hasColumn('produk', 'tipe_produk');
+            $stokService->syncAllProdukResep();
+        } catch (\Throwable $e) {
+            \Log::warning('Sinkronisasi stok resep gagal: ' . $e->getMessage());
+        }
+
+        try {
             $hasBundleTable = Schema::hasTable('produk_bundle_items');
         } catch (\Throwable $e) {
-            $hasTipeProduk = false;
             $hasBundleTable = false;
         }
 
-        $relations = ['kategori', 'modifierGroups'];
+        $relations = ['kategori', 'modifierGroups', 'resep.detail.bahanBaku'];
         if ($hasBundleTable) {
-            $relations[] = 'bundleItems';
+            $relations[] = 'bundleItems.item';
         }
 
         $query = Produk::with($relations);
@@ -54,14 +59,10 @@ class ProdukController extends Controller
         $modifierGroups = \App\Models\ModifierGroup::where('aktif', true)->get();
         $satuans = \App\Models\Satuan::where('aktif', true)->orderBy('nama')->get();
         
-        $allProduksQuery = Produk::where('aktif', true);
-        if ($hasTipeProduk) {
-            $allProduksQuery->where('tipe_produk', 'standar');
-        }
-        $allProduks = $allProduksQuery->get();
+        $allProduks = Produk::where('aktif', true)->where('tipe_produk', '!=', 'bundling')->get();
 
         $stokMenipisQuery = Produk::where('aktif', true);
-        if (\Illuminate\Support\Facades\Schema::hasColumn('produk', 'min_stok')) {
+        if (Schema::hasColumn('produk', 'min_stok')) {
             $stokMenipisCount = $stokMenipisQuery->whereColumn('stok', '<=', 'min_stok')->count();
         } else {
             $stokMenipisCount = $stokMenipisQuery->where('stok', '<', 20)->count();
@@ -72,7 +73,7 @@ class ProdukController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $query = Produk::with(['kategori', 'modifierGroups']);
+        $query = Produk::with(['kategori', 'modifierGroups', 'resep.detail.bahanBaku']);
 
         if ($request->filled('kategori')) {
             $query->where('kategori_id', $request->kategori);
@@ -125,7 +126,7 @@ class ProdukController extends Controller
     {
         $kategoris = Kategori::where('aktif', true)->get();
         $modifierGroups = \App\Models\ModifierGroup::where('aktif', true)->get();
-        $allProduks = Produk::where('tipe_produk', 'standar')->where('aktif', true)->get();
+        $allProduks = Produk::where('tipe_produk', '!=', 'bundling')->where('aktif', true)->get();
         return view('admin.produk.create', compact('kategoris', 'modifierGroups', 'allProduks'));
     }
 
@@ -136,7 +137,7 @@ class ProdukController extends Controller
             if ($request->hasFile('gambar')) {
                 $data['gambar'] = $request->file('gambar')->store('produk', 'public');
             }
-            $data['tipe_produk'] = $request->tipe_produk ?? 'standar';
+            $data['tipe_produk'] = $request->tipe_produk ?? 'satuan';
             if ($request->filled('min_stok')) {
                 $data['min_stok'] = (int) $request->min_stok;
             }
@@ -154,6 +155,8 @@ class ProdukController extends Controller
                     }
                 }
             }
+
+            $produk->syncStokDanHpp();
         });
         
         return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil ditambahkan.');
@@ -166,7 +169,7 @@ class ProdukController extends Controller
             ->orWhereHas('produks', function ($query) use ($produk) {
                 $query->where('produk_id', $produk->id);
             })->get();
-        $allProduks = Produk::where('tipe_produk', 'standar')->where('id', '!=', $produk->id)->get();
+        $allProduks = Produk::where('tipe_produk', '!=', 'bundling')->where('id', '!=', $produk->id)->get();
         return view('admin.produk.edit', compact('produk', 'kategoris', 'modifierGroups', 'allProduks'));
     }
 
@@ -180,7 +183,7 @@ class ProdukController extends Controller
                 }
                 $data['gambar'] = $request->file('gambar')->store('produk', 'public');
             }
-            $data['tipe_produk'] = $request->tipe_produk ?? 'standar';
+            $data['tipe_produk'] = $request->tipe_produk ?? ($produk->tipe_produk ?? 'satuan');
             if ($request->filled('min_stok')) {
                 $data['min_stok'] = (int) $request->min_stok;
             }
@@ -215,6 +218,8 @@ class ProdukController extends Controller
             } else {
                 \App\Models\ProdukBundleItem::where('bundle_id', $produk->id)->delete();
             }
+
+            $produk->syncStokDanHpp();
         });
 
         return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil diperbarui.');

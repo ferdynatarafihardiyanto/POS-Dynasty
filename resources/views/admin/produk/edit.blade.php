@@ -14,11 +14,15 @@
                     @endforeach
                 </select>
             </div>
+            @php
+                $currentTipe = $produk->isBundle() ? 'bundling' : ($produk->isResep() ? 'resep' : 'satuan');
+            @endphp
             <div class="mb-3">
                 <label>Tipe Produk</label>
-                <select name="tipe_produk" class="form-control" x-data="{tipe: '{{ $produk->tipe_produk }}'}" x-model="tipe" @change="$dispatch('tipe-changed', tipe)">
-                    <option value="standar">Standar (Punya Stok & Resep)</option>
-                    <option value="bundling">Paket Bundling (Gabungan Produk Standar)</option>
+                <select name="tipe_produk" class="form-control" x-data="{tipe: '{{ $currentTipe }}'}" x-model="tipe" @change="$dispatch('tipe-changed', tipe)">
+                    <option value="satuan" {{ $currentTipe === 'satuan' ? 'selected' : '' }}>Item Satuan (Produk jadi / kemasan tanpa resep, stok & HPP manual)</option>
+                    <option value="resep" {{ $currentTipe === 'resep' ? 'selected' : '' }}>Item Resep / Olahan (Minuman / racikan, stok & HPP otomatis dari bahan baku)</option>
+                    <option value="bundling" {{ $currentTipe === 'bundling' ? 'selected' : '' }}>Paket Bundling (Gabungan Produk Standar / Satuan)</option>
                 </select>
             </div>
             <div class="mb-3">

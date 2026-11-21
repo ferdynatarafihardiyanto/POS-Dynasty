@@ -17,9 +17,26 @@ class UpdateProdukRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->merge([
+        $tipe = $this->tipe_produk ?? 'satuan';
+        if ($tipe === 'standar') {
+            $tipe = 'satuan';
+        }
+
+        $mergeData = [
             'aktif' => $this->has('aktif') ? true : false,
-        ]);
+            'tipe_produk' => $tipe,
+        ];
+
+        if ($tipe === 'resep') {
+            if (!$this->filled('hpp')) {
+                $mergeData['hpp'] = 0;
+            }
+            if (!$this->filled('stok')) {
+                $mergeData['stok'] = 0;
+            }
+        }
+
+        $this->merge($mergeData);
     }
 
     public function rules(): array
@@ -34,7 +51,7 @@ class UpdateProdukRequest extends FormRequest
             'stok' => 'required|integer|min:0',
             'min_stok' => 'nullable|integer|min:0',
             'aktif' => 'nullable|boolean',
-            'tipe_produk' => 'nullable|string|in:standar,bundling',
+            'tipe_produk' => 'nullable|string|in:satuan,resep,standar,bundling',
             'modifier_groups' => 'nullable|array',
             'modifier_groups.*' => 'integer|distinct|exists:modifier_groups,id',
             'bundle_items' => 'nullable|array',

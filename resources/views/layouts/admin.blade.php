@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynasty Cafe - Admin</title>
+    <title>Dinasty Cafe - Admin</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -19,7 +19,7 @@
         <!-- Sidebar -->
         <div class="sidebar d-flex flex-column flex-shrink-0 p-3" style="width: 250px;">
             <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <span class="fs-4 fw-bold">☕ Dynasty Cafe</span>
+                <span class="fs-4 fw-bold">☕ Dinasty Cafe</span>
             </a>
             <hr class="text-white">
             <ul class="nav nav-pills flex-column mb-auto">

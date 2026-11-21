@@ -42,7 +42,7 @@ class StokController extends Controller
         return view('admin.stok.index', compact('riwayats', 'produks', 'bahanBakus'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\StokService $stokService)
     {
         $validated = $request->validate([
             'tipe_item' => 'required|in:produk,bahan_baku',
@@ -95,6 +95,10 @@ class StokController extends Controller
         }
 
         $riwayat->save();
+
+        if ($validated['tipe_item'] == 'bahan_baku') {
+            $stokService->syncProdukDariBahanBaku($model->id);
+        }
 
         return redirect()->route('admin.stok.index')->with('success', "Mutasi stok {$model->nama} ({$validated['tipe']}) berhasil dicatat.");
     }

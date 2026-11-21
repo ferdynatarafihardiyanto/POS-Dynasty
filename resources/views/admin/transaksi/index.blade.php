@@ -116,7 +116,7 @@
         <div class="print-only mb-4">
             <div class="d-flex justify-content-between align-items-end pb-2 mb-3" style="border-bottom: 2px solid #000;">
                 <div>
-                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DYNASTY</h3>
+                    <h3 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.5px;">KEDAI DINASTY</h3>
                     <div class="text-muted" style="font-size: 8.5pt;">Sistem Informasi Kasir & Manajemen Toko</div>
                 </div>
                 <div class="text-end" style="font-size: 8.5pt;">
@@ -463,7 +463,7 @@
 
                                 <!-- Header Toko -->
                                 <div class="text-center pb-2">
-                                    <div class="fw-bold text-uppercase" style="font-size: 14px; letter-spacing: 0.5px;" x-text="storeProfile.namaToko || 'Dynasty Cafe'"></div>
+                                    <div class="fw-bold text-uppercase" style="font-size: 14px; letter-spacing: 0.5px;" x-text="storeProfile.namaToko || 'Dinasty Cafe'"></div>
                                     <template x-if="storeProfile.slogan">
                                         <div class="fw-bold text-uppercase mt-1" style="font-size: 10px;" x-text="storeProfile.slogan"></div>
                                     </template>
@@ -562,8 +562,8 @@
                                     </template>
                                     <template x-if="!storeProfile.wifiList || storeProfile.wifiList.length === 0">
                                         <div>
-                                            <div>Wifi : Dynasty Cafe Free (Lt. 1)</div>
-                                            <div>Pass : kedaidynasty123</div>
+                                            <div>Wifi : Dinasty Cafe Free (Lt. 1)</div>
+                                            <div>Pass : kedaidinasty123</div>
                                         </div>
                                     </template>
                                 </div>
@@ -572,7 +572,7 @@
                                 <div class="text-center pt-2.5" style="font-size: 10px; white-space: pre-line; line-height: 1.3;" x-text="storeProfile.pesanFooterStruk || 'Terima kasih atas kunjungan Anda!\nSilakan datang kembali.'"></div>
 
                                 <!-- Footer Link / Sosmed -->
-                                <div class="text-center pt-2 pb-1 fw-bold" style="font-size: 11px;" x-text="storeProfile.sosmed || '@dynastycafe.id'"></div>
+                                <div class="text-center pt-2 pb-1 fw-bold" style="font-size: 11px;" x-text="storeProfile.sosmed || '@dinastycafe.id'"></div>
 
                             </div>
 
@@ -622,16 +622,16 @@ document.addEventListener('alpine:init', () => {
         receiptTrx: null,
         receiptModalInstance: null,
         storeProfile: {
-            namaToko: 'Dynasty Cafe',
+            namaToko: 'Dinasty Cafe',
             slogan: 'Authentic Coffee & Eatery',
             telepon: '0812-3456-7890',
-            sosmed: '@dynastycafe.id',
+            sosmed: '@dinastycafe.id',
             alamat: 'Jl. Jambangan Kebon Agung No. 12 B, Surabaya',
             pesanFooterStruk: "Terima kasih atas kunjungan Anda!\nSilakan datang kembali.",
             cetakLogoStruk: true,
             wifiList: [
-                { ssid: 'Dynasty Cafe Free (Lt. 1)', password: 'kedaidynasty123' },
-                { ssid: 'Dynasty Cafe VIP (Lt. 2)', password: 'dynastyvip88' }
+                { ssid: 'Dinasty Cafe Free (Lt. 1)', password: 'kedaidinasty123' },
+                { ssid: 'Dinasty Cafe VIP (Lt. 2)', password: 'dinastyvip88' }
             ]
         },
         storeLogo: null,
@@ -659,11 +659,11 @@ document.addEventListener('alpine:init', () => {
         
         loadStoreProfile() {
             try {
-                const saved = localStorage.getItem('dynasty_store_profile');
+                const saved = localStorage.getItem('dinasty_store_profile');
                 if (saved) {
                     this.storeProfile = Object.assign({}, this.storeProfile, JSON.parse(saved));
                 }
-                const savedLogo = localStorage.getItem('dynasty_logo_data');
+                const savedLogo = localStorage.getItem('dinasty_logo_data');
                 if (savedLogo) {
                     this.storeLogo = savedLogo;
                 }
@@ -897,7 +897,7 @@ document.addEventListener('alpine:init', () => {
             <html>
             <head>
                 <meta charset="utf-8">
-                <title>Struk Thermal - ${this.receiptTrx?.nomor_pesanan || 'Dynasty'}</title>
+                <title>Struk Thermal - ${this.receiptTrx?.nomor_pesanan || 'Dinasty'}</title>
                 <style>
                     body {
                         font-family: 'Courier New', Courier, Consolas, Monaco, monospace;

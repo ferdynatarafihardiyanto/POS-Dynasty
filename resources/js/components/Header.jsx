@@ -25,7 +25,7 @@ export default function Header() {
                     </div>
                     <div>
                         <h1 className="font-display font-bold text-sm sm:text-base text-white tracking-tight leading-tight">
-                            Kedai Dynasty
+                            Kedai Dinasty
                         </h1>
                         <p className="text-[11px] text-amber-100/80 flex items-center gap-1.5 mt-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>

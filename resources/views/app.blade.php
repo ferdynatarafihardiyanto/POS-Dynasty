@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>Kedai Dynasty - Dine-in & Mobile Ordering</title>
+    <title>Kedai Dinasty - Dine-in & Mobile Ordering</title>
 
     <!-- Google Fonts: DM Sans & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

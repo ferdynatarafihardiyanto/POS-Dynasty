@@ -137,8 +137,8 @@ export default function OrderStatusModal() {
             key: 'selesai',
             label: '4. Selesai / Menikmati Makanan',
             desc: currentOrder?.status === 'selesai'
-                ? 'Pesanan telah selesai dinikmati. Terima kasih telah berkunjung ke Kedai Dynasty! ✨'
-                : 'Selamat menikmati hidangan lezat Kedai Dynasty!',
+                ? 'Pesanan telah selesai dinikmati. Terima kasih telah berkunjung ke Kedai Dinasty! ✨'
+                : 'Selamat menikmati hidangan lezat Kedai Dinasty!',
             icon: Sparkles
         }
     ];
@@ -268,7 +268,7 @@ export default function OrderStatusModal() {
                                             </span>
                                         </div>
                                         <p className="text-xs text-emerald-900 leading-relaxed">
-                                            Terima kasih banyak telah berkunjung ke Kedai Dynasty. Transaksi pesanan Meja {currentOrder.tableNumber} telah selesai dinikmati. Sampai jumpa kembali! ✨
+                                            Terima kasih banyak telah berkunjung ke Kedai Dinasty. Transaksi pesanan Meja {currentOrder.tableNumber} telah selesai dinikmati. Sampai jumpa kembali! ✨
                                         </p>
                                     </div>
                                 ) : currentOrder.status === 'disajikan' ? (

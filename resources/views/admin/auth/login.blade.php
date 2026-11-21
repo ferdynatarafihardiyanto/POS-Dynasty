@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Kasir & Backoffice - Dynasty Cafe</title>
+    <title>Login Kasir & Backoffice - Dinasty Cafe</title>
     <link rel="icon" type="image/png" href="{{ asset('images/Logo.png') }}">
 
     <!-- Bootstrap 5 CDN & Icons -->
@@ -112,7 +112,7 @@
             }
         }
 
-        /* Logo Emblem Container (Menggunakan warna khas Dynasty Maroon agar logo putih terlihat sangat jelas & mewah) */
+        /* Logo Emblem Container (Menggunakan warna khas Dinasty Maroon agar logo putih terlihat sangat jelas & mewah) */
         .brand-emblem-wrap {
             display: inline-flex;
             align-items: center;
@@ -308,15 +308,15 @@
             <div class="text-center mb-4">
                 <div class="brand-emblem-wrap">
                     <img src="{{ asset('images/Logo.png') }}" 
-                         alt="Logo Dynasty Cafe" 
+                         alt="Logo Dinasty Cafe" 
                          class="brand-logo-img" 
                          onerror="this.style.display='none'; document.getElementById('logoFallback').classList.remove('d-none');">
                     <div id="logoFallback" class="brand-logo-fallback d-none">
-                        <i class="bi bi-cup-hot-fill"></i> DYNASTY <span>CAFE</span>
+                        <i class="bi bi-cup-hot-fill"></i> DINASTY <span>CAFE</span>
                     </div>
                 </div>
 
-                <h1 class="brand-title">Dynasty Cafe</h1>
+                <h1 class="brand-title">Dinasty Cafe</h1>
                 <p class="brand-subtitle">Portal Akses Point of Sale & Backoffice</p>
             </div>
 
@@ -392,7 +392,7 @@
                     <i class="bi bi-lock-fill text-muted" style="font-size: 0.7rem;"></i>
                     <span>Koneksi Sesi Terenkripsi & Aman</span>
                 </div>
-                <div>&copy; {{ date('Y') }} Kedai Kopi Dynasty. All Rights Reserved.</div>
+                <div>&copy; {{ date('Y') }} Kedai Kopi Dinasty. All Rights Reserved.</div>
             </div>
 
         </div>

@@ -92,7 +92,7 @@ class MidtransService
             'item_details' => $itemDetails,
             'customer_details' => [
                 'first_name' => $cleanCustomerName,
-                'email' => 'customer@dynastycafe.id',
+                'email' => 'customer@dinastycafe.id',
                 'phone' => '081234567890',
             ],
             'callbacks' => [

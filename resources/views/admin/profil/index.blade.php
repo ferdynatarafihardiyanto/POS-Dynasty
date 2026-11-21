@@ -158,7 +158,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-7">
                                         <label class="form-label">Nama Kafe / Resto <span class="text-danger">*</span> <span class="text-muted fw-normal" style="font-size: 0.75rem;">(Header Utama Struk)</span></label>
-                                        <input type="text" class="form-control" id="namaToko" value="Dynasty Cafe" required placeholder="Contoh: Dynasty Cafe">
+                                        <input type="text" class="form-control" id="namaToko" value="Dinasty Cafe" required placeholder="Contoh: Dinasty Cafe">
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label">Slogan / Tagline <span class="text-muted fw-normal" style="font-size: 0.75rem;">(Sub-header Struk)</span></label>
@@ -170,7 +170,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Instagram / Sosmed / Website <span class="text-muted fw-normal" style="font-size: 0.75rem;">(Footer Bawah Struk)</span></label>
-                                        <input type="text" class="form-control" id="sosmed" value="@dynastycafe.id" placeholder="Contoh: @dynastycafe.id atau domain website">
+                                        <input type="text" class="form-control" id="sosmed" value="@dinastycafe.id" placeholder="Contoh: @dinastycafe.id atau domain website">
                                     </div>
                                     <div class="col-md-12">
                                         <label class="form-label">Alamat Lengkap <span class="text-muted fw-normal" style="font-size: 0.75rem;">(Alamat Tercetak di Header Struk)</span></label>
@@ -339,7 +339,7 @@ Silakan datang kembali.</textarea>
                     
                     <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
                         <span class="text-muted small">☕ Kafe / Resto:</span>
-                        <span class="fw-bold text-dark small text-truncate ms-2" id="modalSummaryToko">Dynasty Cafe</span>
+                        <span class="fw-bold text-dark small text-truncate ms-2" id="modalSummaryToko">Dinasty Cafe</span>
                     </div>
                     
                     <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light">
@@ -401,7 +401,7 @@ Silakan datang kembali.</textarea>
 
                     <!-- Header Toko -->
                     <div class="text-center pb-2">
-                        <div class="fw-bold text-uppercase" id="modalReceiptNama" style="font-size: 14px; letter-spacing: 0.5px;">Dynasty Cafe</div>
+                        <div class="fw-bold text-uppercase" id="modalReceiptNama" style="font-size: 14px; letter-spacing: 0.5px;">Dinasty Cafe</div>
                         <div class="fw-bold text-uppercase mt-1" id="modalReceiptSlogan" style="font-size: 10px;">Authentic Coffee & Eatery</div>
                         <div class="mt-1" id="modalReceiptAlamat" style="font-size: 10px; line-height: 1.3;">Jl. Mawar No. 123, Jakarta Selatan</div>
                         <div id="modalReceiptTelepon" style="font-size: 9.5px;">Telp/WA: 0812-3456-7890</div>
@@ -459,8 +459,8 @@ Silakan datang kembali.</textarea>
 
                     <!-- WiFi Section Dinamis -->
                     <div id="modalReceiptWifiList" style="font-size: 10px; line-height: 1.35; padding-top: 2px;">
-                        <div>Wifi : Dynasty Cafe Free (Lt. 1)</div>
-                        <div>Pass : kedaidynasty123</div>
+                        <div>Wifi : Dinasty Cafe Free (Lt. 1)</div>
+                        <div>Pass : kedaidinasty123</div>
                     </div>
 
                     <!-- Pesan Footer -->
@@ -471,7 +471,7 @@ Silakan datang kembali.</textarea>
 
                     <!-- Footer Link / Sosmed -->
                     <div id="modalReceiptSosmed" class="text-center pt-2 pb-1 fw-bold" style="font-size: 11px;">
-                        @dynastycafe.id
+                        @dinastycafe.id
                     </div>
 
                 </div>
@@ -533,7 +533,7 @@ Silakan datang kembali.</textarea>
                     </label>
                     <div class="input-group">
                         <span class="input-group-text bg-light text-muted"><i class="bi bi-broadcast"></i></span>
-                        <input type="text" class="form-control form-control-sm wifi-ssid-input" placeholder="Contoh: Dynasty_Lt1" value="${escapeHtml(ssid)}">
+                        <input type="text" class="form-control form-control-sm wifi-ssid-input" placeholder="Contoh: Dinasty_Lt1" value="${escapeHtml(ssid)}">
                     </div>
                     <div class="form-text" style="font-size: 0.68rem;">Nama sinyal WiFi kafe Anda</div>
                 </div>
@@ -607,7 +607,7 @@ Silakan datang kembali.</textarea>
                 const dataUrl = e.target.result;
                 setLogoPreview(dataUrl);
                 try {
-                    localStorage.setItem('dynasty_logo_data', dataUrl);
+                    localStorage.setItem('dinasty_logo_data', dataUrl);
                 } catch(err) {}
             };
             reader.readAsDataURL(input.files[0]);
@@ -631,7 +631,7 @@ Silakan datang kembali.</textarea>
 
     // Open Real-time Black & White Thermal Receipt Modal
     function openReceiptPreviewModal() {
-        const nama = document.getElementById('namaToko')?.value || 'Dynasty Cafe';
+        const nama = document.getElementById('namaToko')?.value || 'Dinasty Cafe';
         const slogan = document.getElementById('slogan')?.value || '';
         const alamat = document.getElementById('alamat')?.value || '';
         const telepon = document.getElementById('telepon')?.value || '';
@@ -663,7 +663,7 @@ Silakan datang kembali.</textarea>
         }
 
         const sosmedEl = document.getElementById('modalReceiptSosmed');
-        if (sosmedEl) sosmedEl.textContent = sosmed || '@dynastycafe.id';
+        if (sosmedEl) sosmedEl.textContent = sosmed || '@dinastycafe.id';
 
         // Live Date
         const now = new Date();
@@ -692,7 +692,7 @@ Silakan datang kembali.</textarea>
                 });
             }
             if (!hasAny) {
-                modalWifi.innerHTML = '<div>Wifi : Dynasty Cafe Free (Lt. 1)</div><div>Pass : kedaidynasty123</div>';
+                modalWifi.innerHTML = '<div>Wifi : Dinasty Cafe Free (Lt. 1)</div><div>Pass : kedaidinasty123</div>';
             }
         }
 
@@ -737,7 +737,7 @@ Silakan datang kembali.</textarea>
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Struk Thermal Hitam Putih - POS Dynasty</title>
+            <title>Struk Thermal Hitam Putih - POS Dinasty</title>
             <style>
                 body {
                     font-family: 'Courier New', Courier, Consolas, Monaco, monospace;
@@ -851,7 +851,7 @@ Silakan datang kembali.</textarea>
             }
         });
 
-        const logoData = localStorage.getItem('dynasty_logo_data') || '';
+        const logoData = localStorage.getItem('dinasty_logo_data') || '';
 
         const profileData = {
             namaToko: document.getElementById('namaToko')?.value || '',
@@ -871,7 +871,7 @@ Silakan datang kembali.</textarea>
         };
 
         try {
-            localStorage.setItem('dynasty_store_profile', JSON.stringify(profileData));
+            localStorage.setItem('dinasty_store_profile', JSON.stringify(profileData));
         } catch(err) {
             console.error('Failed to save to localStorage', err);
         }
@@ -894,7 +894,7 @@ Silakan datang kembali.</textarea>
 
         // Update data pada Modal Bukti Simpan
         const summaryToko = document.getElementById('modalSummaryToko');
-        if (summaryToko) summaryToko.textContent = profileData.namaToko || 'Dynasty Cafe';
+        if (summaryToko) summaryToko.textContent = profileData.namaToko || 'Dinasty Cafe';
 
         const summaryWifi = document.getElementById('modalSummaryWifi');
         if (summaryWifi) {
@@ -933,7 +933,7 @@ Silakan datang kembali.</textarea>
     // Load Store Profile on Page Open
     function loadStoreProfile() {
         // First load local logo if available
-        const savedLogo = localStorage.getItem('dynasty_logo_data');
+        const savedLogo = localStorage.getItem('dinasty_logo_data');
         if (savedLogo) {
             setLogoPreview(savedLogo);
         }
@@ -968,8 +968,8 @@ Silakan datang kembali.</textarea>
             } else if (data.wifiSsid || data.wifiPassword) {
                 addWifiNetwork(data.wifiSsid || '', data.wifiPassword || '');
             } else {
-                addWifiNetwork('Dynasty Cafe Free (Lt. 1)', 'kedaidynasty123');
-                addWifiNetwork('Dynasty Cafe VIP (Lt. 2)', 'dynastyvip88');
+                addWifiNetwork('Dinasty Cafe Free (Lt. 1)', 'kedaidinasty123');
+                addWifiNetwork('Dinasty Cafe VIP (Lt. 2)', 'dinastyvip88');
             }
 
             // Custom Fields
@@ -980,15 +980,15 @@ Silakan datang kembali.</textarea>
                     addCustomField(f.label, f.value);
                 });
             } else {
-                addCustomField('Website Kafe', 'https://dynastycafe.id');
-                addCustomField('No. Rekening Pembayaran', 'BCA 8920-1234-56 a.n Dynasty Cafe');
+                addCustomField('Website Kafe', 'https://dinastycafe.id');
+                addCustomField('No. Rekening Pembayaran', 'BCA 8920-1234-56 a.n Dinasty Cafe');
             }
             checkEmptyWifi();
             checkEmptyCustomFields();
         };
 
         // Check local storage first
-        const saved = localStorage.getItem('dynasty_store_profile');
+        const saved = localStorage.getItem('dinasty_store_profile');
         if (saved) {
             try {
                 applyProfileToForm(JSON.parse(saved));
@@ -1010,8 +1010,8 @@ Silakan datang kembali.</textarea>
 
     function resetStoreProfile() {
         if (confirm('Kembalikan ke pengaturan profil bawaan?')) {
-            localStorage.removeItem('dynasty_store_profile');
-            localStorage.removeItem('dynasty_logo_data');
+            localStorage.removeItem('dinasty_store_profile');
+            localStorage.removeItem('dinasty_logo_data');
             location.reload();
         }
     }

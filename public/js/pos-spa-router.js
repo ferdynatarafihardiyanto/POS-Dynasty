@@ -1,5 +1,5 @@
 /**
- * Dynasty POS - SPA Navigation Engine
+ * Dinasty POS - SPA Navigation Engine
  * Memberikan pengalaman Single Page Application (SPA) instan tanpa reload browser,
  * persis seperti React Router pada proyek Caffesence.
  */
@@ -405,5 +405,5 @@
     // Expose navigator ke window jika dibutuhkan secara manual
     window.posSpaNavigate = navigateTo;
 
-    console.log('[SPA] Dynasty POS Seamless Navigation Engine Ready.');
+    console.log('[SPA] Dinasty POS Seamless Navigation Engine Ready.');
 })();

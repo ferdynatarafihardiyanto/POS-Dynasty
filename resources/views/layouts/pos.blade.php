@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dynasty Cafe - POS</title>
+    <title>Dinasty Cafe - POS</title>
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -370,7 +370,7 @@
             <div class="brand">
                 <img src="{{ asset('images/Logo.png') }}" alt="Logo" class="sidebar-logo" style="max-width: 180px; width: 100%; height: auto; max-height: 65px; object-fit: contain; display: block;" onerror="this.onerror=null; this.style.display='none'; document.getElementById('sidebarTextLogo')?.classList.remove('d-none');">
                 <div id="sidebarTextLogo" class="d-none text-white fw-bold fs-5 tracking-wide">
-                    DYNASTY <span style="color: #f59e0b;">CAFE</span>
+                    DINASTY <span style="color: #f59e0b;">CAFE</span>
                 </div>
                 <button type="button" class="btn btn-sm text-white ms-auto d-lg-none rounded-circle d-flex align-items-center justify-content-center" id="closeSidebarBtn" title="Tutup Menu" style="width: 32px; height: 32px; background: rgba(255,255,255,0.15);">
                     <i class="bi bi-x-lg"></i>

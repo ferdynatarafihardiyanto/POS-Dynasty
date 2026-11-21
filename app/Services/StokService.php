@@ -76,7 +76,7 @@ class StokService
                 throw new Exception("Produk {$produk->nama} sedang tidak tersedia.");
             }
 
-            if ($produk->resep) {
+            if ($produk->isResep() || ($produk->resep && $produk->resep->detail->isNotEmpty())) {
                 if ($produk->resep->detail->isEmpty()) {
                     throw new Exception("Produk {$produk->nama} memiliki resep tetapi tidak ada detail resep (INVALID RECIPE).");
                 }
@@ -88,6 +88,7 @@ class StokService
                     $kebutuhanBahan[$bahanId] += $resepDetail->jumlah * $item['jumlah'];
                 }
             } else {
+                // Item Satuan (tanpa resep)
                 if (!isset($kebutuhanProduk[$produk->id])) {
                     $kebutuhanProduk[$produk->id] = 0;
                 }
@@ -110,12 +111,12 @@ class StokService
                     throw new Exception("Bahan baku ID {$bahanId} tidak tersedia atau tidak aktif.");
                 }
                 if ($bahan->stok < $totalButuh) {
-                    throw new Exception("Stok bahan baku {$bahan->nama} tidak mencukupi.");
+                    throw new Exception("Stok bahan baku {$bahan->nama} tidak mencukupi untuk pesanan ini.");
                 }
             }
         }
 
-        // Lock & Validasi Produk (tanpa resep)
+        // Lock & Validasi Produk (Item Satuan tanpa resep)
         if (!empty($kebutuhanProduk)) {
             $prodIds = array_keys($kebutuhanProduk);
             sort($prodIds);
@@ -150,7 +151,7 @@ class StokService
 
         foreach ($details as $detail) {
             $produk = $produks[$detail['produk_id']];
-            if ($produk->resep) {
+            if ($produk->isResep() || ($produk->resep && $produk->resep->detail->isNotEmpty())) {
                 foreach ($produk->resep->detail as $resepDetail) {
                     $bahanId = $resepDetail->bahan_baku_id;
                     if (!isset($kebutuhanBahan[$bahanId])) {
@@ -200,6 +201,55 @@ class StokService
                 'referensi' => $pesanan->nomor_pesanan,
                 'keterangan' => 'Pesanan dibayar'
             ]);
+        }
+
+        // Sinkronisasi otomatis stok & HPP produk olahan yang bahan bakunya terpotong
+        foreach (array_keys($kebutuhanBahan) as $bahanId) {
+            $this->syncProdukDariBahanBaku($bahanId);
+        }
+    }
+
+    /**
+     * Sinkronisasi produk yang bergantung pada bahan baku tertentu.
+     * Mengkalkulasi ulang stok porsi yang tersedia (berdasarkan bottleneck) dan HPP.
+     */
+    public function syncProdukDariBahanBaku($bahanBakuId)
+    {
+        $produkIds = \App\Models\ResepDetail::where('bahan_baku_id', $bahanBakuId)
+            ->join('resep', 'resep_detail.resep_id', '=', 'resep.id')
+            ->pluck('resep.produk_id')
+            ->unique();
+
+        if ($produkIds->isNotEmpty()) {
+            $produks = Produk::with(['resep.detail.bahanBaku', 'bundleItems.item'])->whereIn('id', $produkIds)->get();
+            foreach ($produks as $prod) {
+                $prod->syncStokDanHpp();
+            }
+
+            // Sync paket bundling yang menyertakan produk-produk ini
+            $bundleIds = \App\Models\ProdukBundleItem::whereIn('item_id', $produkIds)->pluck('bundle_id')->unique();
+            if ($bundleIds->isNotEmpty()) {
+                $bundles = Produk::with(['bundleItems.item'])->whereIn('id', $bundleIds)->get();
+                foreach ($bundles as $bundle) {
+                    $bundle->syncStokDanHpp();
+                }
+            }
+        }
+    }
+
+    /**
+     * Sinkronisasi semua produk olahan/resep dan bundling secara menyeluruh.
+     */
+    public function syncAllProdukResep()
+    {
+        $produks = Produk::with(['resep.detail.bahanBaku', 'bundleItems.item'])->get();
+        foreach ($produks as $p) {
+            if ($p->isResep() || $p->isBundle()) {
+                $p->syncStokDanHpp();
+            } elseif ($p->tipe_produk === 'standar' && (!$p->resep || $p->resep->detail->isEmpty())) {
+                $p->tipe_produk = 'satuan';
+                $p->saveQuietly();
+            }
         }
     }
 }

@@ -305,16 +305,16 @@ class PesananController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'namaToko' => 'Dynasty Cafe',
+                'namaToko' => 'Dinasty Cafe',
                 'slogan' => 'Authentic Coffee & Eatery',
                 'telepon' => '0812-3456-7890',
-                'sosmed' => '@dynastycafe.id',
+                'sosmed' => '@dinastycafe.id',
                 'alamat' => 'Jl. Mawar No. 123, Jakarta Selatan',
                 'pesanFooterStruk' => "Terima kasih atas kunjungan Anda!\nSilakan datang kembali.",
                 'cetakLogoStruk' => true,
                 'wifiList' => [
-                    ['ssid' => 'Dynasty Cafe Free (Lt. 1)', 'password' => 'kedaidynasty123'],
-                    ['ssid' => 'Dynasty Cafe VIP (Lt. 2)', 'password' => 'dynastyvip88']
+                    ['ssid' => 'Dinasty Cafe Free (Lt. 1)', 'password' => 'kedaidinasty123'],
+                    ['ssid' => 'Dinasty Cafe VIP (Lt. 2)', 'password' => 'dinastyvip88']
                 ]
             ]
         ]);

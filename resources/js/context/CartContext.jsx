@@ -72,7 +72,7 @@ function getCategoryIcon(categoryName) {
 
 const getDeviceOrderNumbers = (token = null) => {
     try {
-        const raw = localStorage.getItem('dynasty_device_orders');
+        const raw = localStorage.getItem('dinasty_device_orders') || localStorage.getItem('dynasty_device_orders');
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -93,7 +93,7 @@ const getDeviceOrderNumbers = (token = null) => {
 
 const saveDeviceOrderNumber = (orderNumber, token) => {
     try {
-        const raw = localStorage.getItem('dynasty_device_orders');
+        const raw = localStorage.getItem('dinasty_device_orders') || localStorage.getItem('dynasty_device_orders');
         const parsed = raw ? JSON.parse(raw) : [];
         const cleanNum = (orderNumber || '').replace(/^#/, '');
         const newEntry = { orderNumber: cleanNum, token, timestamp: new Date().toISOString() };
@@ -101,7 +101,7 @@ const saveDeviceOrderNumber = (orderNumber, token) => {
             const num = typeof item === 'string' ? item : item.orderNumber;
             return num !== cleanNum;
         })];
-        localStorage.setItem('dynasty_device_orders', JSON.stringify(updated));
+        localStorage.setItem('dinasty_device_orders', JSON.stringify(updated));
     } catch (e) {
         console.error('Failed to save device order', e);
     }
@@ -131,7 +131,7 @@ function buildCategoryFingerprint(apiData) {
 export const CartProvider = ({ children }) => {
     const [cartItems, setCartItems] = useState(() => {
         try {
-            const saved = localStorage.getItem('dynasty_cart');
+            const saved = localStorage.getItem('dinasty_cart') || localStorage.getItem('dynasty_cart');
             return saved ? JSON.parse(saved) : [];
         } catch {
             return [];
@@ -174,7 +174,7 @@ export const CartProvider = ({ children }) => {
                     capacity: 'Dine-In'
                 };
             }
-            const saved = localStorage.getItem('dynasty_table');
+            const saved = localStorage.getItem('dinasty_table') || localStorage.getItem('dynasty_table');
             const parsed = saved ? JSON.parse(saved) : null;
             if (parsed && (parsed.token || parsed.number)) {
                 return parsed;
@@ -187,7 +187,7 @@ export const CartProvider = ({ children }) => {
 
     const [orders, setOrders] = useState(() => {
         try {
-            const saved = localStorage.getItem('dynasty_orders');
+            const saved = localStorage.getItem('dinasty_orders') || localStorage.getItem('dynasty_orders');
             const parsed = saved ? JSON.parse(saved) : [];
             const myNumbers = getDeviceOrderNumbers();
             if (myNumbers.length === 0) return [];
@@ -223,7 +223,7 @@ export const CartProvider = ({ children }) => {
     // Persist cart
     useEffect(() => {
         try {
-            localStorage.setItem('dynasty_cart', JSON.stringify(cartItems));
+            localStorage.setItem('dinasty_cart', JSON.stringify(cartItems));
         } catch (e) {
             console.error('Failed to save cart', e);
         }
@@ -232,7 +232,7 @@ export const CartProvider = ({ children }) => {
     // Persist table
     useEffect(() => {
         try {
-            localStorage.setItem('dynasty_table', JSON.stringify(tableInfo));
+            localStorage.setItem('dinasty_table', JSON.stringify(tableInfo));
         } catch (e) {
             console.error('Failed to save table', e);
         }
@@ -241,7 +241,7 @@ export const CartProvider = ({ children }) => {
     // Persist orders
     useEffect(() => {
         try {
-            localStorage.setItem('dynasty_orders', JSON.stringify(orders));
+            localStorage.setItem('dinasty_orders', JSON.stringify(orders));
         } catch (e) {
             console.error('Failed to save orders', e);
         }
@@ -345,7 +345,7 @@ export const CartProvider = ({ children }) => {
                             }
                             const selected = target || activeDbTables[0];
                             try {
-                                localStorage.setItem('dynasty_table', JSON.stringify(selected));
+                                localStorage.setItem('dinasty_table', JSON.stringify(selected));
                             } catch (e) {}
                             return selected;
                         });
@@ -747,8 +747,11 @@ export const CartProvider = ({ children }) => {
 
     const clearDeviceSession = () => {
         try {
+            localStorage.removeItem('dinasty_device_orders');
             localStorage.removeItem('dynasty_device_orders');
+            localStorage.removeItem('dinasty_orders');
             localStorage.removeItem('dynasty_orders');
+            localStorage.removeItem('dinasty_cart');
             localStorage.removeItem('dynasty_cart');
             setOrders([]);
             setActiveOrder(null);

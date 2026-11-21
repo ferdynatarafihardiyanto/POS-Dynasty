@@ -20,7 +20,7 @@ class StockOpnameController extends Controller
         return view('admin.stock_opname.index', compact('opnames', 'produks', 'bahanBakus'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\StokService $stokService)
     {
         $validated = $request->validate([
             'tipe_item' => 'required|in:produk,bahan_baku',
@@ -81,6 +81,10 @@ class StockOpnameController extends Controller
             'keterangan' => 'Stock Opname: ' . ($validated['keterangan'] ?? 'Penyesuaian fisik'),
             'referensi' => $nomorOpname
         ]);
+
+        if ($validated['tipe_item'] == 'bahan_baku') {
+            $stokService->syncProdukDariBahanBaku($model->id);
+        }
 
         return redirect()->route('admin.stock_opname.index')->with('success', "Stock opname {$model->nama} berhasil dicatat! Stok disesuaikan dari {$stok_sistem} menjadi {$stok_fisik}.");
     }

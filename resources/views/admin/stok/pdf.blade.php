@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Mutasi Stok - Dynasty</title>
+    <title>Laporan Mutasi Stok - Dinasty</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -147,7 +147,7 @@
 @endif
 
 <div class="page-header">
-    <div class="brand">Dynasty</div>
+    <div class="brand">Dinasty</div>
     <div class="report-title">Laporan Mutasi Stok</div>
     <div class="meta">Dicetak: {{ now()->setTimezone('Asia/Jakarta')->format('d F Y, H:i') }} WIB &nbsp;|&nbsp; Total Data: {{ $riwayats->count() }} entri</div>
 </div>
@@ -249,7 +249,7 @@
 </div>
 
 <div class="footer">
-    Dynasty POS System &nbsp;|&nbsp; Laporan ini digenerate secara otomatis pada {{ now()->setTimezone('Asia/Jakarta')->format('d F Y H:i') }} WIB
+    Dinasty POS System &nbsp;|&nbsp; Laporan ini digenerate secara otomatis pada {{ now()->setTimezone('Asia/Jakarta')->format('d F Y H:i') }} WIB
 </div>
 
 </body>

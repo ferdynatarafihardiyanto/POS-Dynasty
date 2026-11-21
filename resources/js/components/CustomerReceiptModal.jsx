@@ -11,7 +11,7 @@ export default function CustomerReceiptModal({ isOpen, onClose, order }) {
     // Profile & Logo Toko (Sinkron dengan Admin Profil & API)
     const [storeProfile, setStoreProfile] = useState(() => {
         try {
-            const saved = localStorage.getItem('dynasty_store_profile');
+            const saved = localStorage.getItem('dinasty_store_profile') || localStorage.getItem('dynasty_store_profile');
             if (saved) return JSON.parse(saved);
         } catch (e) {}
         return {
@@ -30,7 +30,7 @@ export default function CustomerReceiptModal({ isOpen, onClose, order }) {
     });
 
     const [storeLogo, setStoreLogo] = useState(() => {
-        return localStorage.getItem('dynasty_logo_data') || null;
+        return localStorage.getItem('dinasty_logo_data') || localStorage.getItem('dynasty_logo_data') || null;
     });
 
     useEffect(() => {

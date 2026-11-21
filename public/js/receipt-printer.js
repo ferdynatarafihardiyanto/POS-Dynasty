@@ -1,6 +1,6 @@
 /**
  * ==============================================================================
- * 🖨️ MODUL PRINTER STRUK THERMAL - POS DYNASTY CAFE
+ * 🖨️ MODUL PRINTER STRUK THERMAL - POS DINASTY CAFE
  * ==============================================================================
  * Wadah integrasi printer struk kasir yang modular & fleksibel.
  * 
@@ -206,13 +206,13 @@ window.ReceiptPrinter = {
             ]
         };
         try {
-            const savedProf = localStorage.getItem('dynasty_store_profile');
+            const savedProf = localStorage.getItem('dinasty_store_profile');
             if (savedProf) {
                 storeProfile = Object.assign({}, storeProfile, JSON.parse(savedProf));
             }
         } catch(e) {}
 
-        const savedLogo = localStorage.getItem('dynasty_logo_data') || storeProfile.logo_url || null;
+        const savedLogo = localStorage.getItem('dinasty_logo_data') || storeProfile.logo_url || null;
 
         let itemsHtml = '';
         if (data.items && data.items.length > 0) {

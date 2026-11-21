@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Daftar Barang - Dynasty</title>
+    <title>Daftar Barang - Dinasty</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; font-size: 10px; color: #1a1a2e; background: #fff; }
@@ -113,7 +113,7 @@
 @endif
 
 <div class="page-header">
-    <div class="brand">Dynasty</div>
+    <div class="brand">Dinasty</div>
     <div class="report-title">Laporan Daftar Barang</div>
     <div class="meta">Dicetak: {{ now()->setTimezone('Asia/Jakarta')->format('d F Y, H:i') }} WIB &nbsp;|&nbsp; Total Data: {{ $produks->count() }} barang</div>
 </div>
@@ -206,7 +206,7 @@
 </div>
 
 <div class="footer">
-    Dynasty POS System &nbsp;|&nbsp; Laporan Daftar Barang digenerate pada {{ now()->setTimezone('Asia/Jakarta')->format('d F Y H:i') }} WIB
+    Dinasty POS System &nbsp;|&nbsp; Laporan Daftar Barang digenerate pada {{ now()->setTimezone('Asia/Jakarta')->format('d F Y H:i') }} WIB
 </div>
 
 </body>

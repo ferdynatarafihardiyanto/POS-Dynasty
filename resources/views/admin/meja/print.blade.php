@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak QR Meja {{ $meja->table_number }} - Dynasty Cafe</title>
+    <title>Cetak QR Meja {{ $meja->table_number }} - Dinasty Cafe</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -153,7 +153,7 @@
 
     <!-- Printable Card -->
     <div class="table-card">
-        <div class="cafe-badge">☕ Dynasty Cafe</div>
+        <div class="cafe-badge">☕ Dinasty Cafe</div>
         <div class="table-title">Meja {{ $meja->table_number }}</div>
         @if(!empty($meja->name))
             <div class="table-desc">{{ $meja->name }}</div>

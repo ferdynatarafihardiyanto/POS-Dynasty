@@ -193,7 +193,7 @@ export default function MenuDetailModal({ item, onClose }) {
                             Detail Menu
                         </h2>
                         <p className="text-[11px] font-medium text-[#82181A]">
-                            Kedai Dynasty • Meja {tableInfo.number}
+                            Kedai Dinasty • Meja {tableInfo.number}
                         </p>
                     </div>
 

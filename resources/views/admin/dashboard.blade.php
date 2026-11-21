@@ -5,7 +5,7 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <h2 class="fw-bold mb-3">Selamat Datang di Dynasty Cafe!</h2>
+        <h2 class="fw-bold mb-3">Selamat Datang di Dinasty Cafe!</h2>
         <p class="text-muted">Ringkasan penjualan hari ini ({{ \Carbon\Carbon::parse($laporanHariIni['tanggal'])->translatedFormat('d F Y') }}).</p>
     </div>
 </div>

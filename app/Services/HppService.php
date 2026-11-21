@@ -7,27 +7,15 @@ use App\Models\Produk;
 class HppService
 {
     /**
-     * Hitung HPP produk berdasarkan resep dan harga beli bahan baku.
-     * HPP = Σ (jumlah bahan baku × harga beli per unit)
+     * Hitung HPP produk berdasarkan resep dan harga beli bahan baku atau bundling.
+     * HPP Resep = Σ (jumlah bahan baku × harga beli per unit)
      *
      * @param Produk $produk
      * @return float
      */
     public function hitungHppProduk(Produk $produk): float
     {
-        // Jika produk tidak memiliki resep, kembalikan HPP dari database produk
-        if (!$produk->resep) {
-            return (float) $produk->hpp;
-        }
-
-        $hpp = 0;
-
-        foreach ($produk->resep->detail as $dtl) {
-            // jumlah bahan baku × harga beli per unit bahan baku
-            $hpp += $dtl->jumlah * $dtl->bahanBaku->harga_beli;
-        }
-
-        return (float) $hpp;
+        return $produk->hitungHpp();
     }
 
     /**
@@ -41,5 +29,33 @@ class HppService
     public function hitungMargin(float $hargaJual, float $hpp): float
     {
         return $hargaJual - $hpp;
+    }
+
+    /**
+     * Sinkronisasi HPP satu produk ke database.
+     *
+     * @param Produk $produk
+     * @return float
+     */
+    public function syncProdukHpp(Produk $produk): float
+    {
+        $hpp = $produk->hitungHpp();
+        $produk->hpp = (int) round($hpp);
+        $produk->saveQuietly();
+        return $hpp;
+    }
+
+    /**
+     * Sinkronisasi seluruh HPP produk olahan dan bundling.
+     */
+    public function syncAllHpp(): void
+    {
+        $produks = Produk::with(['resep.detail.bahanBaku', 'bundleItems.item'])->get();
+        foreach ($produks as $p) {
+            if ($p->isResep() || $p->isBundle()) {
+                $p->hpp = (int) round($p->hitungHpp());
+                $p->saveQuietly();
+            }
+        }
     }
 }

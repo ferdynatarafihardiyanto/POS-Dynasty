@@ -67,7 +67,7 @@
                 </button>
                 <div>
                     <h4 class="mb-0 fw-bold fs-5 fs-md-4">Kasir</h4>
-                    <div class="text-danger fw-bold small" style="font-size: 0.72rem;">KEDAI DYNASTY</div>
+                    <div class="text-danger fw-bold small" style="font-size: 0.72rem;">KEDAI DINASTY</div>
                 </div>
             </div>
 
@@ -507,7 +507,7 @@
                         <div class="col-md-6 d-flex justify-content-center">
                             <div class="receipt-card bg-white p-4 shadow-sm text-dark w-100" style="max-width: 330px; font-family: 'Courier New', Courier, monospace; font-size: 12px; border: 1px dashed #cbd5e1; border-radius: 8px;">
                                 <div class="text-center mb-2">
-                                    <div class="fw-bold" style="font-size: 16px;">KEDAI DYNASTY</div>
+                                    <div class="fw-bold" style="font-size: 16px;">KEDAI DINASTY</div>
                                     <div style="font-size: 11px;">Jl. Contoh No. 123</div>
                                     <div style="font-size: 10px;">Telp: 08123456789</div>
                                 </div>
@@ -1819,7 +1819,7 @@ document.addEventListener('alpine:init', () => {
                         if (window.speechSynthesis.speaking) {
                             window.speechSynthesis.cancel();
                         }
-                        const utterance = new SpeechSynthesisUtterance("Notifikasi suara kasir POS Dynasty aktif. Pesanan meja masuk yang sudah dibayar akan bersuara otomatis.");
+                        const utterance = new SpeechSynthesisUtterance("Notifikasi suara kasir POS Dinasty aktif. Pesanan meja masuk yang sudah dibayar akan bersuara otomatis.");
                         utterance.lang = 'id-ID';
                         utterance.rate = 0.95;
                         const voices = window.speechSynthesis.getVoices() || [];
