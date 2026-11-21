@@ -658,12 +658,17 @@ document.addEventListener('alpine:init', () => {
         },
         
         loadStoreProfile() {
+            const sanitize = (obj) => {
+                if (!obj) return obj;
+                return JSON.parse(JSON.stringify(obj).replace(/dynasty/gi, (m) => m === 'DYNASTY' ? 'DINASTY' : (m === 'Dynasty' ? 'Dinasty' : 'dinasty')));
+            };
+
             try {
-                const saved = localStorage.getItem('dinasty_store_profile');
+                const saved = localStorage.getItem('dinasty_store_profile') || localStorage.getItem('dynasty_store_profile');
                 if (saved) {
-                    this.storeProfile = Object.assign({}, this.storeProfile, JSON.parse(saved));
+                    this.storeProfile = Object.assign({}, this.storeProfile, sanitize(JSON.parse(saved)));
                 }
-                const savedLogo = localStorage.getItem('dinasty_logo_data');
+                const savedLogo = localStorage.getItem('dinasty_logo_data') || localStorage.getItem('dynasty_logo_data');
                 if (savedLogo) {
                     this.storeLogo = savedLogo;
                 }
@@ -673,11 +678,12 @@ document.addEventListener('alpine:init', () => {
                 .then(res => res.json())
                 .then(res => {
                     if (res.success && res.data) {
-                        this.storeProfile = Object.assign({}, this.storeProfile, res.data);
-                        if (res.data.logo_url) {
-                            this.storeLogo = res.data.logo_url;
-                        } else if (res.data.logo_data) {
-                            this.storeLogo = res.data.logo_data;
+                        const cleanData = sanitize(res.data);
+                        this.storeProfile = Object.assign({}, this.storeProfile, cleanData);
+                        if (cleanData.logo_url) {
+                            this.storeLogo = cleanData.logo_url;
+                        } else if (cleanData.logo_data) {
+                            this.storeLogo = cleanData.logo_data;
                         }
                     }
                 })

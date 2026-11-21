@@ -12,7 +12,10 @@ export default function CustomerReceiptModal({ isOpen, onClose, order }) {
     const [storeProfile, setStoreProfile] = useState(() => {
         try {
             const saved = localStorage.getItem('dinasty_store_profile') || localStorage.getItem('dynasty_store_profile');
-            if (saved) return JSON.parse(saved);
+            if (saved) {
+                const cleaned = saved.replace(/dynasty/gi, (m) => m === 'DYNASTY' ? 'DINASTY' : (m === 'Dynasty' ? 'Dinasty' : 'dinasty'));
+                return JSON.parse(cleaned);
+            }
         } catch (e) {}
         return {
             namaToko: 'Kedai Kopi Dinasty',
@@ -39,10 +42,12 @@ export default function CustomerReceiptModal({ isOpen, onClose, order }) {
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.data) {
-                    setStoreProfile(res.data);
-                    if (res.data.logo_url) {
-                        setStoreLogo(res.data.logo_url);
-                    } else if (res.data.logo_data) {
+                    const cleanStr = JSON.stringify(res.data).replace(/dynasty/gi, (m) => m === 'DYNASTY' ? 'DINASTY' : (m === 'Dynasty' ? 'Dinasty' : 'dinasty'));
+                    const cleanData = JSON.parse(cleanStr);
+                    setStoreProfile(cleanData);
+                    if (cleanData.logo_url) {
+                        setStoreLogo(cleanData.logo_url);
+                    } else if (cleanData.logo_data) {
                         setStoreLogo(res.data.logo_data);
                     }
                 }

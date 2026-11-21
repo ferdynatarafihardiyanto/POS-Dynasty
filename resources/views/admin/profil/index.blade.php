@@ -987,11 +987,16 @@ Silakan datang kembali.</textarea>
             checkEmptyCustomFields();
         };
 
+        const sanitizeData = (data) => {
+            if (!data) return data;
+            return JSON.parse(JSON.stringify(data).replace(/dynasty/gi, (m) => m === 'DYNASTY' ? 'DINASTY' : (m === 'Dynasty' ? 'Dinasty' : 'dinasty')));
+        };
+
         // Check local storage first
-        const saved = localStorage.getItem('dinasty_store_profile');
+        const saved = localStorage.getItem('dinasty_store_profile') || localStorage.getItem('dynasty_store_profile');
         if (saved) {
             try {
-                applyProfileToForm(JSON.parse(saved));
+                applyProfileToForm(sanitizeData(JSON.parse(saved)));
             } catch(e) {
                 console.error(e);
             }
@@ -1002,7 +1007,7 @@ Silakan datang kembali.</textarea>
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.data) {
-                    applyProfileToForm(res.data);
+                    applyProfileToForm(sanitizeData(res.data));
                 }
             })
             .catch(() => {});

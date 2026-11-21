@@ -296,6 +296,9 @@ class PesananController extends Controller
         $filePath = storage_path('app/store_profile.json');
         if (file_exists($filePath)) {
             $content = file_get_contents($filePath);
+            $content = str_replace('Dynasty', 'Dinasty', $content);
+            $content = str_replace('DYNASTY', 'DINASTY', $content);
+            $content = str_replace('dynasty', 'dinasty', $content);
             $data = json_decode($content, true);
             if ($data) {
                 return response()->json(['success' => true, 'data' => $data]);
