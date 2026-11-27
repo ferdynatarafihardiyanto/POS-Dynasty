@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { X, CheckCircle2, Loader2, User, QrCode, Building2 } from 'lucide-react';
+import { X, CheckCircle2, Loader2, User, QrCode, Building2, UploadCloud, Trash2 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export default function CustomerPayModal({ isOpen, onClose, order }) {
     const { tableInfo, setActiveOrder, setOrders, showToast } = useCart();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [proofImage, setProofImage] = useState(null);
+    const [proofPreview, setProofPreview] = useState(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setProofImage(file);
+            const previewUrl = URL.createObjectURL(file);
+            setProofPreview(previewUrl);
+        }
+    };
+
+    const handleRemoveProof = () => {
+        setProofImage(null);
+        if (proofPreview) {
+            URL.revokeObjectURL(proofPreview);
+            setProofPreview(null);
+        }
+    };
     const customerName = (order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || 'Pelanggan').trim();
 
     if (!isOpen || !order) return null;
@@ -150,8 +169,14 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                 {/* Header */}
                 <div className="sticky top-0 z-10 bg-white px-4 py-3.5 border-b border-stone-200 flex items-center justify-between">
                     <div>
+                        {/* [HIDDEN / BACKUP] MIDTRANS TITLE:
                         <h3 className="font-display font-bold text-stone-900 text-sm">
                             Pembayaran Midtrans Snap
+                        </h3>
+                        */}
+                        <h3 className="font-display font-bold text-stone-900 text-sm flex items-center gap-1.5">
+                            <QrCode className="w-4 h-4 text-[#881B1E]" />
+                            <span>Pembayaran QRIS</span>
                         </h3>
                         <p className="text-[11px] text-stone-500 font-medium mt-0.5">
                             Dine-in • Meja {order.tableNumber || tableInfo.number} • #{order.orderNumber}
@@ -184,7 +209,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </span>
                     </div>
 
-                    {/* Info Nama Pemesan (Tercatat dari Keranjang Pesanan) */}
+                    {/* Info Nama Pemesan (Tercatat dari Keranjang Pesanan - TETAP DITAMPILKAN) */}
                     <div className="bg-white p-3.5 rounded-xl border border-stone-200 shadow-2xs space-y-2">
                         <div className="flex items-center justify-between text-xs font-bold text-stone-800">
                             <span className="flex items-center gap-1.5">
@@ -207,7 +232,111 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </p>
                     </div>
 
-                    {/* Midtrans Channel Highlight Card */}
+                    {/* QR Code Pembayaran QRIS */}
+                    <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs text-center space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                            <span className="text-xs font-bold uppercase tracking-wider text-stone-900 flex items-center gap-1.5">
+                                <QrCode className="w-4 h-4 text-[#881B1E]" />
+                                <span>Scan QRIS Pembayaran</span>
+                            </span>
+                            <span className="text-[10px] bg-red-50 text-[#881B1E] font-bold px-2 py-0.5 rounded-md border border-red-200">
+                                QRIS Statis
+                            </span>
+                        </div>
+
+                        {/* Gambar QR Code Statis */}
+                        <div className="flex flex-col items-center justify-center p-3 bg-stone-50 rounded-xl border border-dashed border-stone-300">
+                            <img 
+                                src="/images/qris.jpg"
+                                alt="QRIS Kedai Dinasty"
+                                className="max-h-56 sm:max-h-64 w-auto object-contain bg-white p-2 rounded-xl shadow-xs"
+                                onError={(e) => {
+                                    if (!e.target.dataset.triedPng) {
+                                        e.target.dataset.triedPng = 'true';
+                                        e.target.src = '/images/qris.png';
+                                    }
+                                }}
+                            />
+                            <p className="text-[11px] text-stone-500 font-medium mt-2">
+                                Scan via GoPay, OVO, DANA, ShopeePay, BCA, atau m-Banking
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Kotak Upload Bukti Pembayaran */}
+                    <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs space-y-2.5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                                <UploadCloud className="w-4 h-4 text-[#881B1E]" />
+                                <span>Upload Bukti Pembayaran</span>
+                            </span>
+                            <span className="text-[10px] text-amber-800 bg-amber-50 font-bold px-2 py-0.5 rounded-md border border-amber-200/80">
+                                Wajib Screenshot
+                            </span>
+                        </div>
+
+                        {!proofPreview ? (
+                            <label className="flex flex-col items-center justify-center w-full py-5 px-4 border-2 border-dashed border-stone-300 hover:border-[#881B1E] rounded-xl bg-stone-50 hover:bg-amber-50/30 transition-all cursor-pointer group">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                                <div className="w-10 h-10 rounded-full bg-red-50 text-[#881B1E] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                                    <UploadCloud className="w-5 h-5" />
+                                </div>
+                                <span className="text-xs font-bold text-stone-800 group-hover:text-[#881B1E]">
+                                    Pilih Foto / Screenshot Transfer
+                                </span>
+                                <span className="text-[10px] text-stone-400 mt-0.5">
+                                    Format JPG, PNG, atau WEBP (Maks 5MB)
+                                </span>
+                            </label>
+                        ) : (
+                            <div className="relative rounded-xl border border-stone-200 bg-stone-50 p-2.5 flex items-center gap-3">
+                                <img
+                                    src={proofPreview}
+                                    alt="Preview Bukti Transfer"
+                                    className="w-16 h-16 rounded-lg object-cover border border-stone-200 shrink-0 bg-white"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-stone-900 truncate">
+                                        {proofImage?.name || 'Bukti_Transfer.jpg'}
+                                    </p>
+                                    <p className="text-[10px] text-stone-500 mt-0.5">
+                                        {proofImage?.size ? `${(proofImage.size / 1024).toFixed(0)} KB • ` : ''}Siap dikonfirmasi
+                                    </p>
+                                    <label className="text-[11px] text-[#881B1E] hover:underline font-bold cursor-pointer mt-1 inline-block">
+                                        Ganti Foto
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                    </label>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveProof}
+                                    className="p-1.5 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                                    title="Hapus Foto"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                        <p className="text-[10px] text-stone-400 leading-tight">
+                            Pastikan nominal transfer di bukti pembayaran sesuai dengan total tagihan di atas.
+                        </p>
+                    </div>
+
+                    {/* ========================================================
+                        [HIDDEN / BACKUP] METODE RESMI MIDTRANS SNAP
+                        Fungsi dan kode ini disimpan utuh, tidak dihapus.
+                    ======================================================== */}
+                    {/*
                     <div className="bg-[#FFFBEB] p-3.5 rounded-xl border-2 border-[#FBBF24] shadow-2xs space-y-3">
                         <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
                             <span className="text-xs font-bold uppercase text-stone-900 tracking-wide">
@@ -255,11 +384,17 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                             </div>
                         </div>
                     </div>
+                    */}
 
                 </div>
 
                 {/* Footer Action */}
                 <div className="p-4 bg-white border-t border-stone-200 space-y-2">
+                    {/* ========================================================
+                        [HIDDEN / BACKUP] TOMBOL RESMI MIDTRANS SNAP
+                        Fungsi handleMidtransPayment tetap aman dan tidak dihapus.
+                    ======================================================== */}
+                    {/*
                     <button
                         type="button"
                         onClick={handleMidtransPayment}
@@ -274,6 +409,16 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         ) : (
                             <span>BAYAR VIA MIDTRANS SNAP</span>
                         )}
+                    </button>
+                    */}
+
+                    {/* Tombol Baru: Sudah Membayar (Visual Only) */}
+                    <button
+                        type="button"
+                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                    >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>SUDAH MEMBAYAR</span>
                     </button>
 
                     <button

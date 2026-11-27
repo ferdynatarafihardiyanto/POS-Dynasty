@@ -23,15 +23,11 @@ export default function Header() {
                         <span className="text-[9px] uppercase tracking-wider text-amber-300 font-medium leading-none">Meja</span>
                         <span className="font-bold text-white text-xs sm:text-sm leading-tight">{tableInfo.number}</span>
                     </div>
-                    <div>
-                        <h1 className="font-display font-bold text-sm sm:text-base text-white tracking-tight leading-tight">
-                            Kedai Dinasty
-                        </h1>
-                        <p className="text-[11px] text-amber-100/80 flex items-center gap-1.5 mt-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-                            <span>Dine-In • Meja {tableInfo.number}</span>
-                        </p>
-                    </div>
+                    <img 
+                        src="/images/Logo.png" 
+                        alt="Logo Dinasty" 
+                        className="h-12 sm:h-14 w-auto object-contain"
+                    />
                 </div>
 
                 {/* Right: Actions */}
