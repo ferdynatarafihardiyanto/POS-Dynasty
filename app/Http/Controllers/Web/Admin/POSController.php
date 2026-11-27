@@ -10,6 +10,7 @@ use App\Services\PesananService;
 use App\Services\PembayaranService;
 use App\Http\Requests\StorePosOrderRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Exception;
 
 class POSController extends Controller
@@ -84,49 +85,7 @@ class POSController extends Controller
             ->whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'disajikan'])
             ->orderBy('id', 'desc')
             ->get()
-            ->map(function ($p) {
-                $rawCatatan = $p->catatan;
-                $catatanKhusus = '';
-                if (!empty($rawCatatan)) {
-                    if (preg_match('/^Pemesan:\s*[^|]+(?:\s*\|\s*(.*))?$/i', $rawCatatan, $m)) {
-                        $catatanKhusus = isset($m[1]) ? trim($m[1]) : '';
-                    } elseif (!str_starts_with($rawCatatan, 'Pesanan Meja')) {
-                        if (str_contains($rawCatatan, ' - ')) {
-                            $parts = explode(' - ', $rawCatatan, 2);
-                            $catatanKhusus = trim($parts[1]);
-                        }
-                    }
-                }
-
-                return [
-                    'id' => $p->id,
-                    'nomor_pesanan' => $p->nomor_pesanan,
-                    'meja_id' => $p->meja_id,
-                    'meja_nomor' => $p->meja ? ($p->meja->table_number ? str_pad($p->meja->table_number, 2, '0', STR_PAD_LEFT) : $p->meja->id) : '-',
-                    'meja_nama' => $p->meja ? ($p->meja->name ?? ('Meja ' . $p->meja->table_number)) : 'Meja Umum',
-                    'nama_pelanggan' => $p->nama_pelanggan,
-                    'catatan_khusus' => $catatanKhusus,
-                    'status' => $p->status,
-                    'status_pembayaran' => $p->status_pembayaran,
-                    'metode_pembayaran' => $p->pembayaran ? $p->pembayaran->metode_pembayaran : null,
-                    'total_harga' => $p->total_harga,
-                    'catatan' => $p->catatan,
-                    'waktu' => $p->created_at ? $p->created_at->timezone('Asia/Jakarta')->format('H:i') : '-',
-                    'created_at' => $p->created_at ? $p->created_at->toISOString() : null,
-                    'items' => $p->detailPesanan->map(function ($d) {
-                        return [
-                            'id' => $d->id,
-                            'produk_id' => $d->produk_id,
-                            'nama_produk' => $d->nama_produk,
-                            'harga' => $d->harga,
-                            'jumlah' => $d->jumlah,
-                            'subtotal' => $d->subtotal,
-                            'catatan' => $d->catatan,
-                            'modifiers' => $d->modifiers_snapshot ? json_decode($d->modifiers_snapshot, true) : []
-                        ];
-                    })
-                ];
-            });
+            ->map(fn ($p) => $p->toPosPayload());
 
         return response()->json([
             'success' => true,
@@ -138,7 +97,7 @@ class POSController extends Controller
     public function ubahStatusPesanan(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string|in:menunggu_pembayaran,diproses,disajikan,selesai,batal'
+            'status' => 'required|string|in:menunggu_pembayaran,menunggu_konfirmasi,diproses,disajikan,selesai,batal'
         ]);
 
         $pesanan = \App\Models\Pesanan::with(['meja', 'detailPesanan'])->find($id);
@@ -209,5 +168,137 @@ class POSController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    /**
+     * Verifikasi & konfirmasi 1-klik bukti pembayaran QRIS/Transfer dari pelanggan.
+     */
+    public function konfirmasiBukti(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'nullable|string|in:tunai,cash,qris,debit,transfer'
+        ]);
+
+        try {
+            $pesanan = \App\Models\Pesanan::with(['detailPesanan.produk', 'meja', 'pembayaran'])->findOrFail($id);
+
+            if ($pesanan->status_pembayaran === 'dibayar') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan ' . $pesanan->nomor_pesanan . ' sudah dikonfirmasi lunas sebelumnya.'
+                ], 400);
+            }
+
+            $methodMap = [
+                'tunai' => 'cash',
+                'cash' => 'cash',
+                'qris' => 'qris',
+                'debit' => 'transfer',
+                'transfer' => 'transfer',
+            ];
+
+            $requestedMethod = $request->input('payment_method') ?: ($pesanan->metode_pembayaran_customer ?: 'qris');
+            $backendMethod = $methodMap[strtolower($requestedMethod)] ?? 'qris';
+
+            $pembayaran = $this->pembayaranService->prosesPembayaran(
+                $pesanan->id,
+                $backendMethod,
+                $pesanan->total_harga
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembayaran pesanan ' . $pesanan->nomor_pesanan . ' berhasil dikonfirmasi! Pesanan sedang dimasak.',
+                'data' => [
+                    'pesanan_id' => $pesanan->id,
+                    'nomor_pesanan' => $pesanan->nomor_pesanan,
+                    'transaksi' => $pembayaran->nomor_transaksi,
+                    'metode_pembayaran' => $pembayaran->metode_pembayaran,
+                    'kembalian' => $pembayaran->kembalian,
+                    'total_harga' => $pesanan->total_harga
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Tolak bukti pembayaran yang tidak valid / dana belum masuk agar pelanggan unggah ulang.
+     */
+    public function tolakBukti(Request $request, $id)
+    {
+        $request->validate([
+            'alasan' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            $pesanan = \App\Models\Pesanan::with('pembayaran')->findOrFail($id);
+
+            if ($pesanan->status_pembayaran === 'dibayar') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pesanan sudah berstatus lunas, tidak dapat menolak bukti.'
+                ], 400);
+            }
+
+            if ($pesanan->bukti_pembayaran && Storage::disk('public')->exists($pesanan->bukti_pembayaran)) {
+                Storage::disk('public')->delete($pesanan->bukti_pembayaran);
+            }
+
+            $alasan = trim((string) $request->input('alasan'));
+            $pesanan->bukti_pembayaran = null;
+            $pesanan->waktu_upload_bukti = null;
+            $pesanan->catatan_tolak_bukti = $alasan !== ''
+                ? $alasan
+                : 'Bukti pembayaran tidak valid atau dana belum masuk mutasi. Silakan unggah ulang.';
+            $pesanan->status = 'menunggu_pembayaran';
+            $pesanan->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bukti pembayaran pesanan ' . $pesanan->nomor_pesanan . ' ditolak. Pelanggan diminta mengunggah ulang.',
+                'data' => [
+                    'id' => $pesanan->id,
+                    'nomor_pesanan' => $pesanan->nomor_pesanan,
+                    'status' => $pesanan->status,
+                    'catatan_tolak_bukti' => $pesanan->catatan_tolak_bukti
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+    }
+
+    /**
+     * Tampilkan file gambar bukti pembayaran untuk Admin/Kasir tanpa bergantung symlink storage.
+     */
+    public function lihatBukti($id)
+    {
+        $pesanan = \App\Models\Pesanan::findOrFail($id);
+
+        if (empty($pesanan->bukti_pembayaran)) {
+            abort(404, 'Bukti pembayaran tidak ditemukan.');
+        }
+
+        $path = $pesanan->bukti_pembayaran;
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return redirect()->away($path);
+        }
+
+        $cleanPath = ltrim(preg_replace('#^/?storage/#', '', $path), '/');
+        if (!Storage::disk('public')->exists($cleanPath)) {
+            abort(404, 'File bukti pembayaran tidak ditemukan di penyimpanan.');
+        }
+
+        return response()->file(Storage::disk('public')->path($cleanPath), [
+            'Cache-Control' => 'private, max-age=300'
+        ]);
     }
 }

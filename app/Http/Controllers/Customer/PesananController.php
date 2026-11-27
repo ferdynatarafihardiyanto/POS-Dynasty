@@ -10,6 +10,7 @@ use App\Models\DetailPesanan;
 use App\Models\CafeTable;
 use App\Models\Produk;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PesananController extends Controller
 {
@@ -19,6 +20,7 @@ class PesananController extends Controller
             'qr_token' => 'required|string',
             'catatan' => 'nullable|string',
             'nama_pelanggan' => 'nullable|string|max:100',
+            'metode_pembayaran' => 'nullable|string|in:qris,transfer,kasir',
             'produk' => 'required|array|min:1',
             'produk.*.produk_id' => 'required|integer',
             'produk.*.jumlah' => 'required|integer|min:1',
@@ -49,6 +51,11 @@ class PesananController extends Controller
 
             $pesanan = $pesananService->buatPesanan($meja->id, $request->produk, $catatanPesanan);
 
+            if ($request->filled('metode_pembayaran')) {
+                $pesanan->metode_pembayaran_customer = $request->metode_pembayaran;
+                $pesanan->save();
+            }
+
             return response()->json([
                 'message' => 'Pesanan berhasil dibuat',
                 'data' => [
@@ -56,6 +63,7 @@ class PesananController extends Controller
                     'meja' => $meja->table_number,
                     'status' => $pesanan->status,
                     'status_pembayaran' => $pesanan->status_pembayaran,
+                    'metode_pembayaran_customer' => $pesanan->metode_pembayaran_customer,
                     'total_harga' => $pesanan->total_harga,
                     'catatan' => $pesanan->catatan,
                     'detail' => $pesanan->detailPesanan->map(function ($d) {
@@ -138,6 +146,10 @@ class PesananController extends Controller
                     'status' => $p->status,
                     'status_pembayaran' => $p->status_pembayaran,
                     'metode_pembayaran' => $p->pembayaran ? $p->pembayaran->metode_pembayaran : null,
+                    'metode_pembayaran_customer' => $p->metode_pembayaran_customer,
+                    'bukti_pembayaran_url' => $p->bukti_pembayaran_url,
+                    'waktu_upload_bukti' => $p->waktu_upload_bukti ? $p->waktu_upload_bukti->toISOString() : null,
+                    'catatan_tolak_bukti' => $p->catatan_tolak_bukti,
                     'total_harga' => $p->total_harga,
                     'catatan' => $p->catatan,
                     'created_at' => $p->created_at ? $p->created_at->toISOString() : null,
@@ -194,6 +206,10 @@ class PesananController extends Controller
                 'status' => $pesanan->status,
                 'status_pembayaran' => $pesanan->status_pembayaran,
                 'metode_pembayaran' => $pesanan->pembayaran ? $pesanan->pembayaran->metode_pembayaran : null,
+                'metode_pembayaran_customer' => $pesanan->metode_pembayaran_customer,
+                'bukti_pembayaran_url' => $pesanan->bukti_pembayaran_url,
+                'waktu_upload_bukti' => $pesanan->waktu_upload_bukti ? $pesanan->waktu_upload_bukti->toISOString() : null,
+                'catatan_tolak_bukti' => $pesanan->catatan_tolak_bukti,
                 'total_harga' => $pesanan->total_harga,
                 'catatan' => $pesanan->catatan,
                 'created_at' => $pesanan->created_at ? $pesanan->created_at->toISOString() : null,
@@ -230,16 +246,7 @@ class PesananController extends Controller
         }
 
         if ($request->filled('nama_pelanggan')) {
-            $namaPelanggan = trim($request->nama_pelanggan);
-            $currentCatatan = $pesanan->catatan ?? '';
-            if (preg_match('/^Pemesan:\s*([^|]+)(?:\s*\|\s*(.*))?$/i', $currentCatatan, $matches)) {
-                $extraNote = isset($matches[2]) ? trim($matches[2]) : '';
-                $pesanan->catatan = "Pemesan: {$namaPelanggan}" . ($extraNote ? " | {$extraNote}" : "");
-            } elseif (empty($currentCatatan) || str_starts_with($currentCatatan, 'Pesanan Meja')) {
-                $pesanan->catatan = "Pemesan: {$namaPelanggan}";
-            } elseif (!str_contains($currentCatatan, $namaPelanggan)) {
-                $pesanan->catatan = "Pemesan: {$namaPelanggan} | {$currentCatatan}";
-            }
+            $pesanan->syncCustomerNameInCatatan($request->nama_pelanggan);
             $pesanan->save();
         }
 
@@ -289,6 +296,116 @@ class PesananController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
+    }
+
+    /**
+     * Unggah screenshot bukti pembayaran QRIS/Transfer dari pelanggan untuk diverifikasi kasir.
+     */
+    public function uploadBuktiPembayaran(Request $request, $nomor_pesanan)
+    {
+        $nomor_pesanan = urldecode(ltrim($nomor_pesanan, '#'));
+
+        $request->validate([
+            'bukti_pembayaran' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'bukti_base64' => 'nullable|string',
+            'metode_pembayaran' => 'nullable|string|in:qris,transfer,kasir',
+            'nama_pelanggan' => 'nullable|string|max:100',
+            'qr_token' => 'nullable|string',
+        ]);
+
+        $pesanan = Pesanan::with(['meja', 'pembayaran'])
+            ->where('nomor_pesanan', $nomor_pesanan)
+            ->first();
+
+        if (!$pesanan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan'
+            ], 404);
+        }
+
+        if ($pesanan->status_pembayaran === 'dibayar') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan ini sudah lunas dikonfirmasi!',
+                'data' => [
+                    'nomor_pesanan' => $pesanan->nomor_pesanan,
+                    'status' => $pesanan->status,
+                    'status_pembayaran' => 'dibayar',
+                    'bukti_pembayaran_url' => $pesanan->bukti_pembayaran_url,
+                ]
+            ]);
+        }
+
+        $metode = $request->input('metode_pembayaran', 'qris');
+
+        if ($metode !== 'kasir' && !$request->hasFile('bukti_pembayaran') && !$request->filled('bukti_base64')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Harap unggah foto/screenshot bukti pembayaran terlebih dahulu.'
+            ], 422);
+        }
+
+        $storedPath = $pesanan->bukti_pembayaran;
+        $cleanOrderNum = preg_replace('/[^a-zA-Z0-9_-]/', '', $pesanan->nomor_pesanan);
+
+        if ($request->hasFile('bukti_pembayaran')) {
+            if ($storedPath && Storage::disk('public')->exists($storedPath)) {
+                Storage::disk('public')->delete($storedPath);
+            }
+            $file = $request->file('bukti_pembayaran');
+            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $filename = $cleanOrderNum . '_' . time() . '.' . $ext;
+            $storedPath = $file->storeAs('bukti_pembayaran', $filename, 'public');
+        } elseif ($request->filled('bukti_base64')) {
+            $rawBase64 = $request->input('bukti_base64');
+            if (!preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/i', $rawBase64, $matches)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Format gambar bukti pembayaran tidak valid (gunakan JPG, PNG, atau WEBP).'
+                ], 422);
+            }
+            $decoded = base64_decode($matches[2], true);
+            if ($decoded === false || strlen($decoded) > 5 * 1024 * 1024) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ukuran atau format gambar bukti pembayaran tidak valid (maksimal 5MB).'
+                ], 422);
+            }
+            if ($storedPath && Storage::disk('public')->exists($storedPath)) {
+                Storage::disk('public')->delete($storedPath);
+            }
+            $ext = strtolower($matches[1]) === 'jpeg' ? 'jpg' : strtolower($matches[1]);
+            $filename = $cleanOrderNum . '_' . time() . '.' . $ext;
+            $storedPath = 'bukti_pembayaran/' . $filename;
+            Storage::disk('public')->put($storedPath, $decoded);
+        }
+
+        if ($request->filled('nama_pelanggan')) {
+            $pesanan->syncCustomerNameInCatatan($request->nama_pelanggan);
+        }
+
+        $pesanan->bukti_pembayaran = $storedPath;
+        $pesanan->metode_pembayaran_customer = $metode;
+        $pesanan->waktu_upload_bukti = now();
+        $pesanan->catatan_tolak_bukti = null;
+        $pesanan->status = $metode === 'kasir' ? 'menunggu_pembayaran' : 'menunggu_konfirmasi';
+        $pesanan->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $metode === 'kasir'
+                ? 'Pesanan tercatat untuk dibayar di kasir.'
+                : 'Bukti pembayaran berhasil dikirim! Kasir sedang memverifikasi.',
+            'data' => [
+                'nomor_pesanan' => $pesanan->nomor_pesanan,
+                'status' => $pesanan->status,
+                'status_pembayaran' => $pesanan->status_pembayaran,
+                'metode_pembayaran_customer' => $pesanan->metode_pembayaran_customer,
+                'bukti_pembayaran_url' => $pesanan->bukti_pembayaran_url,
+                'waktu_upload_bukti' => $pesanan->waktu_upload_bukti ? $pesanan->waktu_upload_bukti->toISOString() : null,
+            ]
+        ]);
     }
 
     public function getProfilToko()

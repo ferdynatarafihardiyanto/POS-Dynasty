@@ -33,51 +33,11 @@ class POSController extends Controller
 
     public function pesananAktif()
     {
-        $pesanans = Pesanan::with(['meja', 'detailPesanan'])
+        $pesanans = Pesanan::with(['meja', 'detailPesanan', 'pembayaran'])
             ->whereIn('status', ['menunggu_pembayaran', 'menunggu_konfirmasi', 'diproses', 'disajikan'])
             ->orderBy('id', 'desc')
             ->get()
-            ->map(function ($p) {
-                $rawCatatan = $p->catatan;
-                $catatanKhusus = '';
-                if (!empty($rawCatatan)) {
-                    if (preg_match('/^Pemesan:\s*[^|]+(?:\s*\|\s*(.*))?$/i', $rawCatatan, $m)) {
-                        $catatanKhusus = isset($m[1]) ? trim($m[1]) : '';
-                    } elseif (!str_starts_with($rawCatatan, 'Pesanan Meja')) {
-                        if (str_contains($rawCatatan, ' - ')) {
-                            $parts = explode(' - ', $rawCatatan, 2);
-                            $catatanKhusus = trim($parts[1]);
-                        }
-                    }
-                }
-
-                return [
-                    'id' => $p->id,
-                    'nomor_pesanan' => $p->nomor_pesanan,
-                    'meja_id' => $p->meja_id,
-                    'meja_nomor' => $p->meja ? ($p->meja->table_number ? str_pad($p->meja->table_number, 2, '0', STR_PAD_LEFT) : $p->meja->id) : '-',
-                    'meja_nama' => $p->meja ? ($p->meja->name ?? ('Meja ' . $p->meja->table_number)) : 'Meja Umum',
-                    'nama_pelanggan' => $p->nama_pelanggan,
-                    'catatan_khusus' => $catatanKhusus,
-                    'status' => $p->status,
-                    'total_harga' => $p->total_harga,
-                    'catatan' => $p->catatan,
-                    'waktu' => $p->created_at ? $p->created_at->timezone('Asia/Jakarta')->format('H:i') : '-',
-                    'created_at' => $p->created_at,
-                    'items' => $p->detailPesanan->map(function ($d) {
-                        return [
-                            'id' => $d->id,
-                            'produk_id' => $d->produk_id,
-                            'nama_produk' => $d->nama_produk,
-                            'harga' => $d->harga,
-                            'jumlah' => $d->jumlah,
-                            'subtotal' => $d->subtotal,
-                            'catatan' => $d->catatan,
-                            'modifiers' => $d->modifiers_snapshot ? json_decode($d->modifiers_snapshot, true) : []
-                        ];
-                    })
-                ];
-            });
+            ->map(fn ($p) => $p->toPosPayload());
 
         return response()->json([
             'message' => 'Daftar pesanan aktif berhasil diambil',

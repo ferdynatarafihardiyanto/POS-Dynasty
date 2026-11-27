@@ -409,6 +409,26 @@
                                     <div class="fw-bold small text-success" x-text="formatRupiah(getChange(selectedTrx))"></div>
                                 </div>
                             </div>
+
+                            <!-- Bukti Pembayaran Pelanggan (QRIS / Transfer) Jika Ada -->
+                            <template x-if="selectedTrx.bukti_pembayaran || selectedTrx.bukti_pembayaran_url">
+                                <div class="rounded-3 p-3 mb-4 border bg-light">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="text-muted small fw-bold text-uppercase">
+                                            <i class="bi bi-image text-danger me-1"></i> Bukti Pembayaran Customer
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle text-uppercase" style="font-size: 0.7rem;" x-text="selectedTrx.metode_pembayaran_customer || getPaymentMethod(selectedTrx)"></span>
+                                    </div>
+                                    <div class="text-center bg-white p-2 rounded-3 border">
+                                        <a :href="getAdminBuktiUrl(selectedTrx)" target="_blank" title="Buka gambar bukti pembayaran di tab baru">
+                                            <img :src="getAdminBuktiUrl(selectedTrx)" alt="Bukti Pembayaran" class="img-fluid rounded-2" style="max-height: 220px; object-fit: contain;">
+                                        </a>
+                                    </div>
+                                    <template x-if="selectedTrx.waktu_upload_bukti">
+                                        <div class="text-muted text-center mt-2" style="font-size: 0.72rem;" x-text="'Diunggah pada: ' + formatDate(selectedTrx.waktu_upload_bukti) + ' ' + formatTime(selectedTrx.waktu_upload_bukti)"></div>
+                                    </template>
+                                </div>
+                            </template>
                         </div>
                     </template>
                 </div>
@@ -962,6 +982,14 @@ document.addEventListener('alpine:init', () => {
         getChange(trx) {
             if (!trx) return 0;
             return this.getCashReceived(trx) - trx.total_harga;
+        },
+
+        getAdminBuktiUrl(trx) {
+            if (!trx) return null;
+            if (trx.bukti_pembayaran) {
+                return '/admin/pos/pesanan/' + trx.id + '/bukti';
+            }
+            return trx.bukti_pembayaran_url || null;
         }
     }));
 });

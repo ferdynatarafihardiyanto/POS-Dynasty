@@ -92,6 +92,7 @@ Route::get('/pesanan', [\App\Http\Controllers\Customer\PesananController::class,
 Route::get('/pesanan/riwayat', [\App\Http\Controllers\Customer\PesananController::class, 'riwayatPesanan']);
 Route::get('/pesanan/{nomor_pesanan}', [\App\Http\Controllers\Customer\PesananController::class, 'detailPesanan']);
 Route::post('/pesanan/{nomor_pesanan}/bayar', [\App\Http\Controllers\Customer\PesananController::class, 'bayarOnline']);
+Route::post('/pesanan/{nomor_pesanan}/upload-bukti', [\App\Http\Controllers\Customer\PesananController::class, 'uploadBuktiPembayaran']);
 
 // Public Store Profile (Untuk Sinkronisasi Struk & Identitas Kafe)
 Route::get('/profil-toko', [\App\Http\Controllers\Customer\PesananController::class, 'getProfilToko']);

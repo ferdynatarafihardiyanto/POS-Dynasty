@@ -33,7 +33,7 @@ class PembayaranService
                 throw new Exception("Pesanan tidak ditemukan.");
             }
 
-            if ($pesanan->status === 'dibayar' || $pesanan->status === 'selesai') {
+            if ($pesanan->pembayaran()->exists() || $pesanan->status === 'dibayar' || $pesanan->status === 'selesai') {
                 throw new Exception("Pesanan sudah dibayar.");
             }
 
@@ -90,6 +90,7 @@ class PembayaranService
             } else {
                 $pesanan->status = 'diproses';
             }
+            $pesanan->catatan_tolak_bukti = null;
             $pesanan->save();
 
             DB::commit();

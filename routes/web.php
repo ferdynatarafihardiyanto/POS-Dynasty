@@ -139,5 +139,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/pos/pesanan-aktif', [POSController::class, 'pesananAktif'])->name('pos.pesanan_aktif');
         Route::patch('/pos/pesanan/{id}/status', [POSController::class, 'ubahStatusPesanan'])->name('pos.ubah_status');
         Route::post('/pos/pesanan/{id}/bayar', [POSController::class, 'bayarPesananMeja'])->name('pos.bayar_pesanan');
+        Route::post('/pos/pesanan/{id}/konfirmasi-bukti', [POSController::class, 'konfirmasiBukti'])->name('pos.konfirmasi_bukti');
+        Route::post('/pos/pesanan/{id}/tolak-bukti', [POSController::class, 'tolakBukti'])->name('pos.tolak_bukti');
+        Route::get('/pos/pesanan/{id}/bukti', [POSController::class, 'lihatBukti'])->name('pos.lihat_bukti');
     });
 });
