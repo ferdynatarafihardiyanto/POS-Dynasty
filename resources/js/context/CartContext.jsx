@@ -622,11 +622,20 @@ export const CartProvider = ({ children }) => {
                         if (!current) return current;
                         const curNum = (current.orderNumber || '').replace(/^#/, '');
                         if (curNum !== updated.nomor_pesanan) return current;
-                        if (current.status === newStatus && current.status_pembayaran === newPayStatus) return current;
+                        if (
+                            current.status === newStatus && 
+                            current.status_pembayaran === newPayStatus &&
+                            current.bukti_pembayaran_url === updated.bukti_pembayaran_url &&
+                            current.waktu_upload_bukti === updated.waktu_upload_bukti
+                        ) return current;
                         return {
                             ...current,
                             status: newStatus,
                             status_pembayaran: newPayStatus,
+                            metode_pembayaran_customer: updated.metode_pembayaran_customer || current.metode_pembayaran_customer,
+                            bukti_pembayaran_url: updated.bukti_pembayaran_url || current.bukti_pembayaran_url,
+                            waktu_upload_bukti: updated.waktu_upload_bukti || current.waktu_upload_bukti,
+                            catatan_tolak_bukti: updated.catatan_tolak_bukti ?? current.catatan_tolak_bukti,
                             grandTotal: parseFloat(updated.total_harga) || current.grandTotal
                         };
                     });
@@ -639,6 +648,10 @@ export const CartProvider = ({ children }) => {
                                       ...o,
                                       status: newStatus,
                                       status_pembayaran: newPayStatus,
+                                      metode_pembayaran_customer: updated.metode_pembayaran_customer || o.metode_pembayaran_customer,
+                                      bukti_pembayaran_url: updated.bukti_pembayaran_url || o.bukti_pembayaran_url,
+                                      waktu_upload_bukti: updated.waktu_upload_bukti || o.waktu_upload_bukti,
+                                      catatan_tolak_bukti: updated.catatan_tolak_bukti ?? o.catatan_tolak_bukti,
                                       grandTotal: parseFloat(updated.total_harga) || o.grandTotal
                                   }
                                 : o;
@@ -659,7 +672,7 @@ export const CartProvider = ({ children }) => {
     const grandTotal = subtotal + taxPB1;
     const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-    const submitOrder = async (orderNotes = '', customerName = '') => {
+    const submitOrder = async (orderNotes = '', customerName = '', paymentMethod = 'qris') => {
         if (cartItems.length === 0) {
             showToast('Keranjang belanja masih kosong', 'warning');
             return null;
@@ -673,6 +686,7 @@ export const CartProvider = ({ children }) => {
         const payloadBackend = {
             qr_token: activeToken,
             nama_pelanggan: finalCustomerName,
+            metode_pembayaran: paymentMethod,
             catatan: finalCustomerName 
                 ? `Pemesan: ${finalCustomerName}${orderNotes ? ' | ' + orderNotes : ''}`
                 : (orderNotes || `Pesanan Meja ${tableInfo.number}`),
@@ -699,6 +713,7 @@ export const CartProvider = ({ children }) => {
                     nama_pelanggan: finalCustomerName,
                     status: res.data.data.status || 'menunggu_konfirmasi',
                     status_pembayaran: res.data.data.status_pembayaran || 'menunggu_pembayaran',
+                    metode_pembayaran_customer: paymentMethod,
                     items: [...cartItems],
                     subtotal,
                     tax: taxPB1,
@@ -720,6 +735,7 @@ export const CartProvider = ({ children }) => {
                 nama_pelanggan: finalCustomerName,
                 status: 'menunggu_konfirmasi',
                 status_pembayaran: 'menunggu_pembayaran',
+                metode_pembayaran_customer: paymentMethod,
                 items: [...cartItems],
                 subtotal,
                 tax: taxPB1,
@@ -737,7 +753,11 @@ export const CartProvider = ({ children }) => {
         clearCart();
         setIsCartOpen(false);
         setIsOrderStatusOpen(true);
-        showToast('Pesanan berhasil dikirim ke Dapur! 🍳👨‍🍳', 'success');
+        if (paymentMethod === 'kasir') {
+            showToast('Pesanan berhasil dibuat! Silakan bayar di meja kasir. 💵', 'success');
+        } else {
+            showToast('Pesanan berhasil dibuat! Silakan bayar via QRIS & upload bukti. 📱', 'success');
+        }
 
         // Fetch fresh orders from backend
         fetchOrderHistory();

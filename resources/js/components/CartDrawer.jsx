@@ -53,7 +53,7 @@ export default function CartDrawer() {
         }).format(num).replace('IDR', 'Rp');
     };
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (metode = 'qris') => {
         const trimmedName = customerName.trim();
         if (!trimmedName) {
             setNameError('Mohon masukkan nama pemesan terlebih dahulu');
@@ -62,7 +62,7 @@ export default function CartDrawer() {
         localStorage.setItem('pos_customer_name', trimmedName);
         setIsSubmitting(true);
         try {
-            await submitOrder('', trimmedName);
+            await submitOrder('', trimmedName, metode);
         } finally {
             setIsSubmitting(false);
         }
@@ -293,7 +293,7 @@ export default function CartDrawer() {
                 {cartItems.length > 0 && (
                     <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md p-4 border-t border-stone-200/80 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] space-y-2">
                         <button
-                            onClick={handleCheckout}
+                            onClick={() => handleCheckout('qris')}
                             disabled={isSubmitting}
                             className="w-full py-3.5 px-4 rounded-xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-bold text-xs tracking-wide shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-50 transition flex items-center justify-between uppercase cursor-pointer disabled:cursor-not-allowed"
                         >
@@ -305,9 +305,11 @@ export default function CartDrawer() {
 
                         <button
                             type="button"
-                            className="w-full py-3.5 px-4 rounded-xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-bold text-xs tracking-wide shadow-sm hover:shadow active:scale-[0.99] transition flex items-center justify-between uppercase cursor-pointer"
+                            onClick={() => handleCheckout('kasir')}
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 px-4 rounded-xl bg-[#881B1E] hover:bg-[#731417] text-white font-display font-bold text-xs tracking-wide shadow-sm hover:shadow active:scale-[0.99] disabled:opacity-50 transition flex items-center justify-between uppercase cursor-pointer disabled:cursor-not-allowed"
                         >
-                            <span>Bayar di Kasir 💵</span>
+                            <span>{isSubmitting ? 'Memproses Pesanan...' : 'Bayar di Kasir 💵'}</span>
                             <span className="bg-white/15 px-2.5 py-1 rounded-lg text-white font-display font-bold text-xs tracking-normal">
                                 {formatRupiah(grandTotal)}
                             </span>

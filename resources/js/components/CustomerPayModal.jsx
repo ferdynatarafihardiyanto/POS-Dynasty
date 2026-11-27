@@ -9,7 +9,13 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     const { tableInfo, setActiveOrder, setOrders, showToast } = useCart();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [proofImage, setProofImage] = useState(null);
-    const [proofPreview, setProofPreview] = useState(null);
+    const [proofPreview, setProofPreview] = useState(order?.bukti_pembayaran_url || null);
+
+    React.useEffect(() => {
+        if (order?.bukti_pembayaran_url) {
+            setProofPreview(order.bukti_pembayaran_url);
+        }
+    }, [order?.bukti_pembayaran_url]);
 
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
@@ -22,9 +28,78 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
 
     const handleRemoveProof = () => {
         setProofImage(null);
-        if (proofPreview) {
+        if (proofPreview && !order?.bukti_pembayaran_url) {
             URL.revokeObjectURL(proofPreview);
             setProofPreview(null);
+        } else {
+            setProofPreview(null);
+        }
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!proofImage && !proofPreview) {
+            showToast('Harap pilih screenshot / foto bukti transfer terlebih dahulu 📸', 'warning');
+            return;
+        }
+
+        setIsSubmitting(true);
+        const cleanOrderNumber = (order.orderNumber || '').replace(/^#/, '');
+
+        try {
+            const formData = new FormData();
+            if (proofImage) {
+                formData.append('bukti_pembayaran', proofImage);
+            }
+            formData.append('metode_pembayaran', 'qris');
+            formData.append('nama_pelanggan', customerName || 'Pelanggan');
+            if (tableInfo?.token) {
+                formData.append('qr_token', tableInfo.token);
+            }
+
+            const res = await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/upload-bukti`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            if (res.data && res.data.success) {
+                const responseData = res.data.data;
+                const updatedOrder = {
+                    ...order,
+                    status: responseData?.status || 'menunggu_konfirmasi',
+                    status_pembayaran: responseData?.status_pembayaran || 'menunggu_pembayaran',
+                    metode_pembayaran_customer: 'qris',
+                    bukti_pembayaran_url: responseData?.bukti_pembayaran_url || proofPreview,
+                    waktu_upload_bukti: responseData?.waktu_upload_bukti || new Date().toISOString()
+                };
+
+                if (typeof setActiveOrder === 'function') {
+                    setActiveOrder(updatedOrder);
+                }
+
+                if (typeof setOrders === 'function') {
+                    setOrders(prev => {
+                        if (!Array.isArray(prev)) return [updatedOrder];
+                        return prev.map(o => {
+                            const oNum = (o?.orderNumber || '').replace(/^#/, '');
+                            return (oNum === cleanOrderNumber || o?.orderNumber === order?.orderNumber) ? updatedOrder : o;
+                        });
+                    });
+                }
+
+                showToast('Bukti pembayaran terkirim ke POS Kasir! Mohon tunggu verifikasi kasir. ✨', 'success');
+                if (typeof onClose === 'function') {
+                    onClose();
+                }
+            } else {
+                throw new Error(res.data?.message || 'Gagal mengirim bukti pembayaran.');
+            }
+        } catch (err) {
+            console.error('Upload bukti error:', err);
+            const msg = err.response?.data?.message || err.message || 'Gagal mengirim bukti pembayaran ke kasir.';
+            showToast(msg, 'warning');
+        } finally {
+            setIsSubmitting(false);
         }
     };
     const customerName = (order?.customerName || order?.nama_pelanggan || localStorage.getItem('pos_customer_name') || 'Pelanggan').trim();
@@ -412,13 +487,24 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     </button>
                     */}
 
-                    {/* Tombol Baru: Sudah Membayar (Visual Only) */}
+                    {/* Tombol Konfirmasi: Sudah Membayar */}
                     <button
                         type="button"
-                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                        onClick={handleConfirmPayment}
+                        disabled={isSubmitting || (!proofImage && !proofPreview)}
+                        className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>SUDAH MEMBAYAR</span>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                <span>Mengirim ke Kasir...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>SUDAH MEMBAYAR</span>
+                            </>
+                        )}
                     </button>
 
                     <button
