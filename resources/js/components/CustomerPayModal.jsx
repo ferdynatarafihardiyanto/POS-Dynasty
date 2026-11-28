@@ -5,9 +5,73 @@ import { X, CheckCircle2, Loader2, User, QrCode, Building2, UploadCloud, Trash2 
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+/**
+ * Kompres foto / screenshot secara instan di sisi pengguna (Client-side Canvas)
+ * Mengubah foto raksasa (3-8MB) menjadi ~150-300KB agar upload instan dan tidak membebani server
+ */
+const compressImage = (file, maxWidth = 1400, maxHeight = 1400, quality = 0.8) => {
+    return new Promise((resolve) => {
+        if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
+            resolve(file);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob || blob.size >= file.size) {
+                            resolve(file);
+                            return;
+                        }
+
+                        const newFileName = (file.name || 'bukti_transfer').replace(/\.[^/.]+$/, "") + ".jpg";
+                        const compressedFile = new File([blob], newFileName, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = () => resolve(file);
+        };
+        reader.onerror = () => resolve(file);
+    });
+};
+
 export default function CustomerPayModal({ isOpen, onClose, order }) {
     const { tableInfo, setActiveOrder, setOrders, showToast } = useCart();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCompressing, setIsCompressing] = useState(false);
     const [proofImage, setProofImage] = useState(null);
     const [proofPreview, setProofPreview] = useState(order?.bukti_pembayaran_url || null);
 
@@ -17,12 +81,24 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
         }
     }, [order?.bukti_pembayaran_url]);
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            setProofImage(file);
-            const previewUrl = URL.createObjectURL(file);
-            setProofPreview(previewUrl);
+            setIsCompressing(true);
+            try {
+                // Otomatis kompresi gambar sebelum disiapkan untuk upload
+                const compressed = await compressImage(file);
+                setProofImage(compressed);
+                const previewUrl = URL.createObjectURL(compressed);
+                setProofPreview(previewUrl);
+            } catch (err) {
+                console.warn('Kompresi gambar gagal, memakai file asli:', err);
+                setProofImage(file);
+                const previewUrl = URL.createObjectURL(file);
+                setProofPreview(previewUrl);
+            } finally {
+                setIsCompressing(false);
+            }
         }
     };
 
@@ -363,7 +439,13 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                             </span>
                         </div>
 
-                        {!proofPreview ? (
+                        {isCompressing ? (
+                            <div className="flex flex-col items-center justify-center w-full py-5 px-4 border-2 border-dashed border-amber-300 rounded-xl bg-amber-50/50">
+                                <Loader2 className="w-6 h-6 animate-spin text-[#881B1E] mb-2" />
+                                <span className="text-xs font-bold text-stone-800">Mengoptimalkan & Mengompresi Foto...</span>
+                                <span className="text-[10px] text-stone-500 mt-0.5">Memperkecil ukuran foto agar pengiriman cepat & hemat kuota</span>
+                            </div>
+                        ) : !proofPreview ? (
                             <label className="flex flex-col items-center justify-center w-full py-5 px-4 border-2 border-dashed border-stone-300 hover:border-[#881B1E] rounded-xl bg-stone-50 hover:bg-amber-50/30 transition-all cursor-pointer group">
                                 <input
                                     type="file"
@@ -393,7 +475,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                         {proofImage?.name || 'Bukti_Transfer.jpg'}
                                     </p>
                                     <p className="text-[10px] text-stone-500 mt-0.5">
-                                        {proofImage?.size ? `${(proofImage.size / 1024).toFixed(0)} KB • ` : ''}Siap dikonfirmasi
+                                        {proofImage?.size ? `${(proofImage.size / 1024).toFixed(0)} KB (Terkonversi Ringan) • ` : ''}Siap dikonfirmasi
                                     </p>
                                     <label className="text-[11px] text-[#881B1E] hover:underline font-bold cursor-pointer mt-1 inline-block">
                                         Ganti Foto
@@ -504,10 +586,15 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     <button
                         type="button"
                         onClick={handleConfirmPayment}
-                        disabled={isSubmitting || (!proofImage && !proofPreview)}
+                        disabled={isSubmitting || isCompressing || (!proofImage && !proofPreview)}
                         className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isSubmitting ? (
+                        {isCompressing ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                <span>Mengompresi Foto...</span>
+                            </>
+                        ) : isSubmitting ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin text-white" />
                                 <span>Mengirim ke Kasir...</span>

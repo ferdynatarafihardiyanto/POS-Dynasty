@@ -1,6 +1,6 @@
 {
   "node_modules/html2canvas/dist/html2canvas.js": {
-    "file": "assets/html2canvas-BTDwdJzf.js",
+    "file": "assets/html2canvas-BuTesnpg.js",
     "name": "html2canvas",
     "src": "node_modules/html2canvas/dist/html2canvas.js",
     "isDynamicEntry": true,
@@ -18,7 +18,7 @@
     "isEntry": true
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-DPFmGMMj.js",
+    "file": "assets/app-Dridj7FP.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
