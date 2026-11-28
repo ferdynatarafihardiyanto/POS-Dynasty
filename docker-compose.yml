@@ -37,6 +37,7 @@ services:
       - ./database:/var/www/database
       - ./composer.json:/var/www/composer.json
       - ./composer.lock:/var/www/composer.lock
+      - ./docker/php.ini:/usr/local/etc/php/conf.d/99-uploads.ini:ro
 
   db:
     image: mariadb:10.11

@@ -544,6 +544,10 @@ export const CartProvider = ({ children }) => {
                         tableName: `Meja ${p.meja?.table_number || p.meja?.nomor_meja || p.meja || tableInfo.number}`,
                         status: p.status,
                         status_pembayaran: p.status_pembayaran || 'menunggu_pembayaran',
+                        metode_pembayaran_customer: p.metode_pembayaran_customer || null,
+                        bukti_pembayaran_url: p.bukti_pembayaran_url || null,
+                        waktu_upload_bukti: p.waktu_upload_bukti || null,
+                        catatan_tolak_bukti: p.catatan_tolak_bukti || null,
                         items: (p.items || p.detail_pesanan || []).map((dp, idx) => ({
                             cartItemId: `hist-${p.id || p.nomor_pesanan}-${idx}`,
                             quantity: dp.jumlah,
@@ -617,25 +621,31 @@ export const CartProvider = ({ children }) => {
                     const updated = res.data.data;
                     const newStatus = updated.status;
                     const newPayStatus = updated.status_pembayaran;
+                    const newMethod = updated.metode_pembayaran_customer ?? null;
+                    const newProofUrl = updated.bukti_pembayaran_url ?? null;
+                    const newProofTime = updated.waktu_upload_bukti ?? null;
+                    const newRejectNote = updated.catatan_tolak_bukti ?? null;
 
                     setActiveOrder(current => {
                         if (!current) return current;
                         const curNum = (current.orderNumber || '').replace(/^#/, '');
                         if (curNum !== updated.nomor_pesanan) return current;
                         if (
-                            current.status === newStatus && 
+                            current.status === newStatus &&
                             current.status_pembayaran === newPayStatus &&
-                            current.bukti_pembayaran_url === updated.bukti_pembayaran_url &&
-                            current.waktu_upload_bukti === updated.waktu_upload_bukti
+                            (current.metode_pembayaran_customer ?? null) === newMethod &&
+                            (current.bukti_pembayaran_url ?? null) === newProofUrl &&
+                            (current.waktu_upload_bukti ?? null) === newProofTime &&
+                            (current.catatan_tolak_bukti ?? null) === newRejectNote
                         ) return current;
                         return {
                             ...current,
                             status: newStatus,
                             status_pembayaran: newPayStatus,
-                            metode_pembayaran_customer: updated.metode_pembayaran_customer || current.metode_pembayaran_customer,
-                            bukti_pembayaran_url: updated.bukti_pembayaran_url || current.bukti_pembayaran_url,
-                            waktu_upload_bukti: updated.waktu_upload_bukti || current.waktu_upload_bukti,
-                            catatan_tolak_bukti: updated.catatan_tolak_bukti ?? current.catatan_tolak_bukti,
+                            metode_pembayaran_customer: newMethod || current.metode_pembayaran_customer,
+                            bukti_pembayaran_url: newProofUrl,
+                            waktu_upload_bukti: newProofTime,
+                            catatan_tolak_bukti: newRejectNote,
                             grandTotal: parseFloat(updated.total_harga) || current.grandTotal
                         };
                     });
@@ -648,10 +658,10 @@ export const CartProvider = ({ children }) => {
                                       ...o,
                                       status: newStatus,
                                       status_pembayaran: newPayStatus,
-                                      metode_pembayaran_customer: updated.metode_pembayaran_customer || o.metode_pembayaran_customer,
-                                      bukti_pembayaran_url: updated.bukti_pembayaran_url || o.bukti_pembayaran_url,
-                                      waktu_upload_bukti: updated.waktu_upload_bukti || o.waktu_upload_bukti,
-                                      catatan_tolak_bukti: updated.catatan_tolak_bukti ?? o.catatan_tolak_bukti,
+                                      metode_pembayaran_customer: newMethod || o.metode_pembayaran_customer,
+                                      bukti_pembayaran_url: newProofUrl,
+                                      waktu_upload_bukti: newProofTime,
+                                      catatan_tolak_bukti: newRejectNote,
                                       grandTotal: parseFloat(updated.total_harga) || o.grandTotal
                                   }
                                 : o;
@@ -698,20 +708,18 @@ export const CartProvider = ({ children }) => {
             }))
         };
 
-        let backendSuccess = false;
         let createdOrder = null;
 
         try {
-            const res = await axios.post(`${API_URL}/pesanan`, payloadBackend);
+            const res = await axios.post(`${API_URL}/pesanan`, payloadBackend, { timeout: 15000 });
             if (res.data && res.data.data) {
-                backendSuccess = true;
                 createdOrder = {
                     orderNumber: res.data.data.nomor_pesanan || orderNumber,
                     tableNumber: tableInfo.number,
                     tableName: tableInfo.name,
                     customerName: finalCustomerName,
                     nama_pelanggan: finalCustomerName,
-                    status: res.data.data.status || 'menunggu_konfirmasi',
+                    status: res.data.data.status || 'menunggu_pembayaran',
                     status_pembayaran: res.data.data.status_pembayaran || 'menunggu_pembayaran',
                     metode_pembayaran_customer: paymentMethod,
                     items: [...cartItems],
@@ -723,26 +731,19 @@ export const CartProvider = ({ children }) => {
                 };
             }
         } catch (err) {
-            console.log('Backend API order endpoint unreached or error, proceeding with frontend state simulation:', err.message);
+            console.error('Error submitting order to backend:', err);
+            const validationErrors = err.response?.data?.errors;
+            const firstValidationErr = validationErrors
+                ? Object.values(validationErrors).flat().find(Boolean)
+                : null;
+            const errMsg = firstValidationErr || err.response?.data?.message || 'Gagal mengirim pesanan ke server. Periksa koneksi Anda lalu coba lagi.';
+            showToast(errMsg, 'error');
+            return null;
         }
 
-        if (!backendSuccess) {
-            createdOrder = {
-                orderNumber,
-                tableNumber: tableInfo.number,
-                tableName: tableInfo.name,
-                customerName: finalCustomerName,
-                nama_pelanggan: finalCustomerName,
-                status: 'menunggu_konfirmasi',
-                status_pembayaran: 'menunggu_pembayaran',
-                metode_pembayaran_customer: paymentMethod,
-                items: [...cartItems],
-                subtotal,
-                tax: taxPB1,
-                grandTotal,
-                notes: orderNotes,
-                timestamp: new Date().toISOString()
-            };
+        if (!createdOrder) {
+            showToast('Respon server tidak valid. Silakan coba kirim pesanan lagi.', 'error');
+            return null;
         }
 
         const cleanOrderNumber = (createdOrder.orderNumber || '').replace(/^#/, '');

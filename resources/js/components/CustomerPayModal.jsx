@@ -1,70 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import axios from 'axios';
-import { X, CheckCircle2, Loader2, User, QrCode, Building2, UploadCloud, Trash2 } from 'lucide-react';
+import { X, CheckCircle2, Loader2, User, QrCode, Building2, UploadCloud, Trash2, AlertCircle } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const ALLOWED_EXT_REGEX = /\.(jpe?g|png|webp)$/i;
 
-/**
- * Kompres foto / screenshot secara instan di sisi pengguna (Client-side Canvas)
- * Mengubah foto raksasa (3-8MB) menjadi ~150-300KB agar upload instan dan tidak membebani server
- */
-const compressImage = (file, maxWidth = 1400, maxHeight = 1400, quality = 0.8) => {
+const isWebSupportedImage = (file) => {
+    if (!file) return false;
+    const type = (file.type || '').toLowerCase();
+    return ALLOWED_MIME_TYPES.has(type) || ALLOWED_EXT_REGEX.test(file.name || '');
+};
+
+const renderImageToJpegBlob = (img, maxDimension, quality) => {
     return new Promise((resolve) => {
-        if (!file || !file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
-            resolve(file);
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        if (!width || !height) {
+            resolve(null);
             return;
         }
 
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                let width = img.width;
-                let height = img.height;
+        if (width > height && width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+        } else if (height >= width && height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+        }
 
-                if (width > height) {
-                    if (width > maxWidth) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    }
-                } else {
-                    if (height > maxHeight) {
-                        width = Math.round((width * maxHeight) / height);
-                        height = maxHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            resolve(null);
+            return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+    });
+};
+
+/**
+ * Kompres foto / screenshot di sisi pengguna (Client-side Canvas) ke JPEG ringan
+ * agar upload cepat, hemat kuota, dan aman dari penolakan ukuran/format server.
+ */
+const compressImage = (file, maxDimension = 1400, quality = 0.8) => {
+    return new Promise((resolve) => {
+        if (!file) {
+            resolve({ file: null, error: 'File gambar tidak ditemukan.' });
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        const finishWithError = (errorMsg) => {
+            URL.revokeObjectURL(objectUrl);
+            if (isWebSupportedImage(file) && file.size <= MAX_UPLOAD_BYTES) {
+                resolve({ file, error: null });
+            } else {
+                resolve({ file: null, error: errorMsg });
+            }
+        };
+
+        img.onload = async () => {
+            try {
+                let blob = await renderImageToJpegBlob(img, maxDimension, quality);
+                if (blob && blob.size > 1.8 * 1024 * 1024) {
+                    const smallerBlob = await renderImageToJpegBlob(img, 1080, 0.65);
+                    if (smallerBlob && smallerBlob.size < blob.size) {
+                        blob = smallerBlob;
                     }
                 }
 
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
+                URL.revokeObjectURL(objectUrl);
 
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+                if (blob && (!isWebSupportedImage(file) || blob.size < file.size || file.size > 1.8 * 1024 * 1024)) {
+                    const baseName = (file.name || 'bukti_transfer').replace(/\.[^/.]+$/, '');
+                    const compressedFile = new File([blob], `${baseName}.jpg`, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve({ file: compressedFile, error: null });
+                    return;
+                }
 
-                canvas.toBlob(
-                    (blob) => {
-                        if (!blob || blob.size >= file.size) {
-                            resolve(file);
-                            return;
-                        }
+                if (isWebSupportedImage(file)) {
+                    resolve({ file, error: null });
+                    return;
+                }
 
-                        const newFileName = (file.name || 'bukti_transfer').replace(/\.[^/.]+$/, "") + ".jpg";
-                        const compressedFile = new File([blob], newFileName, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-                        resolve(compressedFile);
-                    },
-                    'image/jpeg',
-                    quality
-                );
-            };
-            img.onerror = () => resolve(file);
+                resolve({
+                    file: null,
+                    error: 'Format foto tidak didukung. Silakan ambil screenshot bukti transfer lalu unggah screenshot tersebut.'
+                });
+            } catch {
+                finishWithError('Gagal memproses foto. Pastikan file berupa gambar JPG, PNG, atau WEBP.');
+            }
         };
-        reader.onerror = () => resolve(file);
+
+        img.onerror = () => {
+            finishWithError(
+                'Format foto (misalnya HEIC) tidak bisa dibaca browser. Silakan screenshot bukti transfer Anda lalu unggah screenshot-nya.'
+            );
+        };
+
+        img.src = objectUrl;
     });
 };
 
@@ -74,77 +122,133 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
     const [isCompressing, setIsCompressing] = useState(false);
     const [proofImage, setProofImage] = useState(null);
     const [proofPreview, setProofPreview] = useState(order?.bukti_pembayaran_url || null);
+    const [uploadError, setUploadError] = useState('');
+    const localBlobUrlRef = useRef(null);
 
-    React.useEffect(() => {
-        if (order?.bukti_pembayaran_url) {
+    const revokeLocalPreview = () => {
+        if (localBlobUrlRef.current) {
+            URL.revokeObjectURL(localBlobUrlRef.current);
+            localBlobUrlRef.current = null;
+        }
+    };
+
+    useEffect(() => {
+        return () => revokeLocalPreview();
+    }, []);
+
+    useEffect(() => {
+        if (!isOpen) {
+            revokeLocalPreview();
+            setProofImage(null);
+            setUploadError('');
+            setProofPreview(order?.bukti_pembayaran_url || null);
+            return;
+        }
+
+        setUploadError('');
+        if (!proofImage) {
+            setProofPreview(order?.bukti_pembayaran_url || null);
+        }
+    }, [isOpen, order?.orderNumber]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (!order?.bukti_pembayaran_url && !proofImage) {
+            setProofPreview(null);
+        } else if (order?.bukti_pembayaran_url && !proofImage) {
             setProofPreview(order.bukti_pembayaran_url);
         }
-    }, [order?.bukti_pembayaran_url]);
+        if (order?.catatan_tolak_bukti && !proofImage) {
+            revokeLocalPreview();
+            setProofPreview(null);
+        }
+    }, [isOpen, order?.bukti_pembayaran_url, order?.catatan_tolak_bukti]);
 
     const handleFileChange = async (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setIsCompressing(true);
-            try {
-                // Otomatis kompresi gambar sebelum disiapkan untuk upload
-                const compressed = await compressImage(file);
-                setProofImage(compressed);
-                const previewUrl = URL.createObjectURL(compressed);
-                setProofPreview(previewUrl);
-            } catch (err) {
-                console.warn('Kompresi gambar gagal, memakai file asli:', err);
-                setProofImage(file);
-                const previewUrl = URL.createObjectURL(file);
-                setProofPreview(previewUrl);
-            } finally {
-                setIsCompressing(false);
+        const input = e.target;
+        const file = input.files?.[0];
+        input.value = '';
+        if (!file) return;
+
+        setUploadError('');
+        setIsCompressing(true);
+        try {
+            const { file: processedFile, error } = await compressImage(file);
+            if (!processedFile) {
+                const errMsg = error || 'Foto tidak dapat diproses. Silakan unggah gambar JPG, PNG, atau WEBP.';
+                setUploadError(errMsg);
+                showToast(errMsg, 'warning');
+                return;
             }
+
+            if (processedFile.size > MAX_UPLOAD_BYTES) {
+                const sizeMsg = 'Ukuran foto terlalu besar (maksimal 10MB). Silakan pilih atau screenshot foto yang lebih kecil.';
+                setUploadError(sizeMsg);
+                showToast(sizeMsg, 'warning');
+                return;
+            }
+
+            revokeLocalPreview();
+            const previewUrl = URL.createObjectURL(processedFile);
+            localBlobUrlRef.current = previewUrl;
+            setProofImage(processedFile);
+            setProofPreview(previewUrl);
+        } catch (err) {
+            console.warn('Kompresi gambar gagal:', err);
+            const fallbackMsg = 'Gagal memproses gambar. Silakan coba foto atau screenshot lain.';
+            setUploadError(fallbackMsg);
+            showToast(fallbackMsg, 'warning');
+        } finally {
+            setIsCompressing(false);
         }
     };
 
     const handleRemoveProof = () => {
+        revokeLocalPreview();
         setProofImage(null);
-        if (proofPreview && !order?.bukti_pembayaran_url) {
-            URL.revokeObjectURL(proofPreview);
-            setProofPreview(null);
-        } else {
-            setProofPreview(null);
-        }
+        setProofPreview(null);
+        setUploadError('');
     };
 
     const handleConfirmPayment = async () => {
-        if (!proofImage && !proofPreview) {
-            showToast('Harap pilih screenshot / foto bukti transfer terlebih dahulu 📸', 'warning');
+        if (!proofImage) {
+            const msg = order?.bukti_pembayaran_url && !order?.catatan_tolak_bukti
+                ? 'Bukti pembayaran sudah terkirim ke kasir. Pilih "Ganti Foto" jika ingin mengunggah ulang.'
+                : 'Harap pilih screenshot / foto bukti transfer terlebih dahulu 📸';
+            setUploadError(msg);
+            showToast(msg, 'warning');
             return;
         }
 
+        setUploadError('');
         setIsSubmitting(true);
         const cleanOrderNumber = (order.orderNumber || '').replace(/^#/, '');
 
         try {
-            const formData = new FormData();
-            if (proofImage) {
+            const buildFormData = () => {
+                const formData = new FormData();
                 formData.append('bukti_pembayaran', proofImage);
-            }
-            formData.append('metode_pembayaran', 'qris');
-            formData.append('nama_pelanggan', customerName || 'Pelanggan');
-            if (tableInfo?.token) {
-                formData.append('qr_token', tableInfo.token);
-            }
+                formData.append('metode_pembayaran', 'qris');
+                formData.append('nama_pelanggan', customerName || 'Pelanggan');
+                if (tableInfo?.token) {
+                    formData.append('qr_token', tableInfo.token);
+                }
+                return formData;
+            };
 
-            const uploadRequest = () => axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/upload-bukti`, formData, {
+            const uploadRequest = () => axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/upload-bukti`, buildFormData(), {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
-                timeout: 15000
+                timeout: 20000
             });
 
             let res;
             try {
                 res = await uploadRequest();
             } catch (retryErr) {
-                if (retryErr.code === 'ECONNABORTED' || !retryErr.response) {
-                    // Timeout atau koneksi gagal — coba 1x lagi
+                const status = retryErr.response?.status;
+                if (retryErr.code === 'ECONNABORTED' || !retryErr.response || status >= 502) {
                     res = await uploadRequest();
                 } else {
                     throw retryErr;
@@ -153,13 +257,15 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
 
             if (res.data && res.data.success) {
                 const responseData = res.data.data;
+                const serverProofUrl = responseData?.bukti_pembayaran_url || proofPreview;
                 const updatedOrder = {
                     ...order,
                     status: responseData?.status || 'menunggu_konfirmasi',
                     status_pembayaran: responseData?.status_pembayaran || 'menunggu_pembayaran',
                     metode_pembayaran_customer: 'qris',
-                    bukti_pembayaran_url: responseData?.bukti_pembayaran_url || proofPreview,
-                    waktu_upload_bukti: responseData?.waktu_upload_bukti || new Date().toISOString()
+                    bukti_pembayaran_url: serverProofUrl,
+                    waktu_upload_bukti: responseData?.waktu_upload_bukti || new Date().toISOString(),
+                    catatan_tolak_bukti: null
                 };
 
                 if (typeof setActiveOrder === 'function') {
@@ -176,6 +282,8 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     });
                 }
 
+                revokeLocalPreview();
+                setProofImage(null);
                 showToast('Bukti pembayaran terkirim ke POS Kasir! Mohon tunggu verifikasi kasir. ✨', 'success');
                 if (typeof onClose === 'function') {
                     onClose();
@@ -185,7 +293,12 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
             }
         } catch (err) {
             console.error('Upload bukti error:', err);
-            const msg = err.response?.data?.message || err.message || 'Gagal mengirim bukti pembayaran ke kasir.';
+            const validationErrors = err.response?.data?.errors;
+            const firstValidationErr = validationErrors
+                ? Object.values(validationErrors).flat().find(Boolean)
+                : null;
+            const msg = firstValidationErr || err.response?.data?.message || err.message || 'Gagal mengirim bukti pembayaran ke kasir.';
+            setUploadError(msg);
             showToast(msg, 'warning');
         } finally {
             setIsSubmitting(false);
@@ -427,6 +540,17 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                         </div>
                     </div>
 
+                    {/* Peringatan jika bukti sebelumnya ditolak kasir */}
+                    {order?.catatan_tolak_bukti && (
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-start gap-2.5 text-rose-900 shadow-2xs">
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                            <div className="text-xs leading-relaxed">
+                                <span className="font-bold block text-rose-800">Bukti sebelumnya perlu diunggah ulang:</span>
+                                <span className="text-[11px]">{order.catatan_tolak_bukti}</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Kotak Upload Bukti Pembayaran */}
                     <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs space-y-2.5">
                         <div className="flex items-center justify-between">
@@ -460,7 +584,7 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                     Pilih Foto / Screenshot Transfer
                                 </span>
                                 <span className="text-[10px] text-stone-400 mt-0.5">
-                                    Format JPG, PNG, atau WEBP (Maks 5MB)
+                                    Format JPG, PNG, atau WEBP (Maks 10MB)
                                 </span>
                             </label>
                         ) : (
@@ -472,10 +596,12 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                                 />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold text-stone-900 truncate">
-                                        {proofImage?.name || 'Bukti_Transfer.jpg'}
+                                        {proofImage?.name || 'Bukti_Terkirim.jpg'}
                                     </p>
                                     <p className="text-[10px] text-stone-500 mt-0.5">
-                                        {proofImage?.size ? `${(proofImage.size / 1024).toFixed(0)} KB (Terkonversi Ringan) • ` : ''}Siap dikonfirmasi
+                                        {proofImage?.size
+                                            ? `${(proofImage.size / 1024).toFixed(0)} KB (Siap dikirim ke kasir)`
+                                            : 'Bukti sudah terkirim ke kasir'}
                                     </p>
                                     <label className="text-[11px] text-[#881B1E] hover:underline font-bold cursor-pointer mt-1 inline-block">
                                         Ganti Foto
@@ -582,11 +708,18 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                     </button>
                     */}
 
+                    {uploadError && (
+                        <div className="bg-rose-50 border border-rose-200 text-rose-800 rounded-xl px-3 py-2 text-[11px] font-medium flex items-start gap-2">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                            <span>{uploadError}</span>
+                        </div>
+                    )}
+
                     {/* Tombol Konfirmasi: Sudah Membayar */}
                     <button
                         type="button"
                         onClick={handleConfirmPayment}
-                        disabled={isSubmitting || isCompressing || (!proofImage && !proofPreview)}
+                        disabled={isSubmitting || isCompressing || !proofImage}
                         className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-display font-bold text-xs sm:text-sm tracking-wide active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isCompressing ? (
@@ -598,6 +731,11 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin text-white" />
                                 <span>Mengirim ke Kasir...</span>
+                            </>
+                        ) : !proofImage && order?.bukti_pembayaran_url && !order?.catatan_tolak_bukti ? (
+                            <>
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>BUKTI SUDAH TERKIRIM</span>
                             </>
                         ) : (
                             <>

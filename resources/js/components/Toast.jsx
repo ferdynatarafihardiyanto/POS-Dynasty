@@ -24,7 +24,7 @@ export default function Toast() {
     const type = toast.type || 'info';
 
     return (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm pointer-events-none animate-slide-up">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-11/12 max-w-sm pointer-events-none animate-slide-up">
             <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md pointer-events-auto ${bgStyles[type] || bgStyles.info}`}>
                 {icons[type] || icons.info}
                 <p className="text-xs font-semibold leading-snug flex-1 font-sans">

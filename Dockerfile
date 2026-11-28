@@ -50,8 +50,9 @@ COPY --from=frontend /app/public/build ./public/build
 # Install dependensi PHP tanpa dev packages
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Konfigurasi Nginx, Supervisor, dan Entrypoint
+# Konfigurasi Nginx, PHP, Supervisor, dan Entrypoint
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/php.ini /usr/local/etc/php/conf.d/99-uploads.ini
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh

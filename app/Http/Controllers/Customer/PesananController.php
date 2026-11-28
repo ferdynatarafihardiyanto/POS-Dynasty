@@ -306,11 +306,17 @@ class PesananController extends Controller
         $nomor_pesanan = urldecode(ltrim($nomor_pesanan, '#'));
 
         $request->validate([
-            'bukti_pembayaran' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'bukti_pembayaran' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'bukti_base64' => 'nullable|string',
             'metode_pembayaran' => 'nullable|string|in:qris,transfer,kasir',
             'nama_pelanggan' => 'nullable|string|max:100',
             'qr_token' => 'nullable|string',
+        ], [
+            'bukti_pembayaran.image' => 'File bukti pembayaran harus berupa gambar.',
+            'bukti_pembayaran.mimes' => 'Format gambar bukti harus JPG, PNG, atau WEBP (jika dari iPhone, silakan screenshot terlebih dahulu).',
+            'bukti_pembayaran.max' => 'Ukuran file bukti pembayaran maksimal 10MB.',
+            'bukti_pembayaran.uploaded' => 'File gagal diunggah ke server. Pastikan ukuran foto tidak melebihi batas server.',
+            'metode_pembayaran.in' => 'Metode pembayaran tidak valid.',
         ]);
 
         $pesanan = Pesanan::with(['meja', 'pembayaran'])
@@ -354,7 +360,10 @@ class PesananController extends Controller
                 Storage::disk('public')->delete($storedPath);
             }
             $file = $request->file('bukti_pembayaran');
-            $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $ext = strtolower($file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'jpg');
+            if ($ext === 'jpeg') {
+                $ext = 'jpg';
+            }
             $filename = $cleanOrderNum . '_' . time() . '.' . $ext;
             $storedPath = $file->storeAs('bukti_pembayaran', $filename, 'public');
         } elseif ($request->filled('bukti_base64')) {
@@ -366,10 +375,10 @@ class PesananController extends Controller
                 ], 422);
             }
             $decoded = base64_decode($matches[2], true);
-            if ($decoded === false || strlen($decoded) > 5 * 1024 * 1024) {
+            if ($decoded === false || strlen($decoded) > 10 * 1024 * 1024) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Ukuran atau format gambar bukti pembayaran tidak valid (maksimal 5MB).'
+                    'message' => 'Ukuran atau format gambar bukti pembayaran tidak valid (maksimal 10MB).'
                 ], 422);
             }
             if ($storedPath && Storage::disk('public')->exists($storedPath)) {

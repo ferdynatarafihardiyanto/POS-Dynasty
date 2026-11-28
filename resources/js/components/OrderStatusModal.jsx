@@ -230,52 +230,76 @@ export default function OrderStatusModal() {
                             </div>
 
                             {/* Payment Status Card (Khusus HP: QRIS / TF / Kasir) */}
-                            {!isPaid ? (
-                                <div className="p-4 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                                            <span className="font-display font-bold text-xs text-stone-900 uppercase tracking-wide">
-                                                {currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                                    ? 'Menunggu Konfirmasi Kasir'
-                                                    : (currentOrder.metode_pembayaran_customer === 'kasir'
-                                                        ? 'Pembayaran di Kasir'
-                                                        : 'Langkah 1: Bayar via QRIS')}
+                            {!isPaid ? (() => {
+                                const hasUploadedProof = Boolean(
+                                    (currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url) &&
+                                    !currentOrder.catatan_tolak_bukti
+                                );
+                                const isProofRejected = Boolean(
+                                    currentOrder.catatan_tolak_bukti &&
+                                    !currentOrder.waktu_upload_bukti &&
+                                    !currentOrder.bukti_pembayaran_url
+                                );
+
+                                return (
+                                    <div className={`p-4 rounded-xl bg-white shadow-2xs space-y-3 border ${
+                                        isProofRejected ? 'border-rose-300 bg-rose-50/30' : 'border-stone-200'
+                                    }`}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className={`w-4 h-4 shrink-0 ${isProofRejected ? 'text-rose-600' : 'text-amber-600'}`} />
+                                                <span className="font-display font-bold text-xs text-stone-900 uppercase tracking-wide">
+                                                    {isProofRejected
+                                                        ? 'Bukti Pembayaran Ditolak'
+                                                        : (hasUploadedProof
+                                                            ? 'Menunggu Konfirmasi Kasir'
+                                                            : (currentOrder.metode_pembayaran_customer === 'kasir'
+                                                                ? 'Pembayaran di Kasir'
+                                                                : 'Langkah 1: Bayar via QRIS'))}
+                                                </span>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                                isProofRejected
+                                                    ? 'text-rose-800 bg-rose-100 border border-rose-300'
+                                                    : (hasUploadedProof
+                                                        ? 'text-amber-800 bg-amber-50 border border-amber-300'
+                                                        : (currentOrder.metode_pembayaran_customer === 'kasir'
+                                                            ? 'text-blue-800 bg-blue-50 border border-blue-200'
+                                                            : 'text-amber-900 bg-amber-50 border border-amber-200/60'))
+                                            }`}>
+                                                {isProofRejected
+                                                    ? 'Perlu Upload Ulang'
+                                                    : (hasUploadedProof
+                                                        ? 'Bukti Terkirim ⏳'
+                                                        : (currentOrder.metode_pembayaran_customer === 'kasir'
+                                                            ? 'Bayar di Kasir 💵'
+                                                            : 'Belum Bayar'))}
                                             </span>
                                         </div>
-                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                                            currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                                ? 'text-amber-800 bg-amber-50 border border-amber-300'
-                                                : (currentOrder.metode_pembayaran_customer === 'kasir'
-                                                    ? 'text-blue-800 bg-blue-50 border border-blue-200'
-                                                    : 'text-amber-900 bg-amber-50 border border-amber-200/60')
-                                        }`}>
-                                            {currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                                ? 'Bukti Terkirim ⏳'
-                                                : (currentOrder.metode_pembayaran_customer === 'kasir'
-                                                    ? 'Bayar di Kasir 💵'
-                                                    : 'Belum Bayar')}
-                                        </span>
-                                    </div>
 
-                                    <p className="text-xs text-stone-600 leading-relaxed">
-                                        {currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                            ? 'Bukti screenshot pembayaran telah berhasil dikirim ke POS Kasir! Kasir sedang memverifikasi pembayaran Anda.'
-                                            : (currentOrder.metode_pembayaran_customer === 'kasir'
-                                                ? `Pesanan telah dikirim! Silakan menuju meja kasir untuk menyelesaikan pembayaran tunai / non-tunai pesanan Meja ${currentOrder.tableNumber || tableInfo?.number}.`
-                                                : 'Pesananmu telah dibuat! Silakan selesaikan pembayaran lewat QRIS dan upload foto bukti transfer agar segera diproses dapur.')}
-                                    </p>
+                                        <p className={`text-xs leading-relaxed ${isProofRejected ? 'text-rose-800 font-medium' : 'text-stone-600'}`}>
+                                            {isProofRejected
+                                                ? currentOrder.catatan_tolak_bukti
+                                                : (hasUploadedProof
+                                                    ? 'Bukti screenshot pembayaran telah berhasil dikirim ke POS Kasir! Kasir sedang memverifikasi pembayaran Anda.'
+                                                    : (currentOrder.metode_pembayaran_customer === 'kasir'
+                                                        ? `Pesanan telah dikirim! Silakan menuju meja kasir untuk menyelesaikan pembayaran tunai / non-tunai pesanan Meja ${currentOrder.tableNumber || tableInfo?.number}.`
+                                                        : 'Pesananmu telah dibuat! Silakan selesaikan pembayaran lewat QRIS dan upload foto bukti transfer agar segera diproses dapur.'))}
+                                        </p>
 
-                                    <div className="text-[11px] text-stone-500 flex items-center gap-1.5 pt-2 border-t border-stone-100">
-                                        <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                        <span>
-                                            {currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                                ? 'Layar akan otomatis berubah hijau begitu kasir mengonfirmasi pembayaran.'
-                                                : 'Pelacakan langsung proses dapur akan otomatis aktif setelah pembayaran.'}
-                                        </span>
+                                        <div className="text-[11px] text-stone-500 flex items-center gap-1.5 pt-2 border-t border-stone-100">
+                                            <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                            <span>
+                                                {isProofRejected
+                                                    ? 'Klik tombol Upload Ulang Bukti di bawah untuk mengirim foto yang valid.'
+                                                    : (hasUploadedProof
+                                                        ? 'Layar akan otomatis berubah hijau begitu kasir mengonfirmasi pembayaran.'
+                                                        : 'Pelacakan langsung proses dapur akan otomatis aktif setelah pembayaran.')}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            ) : (
+                                );
+                            })() : (
                                 currentOrder.status === 'selesai' ? (
                                     <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-400 text-emerald-950 shadow-xs space-y-2">
                                         <div className="flex items-center justify-between">
@@ -547,11 +571,13 @@ export default function OrderStatusModal() {
                                 className="flex-[7] py-3.5 px-4 rounded-xl bg-emerald-600 text-white font-display font-bold text-xs active:scale-[0.99] transition flex items-center justify-center cursor-pointer"
                             >
                                 <span>
-                                    {currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
-                                        ? 'Cek / Ganti Bukti Bayar 📄'
-                                        : (currentOrder.metode_pembayaran_customer === 'kasir'
-                                            ? 'Lihat Pembayaran'
-                                            : 'Bayar')}
+                                    {currentOrder.catatan_tolak_bukti && !currentOrder.waktu_upload_bukti && !currentOrder.bukti_pembayaran_url
+                                        ? 'Upload Ulang Bukti 📸'
+                                        : (currentOrder.waktu_upload_bukti || currentOrder.bukti_pembayaran_url
+                                            ? 'Cek / Ganti Bukti Bayar 📄'
+                                            : (currentOrder.metode_pembayaran_customer === 'kasir'
+                                                ? 'Lihat Pembayaran'
+                                                : 'Bayar'))}
                                 </span>
                             </button>
 
