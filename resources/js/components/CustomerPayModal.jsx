@@ -56,11 +56,24 @@ export default function CustomerPayModal({ isOpen, onClose, order }) {
                 formData.append('qr_token', tableInfo.token);
             }
 
-            const res = await axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/upload-bukti`, formData, {
+            const uploadRequest = () => axios.post(`${API_URL}/pesanan/${cleanOrderNumber}/upload-bukti`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                }
+                },
+                timeout: 15000
             });
+
+            let res;
+            try {
+                res = await uploadRequest();
+            } catch (retryErr) {
+                if (retryErr.code === 'ECONNABORTED' || !retryErr.response) {
+                    // Timeout atau koneksi gagal — coba 1x lagi
+                    res = await uploadRequest();
+                } else {
+                    throw retryErr;
+                }
+            }
 
             if (res.data && res.data.success) {
                 const responseData = res.data.data;
